@@ -3,6 +3,24 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 102 · 17/11/2026
+> **Campanella e notifiche push** Tutte le novità degli amici nella campanella, e con il permesso anche a app chiusa (con orari di silenzio).
+> **Raggruppa per** Copertine ed elenco si possono raggruppare per autore, genere o lettura, anche genere › autore.
+> **Amici degli amici** Dalla libreria di un amico vedi i suoi amici, quelli in comune in cima, e puoi chiedere l'amicizia.
+> **Ricerche condivise e archivio comune** Chi usa la stessa chiave Google vede il conto comune del giorno; i libri già cercati da altri arrivano senza usare Google.
+> **Menu più ordinato** Sostieni e Info e aiuto al loro posto; Indietro, × e «Chiudi» tornano al Menu; privacy dentro l'app.
+- **Campanella:** amicizie, prestiti e regali, resi, «Me lo presti?», consigli e chiavi condivise arrivano nella campanella accanto ad Amici; le richieste d'amicizia stanno lì. Avviso quando una chiave Google sta per finire le ricerche del giorno, con la guida per crearne una propria (è gratis).
+- **Notifiche push:** dopo l'accesso, una volta sola, «Ricevi notifiche dagli amici» con la scelta dei tipi (Amicizie, Libri in prestito, Consigli, Chiavi condivise). Impostazioni › Notifiche: interruttore, tipi e orari di silenzio (di partenza 22-8; dopo il silenzio, da 3 avvisi in su un solo riepilogo). Su iPhone solo con l'app nella schermata Home.
+- **Amici e privacy:** «Gli amici vedono i miei amici» e «Gli amici vedono i regali che prenoto» (accese di partenza); spenta la seconda, gli altri vedono solo «Regalo prenotato». Il festeggiato non vede mai niente.
+- **Libreria di un amico:** icona Amici sempre presente; «Aggiungi ai miei desideri» in alto nella scheda (accesa se ce l'hai già nei desideri, un tocco la toglie).
+- **Chiave Google e worker:** «Presta chiave API e worker» con la scelta di cosa prestare; Condivisione mostra cosa presti, cosa ricevi e come creare la tua chiave; la chiave ricevuta da un amico non si vede e non finisce nel backup. In Ricerca dei libri «Usa la tua» e la guida del worker con «Copia il codice del worker».
+- **Ricerche:** descrizione solo dalla prima ricerca e copertina grande senza richieste in più a Google (meno ricerche per libro); archivio comune dei libri per ISBN (serve l'account).
+- **Libreria:** «Raggruppa per» sotto «Ordina per» (gruppi chiusi di partenza, aperti con un tocco o con la ricerca); la vista resta la stessa dopo ogni azione su un libro; «In prestito» sulla copertina dei libri prestati a te; nel + scegli «In Libreria» o «Nei Desideri».
+- **Menu e testata:** voci riordinate (Sostieni prima di Amici, «Info e aiuto» con Condivisione, Installazione, Privacy, Contatti); sottotitoli su una riga; testata con nome, numero di libri e prestiti; boccale di Sostieni in alto. Il QR della Condivisione usa il nuovo indirizzo.
+- **Limiti online:** al massimo 5.000 libri per account e 50 KB per libro; contatore delle ricerche protetto; archivio con copertine solo da Google, Open Library e archive.org.
+- **Sicurezza e riservatezza:** caratteri sul telefono (non più da Google Fonts), regole di sicurezza della pagina, l'app non si apre dentro altri siti; «Contatti» aggiunge alla mail gli ultimi errori dell'app.
+- **Correzioni:** dopo l'uscita dall'account non compare più «Per entrare serve la connessione»; «Cosa c'è di nuovo» ricompare se la prima lettura non riesce.
+
 ## Versione 101 · 17/11/2026
 > **Trasloco corretto** Al vecchio indirizzo, nell'app installata, la pagina del trasloco ora si apre (prima restava una pagina vuota).
 - **Trasloco:** al vecchio indirizzo l'app non si fermava più su una pagina vuota prima di arrivare al trasloco; la pagina del trasloco ora è anche nella copia sul telefono, così si apre pure con l'app installata, e al nuovo indirizzo riceve i libri anche se lì l'app è già stata aperta.

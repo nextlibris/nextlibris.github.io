@@ -1,0 +1,9 @@
+/* Next Libris · modulo «Ricerche condivise»: guida per creare la chiave Google Libri. Componenti dell'app: qui solo la disposizione. */
+.kg .sheet-in{grid-template-columns:minmax(0,1fr)}
+.kg .msg{line-height:1.5}
+.kg .kg-free{display:grid;gap:4px;padding:12px 14px;border-radius:14px;background:var(--accent-soft);border:2px solid var(--accent);color:var(--ink);line-height:1.45}
+.kg .kg-free>b{font:700 22px/1.15 var(--font-display);color:var(--accent)}
+.kg .kg-steps{margin:2px 0;padding-left:22px;display:grid;gap:8px;line-height:1.5;font-size:15px}
+.kg .kg-steps a{color:var(--accent);font-weight:700}
+.kg .row-btns a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.kg #kgPaste{justify-self:center}

@@ -30,12 +30,10 @@
 .fri .fr-conf{background:var(--surface2);border-radius:10px;padding:10px;border-bottom:0}
 .fri .fr-conf .fr-who{font-weight:400}
 .fri .fr-inv{border:2px solid var(--accent);border-radius:14px;padding:8px 12px;display:grid;gap:2px}
-/* icona in alto, accanto all'ingranaggio */
+/* icona in alto, accanto all'ingranaggio (il numero delle novità è sulla campanella, notifiche.css) */
 html.has-fri .top{padding-right:96px}
 .fri-top{position:absolute;top:0;right:38px;color:var(--muted)}
 .fri-top svg{width:24px;height:24px}
-.fri-badge{position:absolute;top:3px;right:3px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#C2372B;color:#fff;font:700 11.5px/18px var(--font-body);text-align:center;border:2px solid var(--bg,#fff)}
-.fri-badge[hidden]{display:none}
 /* avviso in cima */
 .fri-note{display:flex;align-items:center;gap:4px;margin:4px 0 12px;padding:4px 4px 4px 6px;border-radius:14px;background:var(--accent);color:var(--accent-ink,#fff)}
 .fri-note[hidden]{display:none}
@@ -86,22 +84,26 @@ body.selecting .fri-note,body.scanning .fri-note{display:none}
 .fri .fr-more{list-style:none;padding-top:8px}
 .fri .fr-more .btn{width:100%}
 /* ---------- libreria di un amico nella schermata principale (html.guest, app.js guestEnter): sola lettura ---------- */
-.guest-bar{display:grid;gap:6px;margin:0 0 12px;padding:10px 12px;border:2px solid var(--accent);border-radius:14px;background:var(--surface)}
+.guest-bar{display:grid;gap:4px;margin:0 0 12px;padding:0 2px 12px;border-bottom:1px solid var(--line);grid-template-columns:minmax(0,1fr)}   /* striscia sobria (Piero, 16/11/2026: il riquadro verde era troppo in evidenza) */
 .guest-bar[hidden]{display:none}
 .guest-bar p{margin:0;line-height:1.4}
-.guest-bar .gb-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.guest-bar .gb-back{font-weight:700}
-.guest-bar .gb-num{font-weight:600}
+.guest-bar .gb-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.guest-bar .gb-top .link{font-size:15px}
+.guest-bar .gb-back{font-weight:600}
+.guest-bar .gb-more{font-weight:400}
+.guest-bar .gb-num{font-size:14px;color:var(--muted)}
 .guest-bar .gb-line{font-size:14px;overflow-wrap:anywhere}
 .guest-bar .gb-line small{color:var(--muted)}
-.guest-bar .gb-chips{margin:2px 0 0}
+.guest-bar .gb-chips{margin:6px 0 0;gap:6px}
+.guest-bar .gb-chips .chip{min-height:36px;padding:5px 12px;font-size:13.5px;font-weight:500;border-color:var(--line);background:var(--surface);color:var(--ink)}
+.guest-bar .gb-chips .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 html.guest #notice,html.guest #nxBox,html.guest #wrapAsk,html.guest #donAsk,html.guest #instCard,html.guest #donRow,html.guest .lay-note,html.guest #layMore,
 html.guest #fltLoan,html.guest #btnCheck,html.guest #btnExport,html.guest #tipTxt,html.guest #layNav [data-l="add"],html.guest .dock,
-html.guest #btnFri,html.guest .notice-tri,html.guest #btnShareWish,html.guest #btnTodo,html.guest #fltGuess,html.guest .ret-btn{display:none!important}
+html.guest .notice-tri,html.guest #btnShareWish,html.guest #btnTodo,html.guest #fltGuess,html.guest .ret-btn{display:none!important}
 /* scheda: si guarda, non si cambia (restano copertina, autore, etichette-filtro, descrizione, cerca sul web, chiudi) */
 html.guest #list .row :is(button,input,select,textarea,label,[data-act]){pointer-events:none}
-html.guest #list .row :is([data-act="zoom"],[data-act="auinfo"],[data-act="facet"],[data-act="serall"],.cv-dmore,[data-act="descmore"],[data-act="websearch"],[data-act="toggle"],.chev-btn,.sum,.cv-guest,.cv-guest *){pointer-events:auto}
-html.guest #list .row.open :is(.acts-main,.cv-editb,[data-act="del"],[data-act="loan"],[data-act="share"],[data-act="addcopy"],.quotes,.cv-note,.f-n,.f-sh,.f-c,.cv-ph small){display:none!important}
+html.guest #list .row :is([data-act="zoom"],[data-act="auinfo"],[data-act="facet"],[data-act="serall"],.g-wish,.g-wish *,.cv-dmore,[data-act="descmore"],[data-act="websearch"],[data-act="toggle"],.chev-btn,.sum,.cv-guest,.cv-guest *){pointer-events:auto}
+html.guest #list .row.open .acts-main > :not(.g-wish),html.guest #list .row.open :is(.cv-editb,[data-act="del"],[data-act="loan"],[data-act="share"],[data-act="addcopy"],.quotes,.cv-note,.f-n,.f-sh,.f-c,.cv-ph small){display:none!important}
 .cv-guest{display:grid;gap:8px;margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:var(--surface2);grid-template-columns:minmax(0,1fr)}
 .cv-guest .cvg-h{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:none}
 .cv-guest .cvg-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -134,7 +136,27 @@ html.guest #list .row.g-noread :is(.cv-strip,.read){display:none}
 .share-ext.only>summary{display:none}
 .share-ext[open]{display:grid}
 .share-close[hidden]{display:none}
-.fri .fr-optlink{justify-self:start;text-align:left;font-size:14px}
 .opt-fri{display:grid;gap:6px;margin:6px 0}
 .opt-fri .hint{margin:0}
 #loanFri .fr-pick-list{max-height:176px}   /* in «Presta, vendi o regala» l'elenco non spinge troppo in basso «Dal giorno» e i pulsanti */
+/* righe dentro un riquadro (amici, impostazioni): il testo non tocca il bordo (16/11/2026) */
+.fri .fr-box{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.fri .fr-pick-list .fr-go,.fri .fr-box .fr-go{padding:0 10px 0 14px;border-bottom:1px solid var(--line)}
+.fri .fr-pick-list .fr-go:last-child,.fri .fr-box .fr-go:last-child{border-bottom:0}
+.fri .fr-box .fr-open small{font-weight:400;font-size:13px;color:var(--muted)}
+/* finestra «Presta chiave API e worker» */
+#keySheet .sheet-in{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+#keySheet h2,#keySheet p{margin:0}
+#keySheet .check input:disabled+span{opacity:.6}
+#keySheet .row-btns .btn{flex:1 1 0;min-width:0}
+
+/* finestra «Chiave Google e worker» (da Condivisione) sopra le Opzioni; «Presta a …» e la guida sopra di lei (16/11/2026) */
+#kwSheet{z-index:37}
+#keySheet,#kgSheet{z-index:38}
+#kwBody{display:grid;gap:10px}
+
+/* striscia dell'amico: «N amici in comune» si tocca e apre gli amici dell'amico (17/11/2026) */
+.gb-num .gb-ff{font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;padding:0;min-height:0}
+
+/* «Aggiungi ai miei desideri» in alto nella scheda di un libro dell'amico (17/11/2026) */
+.g-wish.on svg path:first-child{fill:currentColor;fill-opacity:.25}

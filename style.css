@@ -1,4 +1,14 @@
 /* Schede di catalogo su una scrivania verde-grigia; barra fissa con i tasti di scatto all'altezza del pollice. */
+/* caratteri dei titoli e del testo: nell'app (vendor/fonts), non più da Google Fonts (17/11/2026: funzionano offline e non passano l'indirizzo IP a Google).
+   Bricolage Grotesque: variabile, grandezza ottica 12-96 e peso 600-700; IBM Plex Sans 400, 500, 600. Licenza OFL. */
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-display:swap;font-weight:600 700;src:url(vendor/fonts/bricolage-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Bricolage Grotesque";font-style:normal;font-display:swap;font-weight:600 700;src:url(vendor/fonts/bricolage-latin-ext.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:400;src:url(vendor/fonts/plex-latin-400.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:400;src:url(vendor/fonts/plex-latin-ext-400.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:500;src:url(vendor/fonts/plex-latin-500.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:500;src:url(vendor/fonts/plex-latin-ext-500.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:600;src:url(vendor/fonts/plex-latin-600.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"IBM Plex Sans";font-style:normal;font-display:swap;font-weight:600;src:url(vendor/fonts/plex-latin-ext-600.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 :root{
   --bg:#EDF1EE; --surface:#FFFFFF; --surface2:#F3F6F3; --ink:#16262A; --muted:#55656A; --line:#D3DBD6;
   --accent:#1B6A4F; --accent-ink:#FFFFFF; --accent-soft:#DCEEE6;
@@ -623,7 +633,7 @@ html[data-look="nuovo"][data-theme="dark"]{
 
 /* caratteri: Literata (nata per leggere libri) per l'intestazione e i titoli; Plex per il resto */
 html[data-look="nuovo"] body{-webkit-font-smoothing:antialiased}
-html[data-look="nuovo"] h1{font:600 clamp(31px,7.6vw,42px)/1.04 var(--font-display);letter-spacing:-.012em}
+html[data-look="nuovo"] h1{font:600 clamp(24px,6.8vw,38px)/1.04 var(--font-display);letter-spacing:-.012em}
 html[data-look="nuovo"] h2{font-weight:600;letter-spacing:-.005em}
 html[data-look="nuovo"] .sum-t{font:600 17px/1.28 var(--font-display);letter-spacing:-.003em}
 html[data-look="nuovo"] .f-t textarea{font:600 19px/1.25 var(--font-display)}
@@ -748,7 +758,7 @@ html[data-look="nuovo"][data-fb="lora"]{--font-body:"Lora",Georgia,serif}
 .fs.fb-lora{font-family:"Lora",Georgia,serif;font-size:16px}
 html[data-look="nuovo"] .sum-t{font-size:calc(17px * var(--ft-k,1))}
 html[data-look="nuovo"] .f-t textarea{font-size:calc(19px * var(--ft-k,1))}
-html[data-look="nuovo"] h1{font-size:calc(clamp(31px,7.6vw,42px) * var(--ft-k,1))}
+html[data-look="nuovo"] h1{font-size:calc(clamp(24px,6.8vw,38px) * var(--ft-k,1))}
 html[data-look="nuovo"][data-ft="montserrat"] h1,html[data-look="nuovo"][data-ft="roboto"] h1{letter-spacing:-.025em}
 
 /* ---- palette: Bordeaux (rosso vino) e Bosco (verde bottiglia), come le tele delle rilegature ---- */
@@ -1037,7 +1047,23 @@ body.welcome-on .tip{display:none}
 html[data-theme="dark"] .ico.act.fav.on svg{color:#F4C430}
 
 
-.owner{margin:4px 0 0;font-size:16px;color:var(--ink)}
+.owner{color:var(--ink)}
+/* testata su due righe (Piero, 17/11/2026): «Next Libris [PROVA]» con le icone centrate sulla stessa linea, sotto una riga grigia con nome e numeri */
+.top-meta{margin:6px 0 0;font-size:15px;line-height:1.35;color:var(--muted)}
+.top-meta .summary{margin:0;display:inline}
+.top-meta .owner:not(:empty)::after{content:" · ";color:var(--muted);font-weight:400}
+html[data-look="nuovo"] .top{--h1-fs:calc(clamp(24px,6.8vw,38px) * var(--ft-k,1))}
+html[data-look="nuovo"] .top h1{font-size:var(--h1-fs)}
+.top .gear,.top .fri-top,.top .nt-top,.top .beer-top{top:calc(var(--h1-fs,31px) * .52 - 22px)}   /* centrate sulla riga del titolo */
+.top h1{white-space:nowrap}
+.top h1 .prova-tag{margin-left:6px;padding:2px 7px;font-size:11px}
+@media (max-width:380px){                 /* telefoni stretti con tre icone: titolo e PROVA non toccano la campanella */
+  html.has-bell .top{padding-right:120px;--h1-fs:calc(23px * var(--ft-k,1))}
+  html.has-bell .top .fri-top{right:32px}
+  html.has-bell .top .nt-top{right:68px}
+  html.has-bell body header.top{padding-right:150px;--h1-fs:calc(21px * var(--ft-k,1))}
+  html.has-bell body header.top .beer-top{right:104px}
+}
 .owner b{font-weight:600}
 .owner .link{padding:2px 0;font-size:15px}
 
@@ -1498,7 +1524,6 @@ body.selecting .don-row,body.selecting .don-ask,body.scanning .don-row{display:n
 .btn.don-opt .don-cup{flex:0 0 36px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--accent)}
 /* copia di prova: etichetta accanto al titolo */
 .prova-tag{display:inline-block;vertical-align:middle;margin-left:8px;padding:3px 9px;border-radius:999px;background:#B4472A;color:#fff;font:700 12px/1.2 var(--font-body);letter-spacing:.06em}
-.copia-social .prova-tag{background:#2E5E8C}   /* copia social: etichetta blu, la prova resta rossa */
 /* Suggerimenti */
 .sg-tabs{margin:4px 0 10px}
 .sg-tabs button[aria-pressed="true"]{background:var(--accent);color:#fff}
@@ -1560,7 +1585,11 @@ body.selecting .nx-box,body.scanning .nx-box{display:none}
 .dmenu .dset-t[aria-expanded="true"] b{color:var(--accent)}
 .dsub{margin:2px 0 6px 18px;padding-left:12px;border-left:2px solid var(--accent-soft)}
 .dsub[hidden]{display:none}
-.dmenu .dopt small.dbk{margin-top:3px;color:var(--ink);opacity:.7}
+.dmenu .dopt small.dbk.dbk-no{color:var(--warn)}
+/* Menu: sottotitoli su una riga, mai a capo (Piero, 17/11/2026) */
+#drawerOpts .dmenu .dopt small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drawerOpts .dlist,#drawerOpts .dsub,#drawerOpts .dopt{min-width:0;max-width:100%}
+#drawerOpts .dmenu .dopt > span:not(.n):not(.dset-i):not(.don-cup):not(.dbadge){flex:1 1 auto;min-width:0}
 @media (prefers-reduced-motion:reduce){.dmenu .dset-c{transition:none}}
 /* scheda dell'autore: foto da Wikipedia accanto al nome (16/11/2026) */
 .au-head{display:flex;gap:14px;align-items:center}
@@ -1619,3 +1648,39 @@ body.selecting .nx-box,body.scanning .nx-box{display:none}
 @media (prefers-reduced-motion:reduce){.shelf-h .sh-c{transition:none}}
 /* restituzione: un pulsante chiaro nella scheda aperta di un libro prestato o ricevuto in prestito (16/11/2026) */
 .ret-btn{margin:2px 0 2px 6px;min-height:34px;padding:4px 12px;border-color:var(--info-line,#8DB1D6);color:var(--info,#24527D);background:var(--info-bg,#E2EDF8);font-weight:700}
+/* menu: «Info e condivisione» sotto «Impostazioni» (16/11/2026) */
+.dmenu.dset.dinfo{margin-top:4px}
+a.dopt{color:inherit;text-decoration:none}
+.opt-sec .ct-mail{margin:4px 0 12px;font-size:17px;font-weight:600;overflow-wrap:anywhere;user-select:all;-webkit-user-select:all}
+
+/* Condivisione › Chiave Google e worker: righe come quelle del Menu, con il bordo (16/11/2026) */
+.svc-box{display:grid;gap:8px;margin-top:0}
+.svc-box .svc-go{border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;color:var(--ink)}
+.svc-box .svc-go > span:first-child{flex:1 1 auto;min-width:0}
+.svc-box .hint{margin:0}
+.svc-lent .svc-own{display:block;margin-top:6px;padding:4px 0;text-align:left}   /* «Usa la tua» su una riga sua (17/11/2026) */
+.keysteps .sbn-copy{display:flex;margin:8px 0 2px;min-height:40px;font-size:14px}   /* guida del worker (17/11/2026) */
+/* Privacy dentro l'app (17/11/2026): il testo di privacy.html con i componenti dell'app */
+.pv-body{font-size:15px;line-height:1.55;overflow-wrap:anywhere}
+.pv-body h2{font-size:16px;margin:20px 0 6px;color:var(--accent)}
+.pv-body p,.pv-body li{margin:0 0 9px}
+.pv-body ul{padding-left:20px;margin:0 0 9px}
+.pv-body .sub{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+.pv-body .box{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px}
+.pv-body a{color:var(--accent)}
+/* boccale di birra nella testata (Piero, 17/11/2026): apre Sostieni; a sinistra delle altre icone, colore dell'app */
+.beer-top{position:absolute;top:0;right:38px;color:var(--accent)}
+.beer-top svg{width:24px;height:24px}
+header.top{padding-right:90px}
+html.has-fri header.top{padding-right:134px}
+html.has-fri header.top .beer-top{right:76px}
+html.has-bell header.top{padding-right:172px}
+html.has-bell header.top .beer-top{right:114px}
+/* «Raggruppa per» (17/11/2026): gruppi come «In lettura», i sottogruppi (genere › autore) più piccoli e rientrati */
+.shelf.grp{margin:0 0 4px}
+.shelf.grp>.shelf-b{padding-top:8px}
+.shelf.grp .sh-t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shelf.grp .shelf-h{margin-bottom:0}
+.shelf.grp-sub{margin:0 0 2px 12px}
+.shelf.grp-sub>.shelf-h{min-height:40px;font-size:15px;font-weight:500;border-bottom-style:dashed}
+.shelf.grp-sub>.shelf-h .sh-n{background:none;color:var(--muted);padding:0;min-width:0}

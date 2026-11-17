@@ -11,7 +11,7 @@ var LS = 'catalogo-libri-wrap', DAY = 864e5, ASK_DAYS = 30;
 var MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 var TITOLO = ['Il tuo inverno in libri', 'La tua primavera in libri', 'La tua estate in libri', 'Il tuo autunno in libri'];
 var cfg = { on: true, seen: '' };
-try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); cfg.on = c0.on !== false; cfg.seen = L.str(c0.seen).slice(0, 10); } catch (e) {}
+try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); cfg.on = c0.on !== false; cfg.seen = L.str(c0.seen).slice(0, 10); } catch (e) { if (window.nlErr) nlErr(e); }
 function save() { NL.ls.set(LS, JSON.stringify(cfg)); }
 
 /* ---------- stagioni ---------- */
@@ -172,14 +172,14 @@ function open(key) {
   pickQ(i);
   W.el.hidden = false; document.body.classList.add('wrap-open');
   if (W.data.Q.key === last && cfg.seen !== last) { cfg.seen = last; save(); paintAsk(); }
-  if (!W.pushed) { try { history.pushState({ wrap: 1 }, ''); W.pushed = true; } catch (e) {} }
-  setTimeout(function () { try { W.el.querySelector('.w-x').focus({ preventScroll: true }); } catch (e) {} }, 30);
+  if (!W.pushed) { try { history.pushState({ wrap: 1 }, ''); W.pushed = true; } catch (e) { if (window.nlErr) nlErr(e); } }
+  setTimeout(function () { try { W.el.querySelector('.w-x').focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); } }, 30);
 }
 function close(fromPop) {
   if (!W.el || W.el.hidden) return;
   W.el.hidden = true; document.body.classList.remove('wrap-open');
-  if (W.pushed) { W.pushed = false; if (!fromPop) { try { history.back(); } catch (e) {} } }
-  try { if (W.back) W.back.focus({ preventScroll: true }); } catch (e) {}
+  if (W.pushed) { W.pushed = false; if (!fromPop) { try { history.back(); } catch (e) { if (window.nlErr) nlErr(e); } } }
+  try { if (W.back) W.back.focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); }
 }
 window.addEventListener('popstate', function () { if (W.el && !W.el.hidden) { W.pushed = false; close(true); } });
 window.addEventListener('keydown', function (e) {
@@ -225,7 +225,7 @@ function share() {
   var d = W.data, c = image(d), name = 'Next Libris - ' + d.Q.label.replace(/\s+–\s+/, '-') + '.png';
   c.toBlob(function (blob) {
     if (!blob) { NL.toast('Non riesco a preparare l\'immagine.'); return; }
-    var f = null; try { f = new File([blob], name, { type: 'image/png' }); } catch (e) {}
+    var f = null; try { f = new File([blob], name, { type: 'image/png' }); } catch (e) { if (window.nlErr) nlErr(e); }
     if (f && navigator.canShare && navigator.canShare({ files: [f] })) {
       navigator.share({ files: [f], title: d.Q.title }).catch(function () {});
     } else {
@@ -269,13 +269,13 @@ function paintMenu() {
     b = document.createElement('button'); b.type = 'button'; b.id = 'goWrap'; b.className = 'dopt dgo';
     b.innerHTML = '<span><b>La tua stagione in libri</b><small id="goWrapTxt"></small></span><span class="n" aria-hidden="true">›</span>';
     st.parentNode.insertBefore(b, st.nextSibling);
-    b.addEventListener('click', function () { NL.closeDrawer(); setTimeout(function () { open(); }, 60); });
+    b.addEventListener('click', function () { NL.fromMenu ? NL.fromMenu(function () { open(); }) : (NL.closeDrawer(), setTimeout(function () { open(); }, 60)); });
   }
   var list = cfg.on ? quarters() : [];
   b.hidden = !list.length;
   if (list.length) {
     var last = prevQ(quarterOf(Date.now())).key, d = list.filter(function (x) { return x.Q.key === last; })[0] || list[0];
-    $('#goWrapTxt').textContent = 'Riepilogo di ogni stagione · ' + d.Q.label + (d.ongoing ? ' (finora)' : '');
+    $('#goWrapTxt').textContent = 'Riepilogo · ' + d.Q.label + (d.ongoing ? ' (finora)' : '');
   }
 }
 function paintOption(sec) {

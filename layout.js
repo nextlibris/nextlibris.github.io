@@ -14,7 +14,7 @@ var LAYOUTS = [
   { k: 'a', t: 'A · Barra in basso', d: 'Libreria, Desideri, + per aggiungere, Per te e Menu sempre sotto il pollice.' }
 ];
 var cur = DEF, one = true;   // avvisi in cima sempre uno alla volta (l'opzione e' stata tolta il 16/11/2026)
-try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); if (DEF === 'classico' && LAYOUTS.some(function (x) { return x.k === c0.v; })) cur = c0.v; } catch (e) {}   // fuori dalle prove: sempre la A
+try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); if (DEF === 'classico' && LAYOUTS.some(function (x) { return x.k === c0.v; })) cur = c0.v; } catch (e) { if (window.nlErr) nlErr(e); }   // fuori dalle prove: sempre la A
 var root = document.documentElement;
 function svg(p, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 22) + '" height="' + (w || 22) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
 var I = {
@@ -43,7 +43,9 @@ function build() {
     '<button type="button" data-l="you">' + svg(I.spark) + '<span>Per te</span></button>' +
     '<button type="button" data-l="menu">' + svg(I.menu) + '<span>Menu</span></button></nav>'));
   document.body.appendChild(el('<div class="sheet" id="layAdd" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layAddH">' +
-    '<h2 id="layAddH">Aggiungi un libro</h2><div class="lay-grid">' +
+    '<h2 id="layAddH">Aggiungi un libro</h2>' +
+    '<div class="tabs lay-dest" role="tablist" aria-label="Dove aggiungerlo"><button type="button" role="tab" data-dest="lib">In Libreria</button><button type="button" role="tab" data-dest="wish">Nei Desideri</button></div>' +
+    '<div class="lay-grid">' +
     '<button type="button" class="lay-big pri" data-l="scan">' + NL.icon('scan') + '<b>Scansiona</b><small>il codice a barre: il modo più preciso</small></button>' +
     '<button type="button" class="lay-big" data-l="photo">' + NL.icon('cam') + '<b>Foto</b><small>della copertina</small></button>' +
     '<button type="button" class="lay-big" data-l="type">' + NL.icon('key') + '<b>Digita</b><small>titolo o ISBN</small></button>' +
@@ -68,7 +70,14 @@ function paintYou() {
     return '<button type="button" class="dopt dgo lay-you" data-l="' + x.l + '"><span class="lay-yi">' + svg(x.i) + '</span><span><b>' + esc(x.t) + '</b><small>' + esc(x.s) + '</small></span><span class="n" aria-hidden="true">›</span></button>';
   }).join('');
 }
-function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') paintYou(); setTimeout(function () { try { s.querySelector('button').focus({ preventScroll: true }); } catch (e) {} }, 30); }
+/* dove va il libro: parte dalla scheda in cui sei e si cambia con un tocco (Piero, 16/11/2026) */
+function paintDest() { var t = NL.tab ? NL.tab() : 'lib'; Array.prototype.forEach.call(document.querySelectorAll('#layAdd [data-dest]'), function (b) { b.setAttribute('aria-selected', b.dataset.dest === t ? 'true' : 'false'); }); }
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('#layAdd [data-dest]'); if (!b) return;
+  if (NL.tab && NL.tab() !== b.dataset.dest) { NL.setTab(b.dataset.dest); window.scrollTo({ top: 0 }); paintNav(); }
+  paintDest();
+});
+function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') paintYou(); if (id === '#layAdd') paintDest(); setTimeout(function () { try { (s.querySelector('.lay-big') || s.querySelector('button')).focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); } }, 30); }
 function sheetsClose() { ['#layAdd', '#layYou'].forEach(function (k) { var s = $(k); if (s) s.hidden = true; }); }
 function act(l) {
   sheetsClose();
@@ -186,7 +195,7 @@ function apply() {
   if (cur !== 'classico') build();
   place(); loans0();
   paintNav(); notes(); sheetsClose();
-  setTimeout(function () { try { NL.updateStick(); } catch (e) {} }, 0);
+  setTimeout(function () { try { NL.updateStick(); } catch (e) { if (window.nlErr) nlErr(e); } }, 0);
 }
 function loans0() {                        // nella A la riga «Prestati» serve solo se il riepilogo non li mostra gia' (toccandoli)
   var c = document.getElementById('cntLoan');

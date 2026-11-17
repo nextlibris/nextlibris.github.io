@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<!-- Content-Security-Policy (17/11/2026): script solo dai file dell'app e dall'accesso con Google, niente script scritti nella pagina.
+     connect-src e img-src ammettono https: perché il worker SBN e le copertine possono stare su indirizzi scelti dall'utente. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-src https://accounts.google.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Next Libris</title>
 <meta name="application-name" content="Next Libris">
 <meta name="apple-mobile-web-app-title" content="Next Libris">
@@ -20,12 +23,8 @@
 <link rel="manifest" href="manifest.json?v=36" crossorigin="use-credentials">
 <link rel="icon" type="image/png" href="icons/next-libris-192.png">
 <link rel="apple-touch-icon" href="icons/next-libris-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <script src="indirizzo.js"></script><!-- vecchio indirizzo: solo la pagina del trasloco -->
-<script>/* aspetto e tema prima di disegnare la pagina, senza lampi; app aperta dall'icona: schermata d'apertura con il nome */try{if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true){document.documentElement.setAttribute('data-splash','');var tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute('content','#24563F');}}catch(e){}try{var c0=(location.pathname.match(/\/next-libris-([a-z]+)(\/|$)/)||[])[1];var s0=JSON.parse(localStorage.getItem((c0?c0+':':'')+'catalogo-libri-set')||'{}');document.documentElement.setAttribute('data-look','nuovo');var th0=s0.themeV2?s0.theme:(s0.theme==='dark'?'dark':'light');if(th0==='light'||th0==='dark')document.documentElement.setAttribute('data-theme',th0);document.documentElement.setAttribute('data-pal',s0.palV2&&s0.pal?s0.pal:'bosco');if(s0.ft)document.documentElement.setAttribute('data-ft',s0.ft);if(s0.fb)document.documentElement.setAttribute('data-fb',s0.fb);}catch(e){document.documentElement.setAttribute('data-look','nuovo');document.documentElement.setAttribute('data-theme','light');}</script>
+<script src="avvio.js"></script><!-- aspetto e tema prima di disegnare; mai dentro la cornice di un altro sito -->
 <link rel="preload" href="vendor/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>/* schermata d'apertura: qui e non nel CSS, cosi' e' la primissima cosa disegnata */
 #splash{display:none}
@@ -45,6 +44,9 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <link rel="stylesheet" href="schede.css"><!-- modulo: aspetto della scheda aperta -->
 <link rel="stylesheet" href="social.css"><!-- modulo: account e sincronizzazione -->
 <link rel="stylesheet" href="amici.css"><!-- modulo: amici -->
+<link rel="stylesheet" href="notifiche.css"><!-- modulo: notifiche (campanella) -->
+<link rel="stylesheet" href="ricerche.css"><!-- modulo: ricerche condivise e archivio comune -->
+<link rel="stylesheet" href="push.css"><!-- modulo: notifiche push -->
 </head>
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/next-libris-192.png" alt="" width="168" height="168"><b>Next Libris</b><span id="splashWho"></span></div>
@@ -52,10 +54,10 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   <header class="top">
     <div>
       <h1>Next Libris</h1>
-      <p class="owner" id="owner"></p>
-      <p class="summary" id="summary" aria-live="polite"></p>
+      <p class="top-meta"><span class="owner" id="owner"></span><span class="summary" id="summary" aria-live="polite"></span></p>
     </div>
     <div class="sync" id="sync" role="status"><span class="dot"></span><span id="syncTxt">Salvato su questo telefono</span></div>
+    <button class="ico beer-top" id="btnBeer" type="button" aria-label="Sostieni Next Libris: offrimi una birra" title="Offrimi una birra"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></button>
     <button class="ico gear" id="btnOpts" aria-label="Opzioni" title="Opzioni"></button>
   </header>
 
@@ -610,7 +612,18 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
           <button class="btn svc-clear" id="sbnClear" type="button" hidden>Cancella</button>
           <div class="svc-saved" id="sbnSaved" hidden></div>
         </div>
-        <p class="hint">Il catalogo delle biblioteche italiane ha i dati più precisi su editore, anno e pagine. Il worker è un piccolo intermediario gratuito su Cloudflare: le istruzioni sono nel LEGGIMI, sezione «Catalogo SBN».</p>
+        <p class="hint">Il catalogo delle biblioteche italiane ha i dati più precisi su editore, anno e pagine. Il worker è un piccolo intermediario gratuito su Cloudflare (100.000 richieste al giorno).</p>
+        <details class="svc-how" id="sbnHow">
+          <summary>Come si crea il worker (gratis, una volta sola)</summary>
+          <ol class="hint keysteps">
+          <li>Meglio da computer o tablet: apri <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">dash.cloudflare.com</a> e crea un account gratuito.</li>
+          <li>A sinistra «Workers &amp; Pages» › «Create» › «Start with Hello World!». Come nome scrivi <b>sbn-libri</b> e premi «Deploy».</li>
+          <li>Premi «Edit code», cancella tutto il codice di esempio e incolla il codice del worker, poi premi «Deploy».
+            <button class="btn sbn-copy" id="sbnCopy" type="button">Copia il codice del worker</button></li>
+          <li>Copia l'indirizzo del worker (tipo <b>sbn-libri.tuonome.workers.dev</b>) e incollalo qui sopra.</li>
+          <li>Tocca «Prova la ricerca ISBN» qui sotto: deve comparire «✓ Catalogo SBN».</li>
+          </ol>
+        </details>
       </div>
 
       <div class="svc" id="svcKey">
@@ -637,6 +650,9 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         </ol>
         </details>
       </div>
+
+      <h3 class="opt-h3">Con gli amici</h3>
+      <div class="svc-box dmenu" id="svcBox"></div>
 
       <div class="opts-row"><button class="btn" id="btnDiag">Prova la ricerca ISBN</button></div>
       <div class="diag" id="diagOut" hidden aria-live="polite"></div>
@@ -673,7 +689,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         <button class="btn mitem" id="btnPubs"><b>Uniforma le case editrici</b><small>Stesso editore scritto in modi diversi: scegli il nome da usare.</small></button>
         <button class="btn mitem" id="btnGuessPub"><b>Deduci le case editrici mancanti</b><small>Dal codice dell'editore contenuto nell'ISBN.</small></button>
         <button class="btn mitem" id="btnFill"><b>Completa genere, pagine e copertine</b><small>Cerca di nuovo i dati che mancano.</small></button>
-        <button class="btn mitem" id="btnDescAll"><b>Scarica tutte le descrizioni</b><small>Le cerca per i libri che non l'hanno, così le leggi anche senza rete.</small></button>
         <button class="btn mitem" id="btnCovers"><b>Cerca copertine più grandi</b><small>Per vederle meglio quando le ingrandisci.</small></button>
         <button class="btn mitem" id="btnMergeDups"><b>Unisci i doppioni</b><small>Stesso libro inserito più volte; non tocca le copie segnate.</small></button>
         <button class="btn mitem" id="btnClearGuess"><b>Svuota le ipotesi</b><small>Cancella i dati segnati «Da verificare».</small></button>
@@ -683,15 +698,11 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <section class="opt-sec" data-sec="share" data-title="Condivisione">
       <label class="field"><span>Il tuo nome</span>
         <input type="text" id="optName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
-      <p class="hint">Compare quando condividi un libro o una lista: «I preferiti di Piero», «Piero ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l'elenco, oppure Esporta.</p>
-      <h3 class="opt-h3">Chiave Google e worker</h3>
-      <p class="hint">Puoi mandarli a un familiare o a un amico che usa Next Libris: la sua ricerca diventa completa come la tua.</p>
-      <button class="btn" id="svcShareBtn" type="button">Condividi chiave e worker</button>
-      <p class="hint" id="svcShareNone" hidden>Non ne hai ancora: si impostano in Menu › Impostazioni › Ricerca dei libri.</p>
+      <p class="hint" id="optNameHint">Compare quando condividi un libro o una lista: «I preferiti di Piero», «Piero ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l'elenco, oppure Esporta.</p>
       <h3 class="opt-h3">Fai conoscere l'app</h3>
       <p class="share-lead">Fai inquadrare il codice con la fotocamera del telefono, oppure manda il link.</p>
       <figure class="qr-box">
-        <svg class="qr" viewBox="0 0 45 45" shape-rendering="crispEdges" role="img" aria-label="QR code dell'indirizzo di Next Libris"><rect width="45" height="45" fill="#fff"/><path stroke="#172420" d="M4 4.5h7m1 0h3m2 0h4m1 0h2m2 0h2m2 0h2m2 0h7m-37 1h1m5 0h1m2 0h2m2 0h2m2 0h2m1 0h1m3 0h5m1 0h1m5 0h1m-37 1h1m1 0h3m1 0h1m3 0h2m1 0h3m3 0h1m1 0h2m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h3m4 0h1m1 0h2m2 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m2 0h2m2 0h1m1 0h3m1 0h2m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m3 0h1m1 0h3m2 0h1m1 0h1m3 0h1m2 0h3m1 0h1m5 0h1m-37 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-26 1h1m2 0h2m3 0h1m1 0h1m2 0h1m3 0h1m-27 1h1m1 0h3m1 0h2m1 0h1m4 0h1m2 0h1m1 0h2m1 0h1m2 0h3m3 0h1m2 0h1m-36 1h2m4 0h1m2 0h3m1 0h3m1 0h2m1 0h2m1 0h1m2 0h1m2 0h1m2 0h4m-37 1h2m1 0h1m1 0h2m4 0h3m1 0h1m5 0h1m2 0h2m2 0h1m1 0h7m-33 1h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h3m1 0h5m1 0h1m1 0h2m-33 1h1m1 0h2m1 0h5m2 0h1m5 0h1m1 0h3m2 0h1m2 0h3m4 0h2m-36 1h3m3 0h1m1 0h1m2 0h1m1 0h2m1 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h1m2 0h2m1 0h1m-37 1h2m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m3 0h1m5 0h1m1 0h1m1 0h3m1 0h3m-36 1h1m1 0h1m4 0h1m2 0h1m4 0h1m2 0h8m1 0h2m1 0h2m-33 1h2m1 0h1m1 0h2m3 0h1m1 0h1m2 0h1m2 0h4m1 0h3m1 0h2m1 0h2m1 0h1m1 0h2m-37 1h1m2 0h1m3 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h2m-36 1h1m1 0h1m2 0h2m1 0h1m2 0h1m1 0h2m1 0h1m2 0h1m2 0h1m2 0h1m1 0h2m1 0h2m2 0h2m-37 1h1m1 0h2m4 0h1m1 0h1m4 0h1m1 0h1m2 0h2m1 0h3m2 0h1m1 0h3m3 0h1m-36 1h1m4 0h1m2 0h4m1 0h1m4 0h1m3 0h3m1 0h2m1 0h2m3 0h2m-34 1h1m4 0h2m1 0h1m3 0h4m3 0h2m1 0h2m2 0h2m2 0h1m1 0h2m-37 1h3m1 0h1m1 0h1m2 0h1m5 0h2m1 0h4m1 0h2m1 0h1m1 0h1m1 0h1m1 0h1m2 0h2m-35 1h2m3 0h1m2 0h1m1 0h3m2 0h1m1 0h1m2 0h1m1 0h3m3 0h1m2 0h1m1 0h1m-36 1h2m3 0h2m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m2 0h1m3 0h3m1 0h1m4 0h1m-35 1h1m5 0h2m1 0h1m2 0h1m1 0h2m2 0h3m1 0h1m1 0h3m1 0h2m2 0h1m2 0h1m-37 1h1m3 0h5m2 0h4m1 0h3m1 0h1m5 0h1m3 0h1m4 0h2m-36 1h4m2 0h3m1 0h3m2 0h2m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m3 0h1m-36 1h1m1 0h1m1 0h1m1 0h1m1 0h1m3 0h2m5 0h1m1 0h1m2 0h2m1 0h7m-26 1h3m1 0h3m1 0h1m3 0h1m3 0h2m1 0h2m3 0h1m2 0h2m-37 1h7m8 0h6m6 0h2m1 0h1m1 0h1m1 0h3m-37 1h1m5 0h1m1 0h1m1 0h2m8 0h2m1 0h3m2 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m1 0h2m3 0h2m1 0h3m1 0h3m2 0h6m-34 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m3 0h7m2 0h2m1 0h2m1 0h3m-37 1h1m1 0h3m1 0h1m1 0h2m5 0h2m1 0h1m3 0h3m2 0h1m1 0h1m1 0h3m2 0h1m-37 1h1m5 0h1m2 0h1m1 0h3m6 0h1m1 0h1m1 0h2m1 0h2m2 0h3m1 0h1m-36 1h7m2 0h2m3 0h2m5 0h6m1 0h2m1 0h1m1 0h1m1 0h2"/><rect x="17.5" y="17.5" width="10" height="10" rx="1.6" fill="#fff"/><image href="icons/next-libris-192.png" x="18.1" y="18.1" width="8.8" height="8.8"/></svg>
+        <svg class="qr" viewBox="0 0 45 45" shape-rendering="crispEdges" role="img" aria-label="QR code dell'indirizzo di Next Libris"><rect width="45" height="45" fill="#fff"/><path stroke="#172420" d="M4 4.5h7M15 4.5h1M17 4.5h2M20 4.5h4M27 4.5h1M29 4.5h1M34 4.5h7M4 5.5h1M10 5.5h1M14 5.5h4M20 5.5h1M22 5.5h1M24 5.5h6M32 5.5h1M34 5.5h1M40 5.5h1M4 6.5h1M6 6.5h3M10 6.5h1M15 6.5h2M18 6.5h1M20 6.5h8M29 6.5h4M34 6.5h1M36 6.5h3M40 6.5h1M4 7.5h1M6 7.5h3M10 7.5h1M14 7.5h1M16 7.5h1M19 7.5h1M21 7.5h1M24 7.5h2M27 7.5h1M31 7.5h1M34 7.5h1M36 7.5h3M40 7.5h1M4 8.5h1M6 8.5h3M10 8.5h1M12 8.5h1M14 8.5h1M16 8.5h5M22 8.5h1M24 8.5h1M30 8.5h2M34 8.5h1M36 8.5h3M40 8.5h1M4 9.5h1M10 9.5h1M13 9.5h1M19 9.5h1M23 9.5h1M25 9.5h1M27 9.5h1M29 9.5h1M34 9.5h1M40 9.5h1M4 10.5h7M12 10.5h1M14 10.5h1M16 10.5h1M18 10.5h1M20 10.5h1M22 10.5h1M24 10.5h1M26 10.5h1M28 10.5h1M30 10.5h1M32 10.5h1M34 10.5h7M12 11.5h1M15 11.5h1M17 11.5h2M20 11.5h2M23 11.5h1M26 11.5h2M31 11.5h2M6 12.5h2M10 12.5h4M15 12.5h2M18 12.5h4M25 12.5h2M28 12.5h2M31 12.5h4M36 12.5h1M5 13.5h4M11 13.5h1M13 13.5h2M19 13.5h1M21 13.5h1M23 13.5h2M26 13.5h2M29 13.5h6M38 13.5h1M7 14.5h4M12 14.5h1M14 14.5h1M18 14.5h3M23 14.5h3M27 14.5h3M31 14.5h1M33 14.5h1M35 14.5h2M38 14.5h1M5 15.5h1M12 15.5h1M15 15.5h2M21 15.5h3M29 15.5h3M35 15.5h1M37 15.5h1M4 16.5h1M8 16.5h1M10 16.5h2M13 16.5h2M17 16.5h3M26 16.5h1M28 16.5h3M33 16.5h2M36 16.5h2M39 16.5h2M4 17.5h2M8 17.5h1M12 17.5h2M16 17.5h1M19 17.5h2M23 17.5h2M26 17.5h1M28 17.5h4M34 17.5h1M36 17.5h1M38 17.5h1M40 17.5h1M4 18.5h1M6 18.5h1M8 18.5h5M14 18.5h3M22 18.5h2M25 18.5h3M30 18.5h1M35 18.5h2M38 18.5h2M4 19.5h1M9 19.5h1M13 19.5h4M20 19.5h3M24 19.5h2M32 19.5h1M40 19.5h1M6 20.5h2M10 20.5h2M14 20.5h1M16 20.5h1M20 20.5h1M23 20.5h1M26 20.5h2M29 20.5h1M31 20.5h2M37 20.5h4M5 21.5h1M8 21.5h2M12 21.5h1M14 21.5h1M16 21.5h2M19 21.5h6M26 21.5h1M28 21.5h1M31 21.5h1M33 21.5h2M37 21.5h2M40 21.5h1M4 22.5h1M6 22.5h1M8 22.5h1M10 22.5h2M17 22.5h10M28 22.5h6M35 22.5h1M37 22.5h1M39 22.5h2M4 23.5h1M8 23.5h2M11 23.5h4M18 23.5h4M23 23.5h1M26 23.5h1M29 23.5h2M33 23.5h2M37 23.5h1M4 24.5h1M7 24.5h4M12 24.5h1M14 24.5h2M18 24.5h1M21 24.5h1M23 24.5h11M36 24.5h1M39 24.5h2M6 25.5h1M12 25.5h1M14 25.5h2M17 25.5h1M21 25.5h2M24 25.5h6M35 25.5h1M37 25.5h4M5 26.5h4M10 26.5h3M14 26.5h2M17 26.5h2M22 26.5h3M26 26.5h1M28 26.5h2M34 26.5h1M36 26.5h1M39 26.5h1M11 27.5h2M15 27.5h4M20 27.5h2M26 27.5h1M31 27.5h2M34 27.5h1M37 27.5h3M5 28.5h1M8 28.5h4M13 28.5h1M15 28.5h1M17 28.5h1M20 28.5h4M25 28.5h4M30 28.5h1M32 28.5h2M38 28.5h1M40 28.5h1M5 29.5h1M8 29.5h2M11 29.5h1M13 29.5h1M17 29.5h2M20 29.5h1M23 29.5h3M27 29.5h4M33 29.5h1M35 29.5h1M40 29.5h1M5 30.5h1M7 30.5h1M9 30.5h3M13 30.5h1M15 30.5h2M21 30.5h2M25 30.5h1M27 30.5h1M30 30.5h1M35 30.5h5M4 31.5h1M6 31.5h1M8 31.5h1M12 31.5h3M16 31.5h1M18 31.5h3M23 31.5h1M25 31.5h3M31 31.5h1M33 31.5h1M35 31.5h3M39 31.5h2M8 32.5h3M12 32.5h2M15 32.5h1M26 32.5h1M29 32.5h1M32 32.5h6M39 32.5h2M12 33.5h1M15 33.5h1M17 33.5h2M20 33.5h2M26 33.5h1M28 33.5h2M32 33.5h1M36 33.5h5M4 34.5h7M12 34.5h1M17 34.5h1M19 34.5h3M24 34.5h7M32 34.5h1M34 34.5h1M36 34.5h2M39 34.5h2M4 35.5h1M10 35.5h1M13 35.5h1M16 35.5h3M20 35.5h1M23 35.5h1M25 35.5h1M28 35.5h1M31 35.5h2M36 35.5h2M4 36.5h1M6 36.5h3M10 36.5h1M15 36.5h2M18 36.5h2M21 36.5h1M24 36.5h1M27 36.5h2M30 36.5h1M32 36.5h6M39 36.5h1M4 37.5h1M6 37.5h3M10 37.5h1M12 37.5h2M18 37.5h2M21 37.5h1M24 37.5h1M26 37.5h1M28 37.5h1M34 37.5h1M36 37.5h1M38 37.5h3M4 38.5h1M6 38.5h3M10 38.5h1M12 38.5h4M17 38.5h1M19 38.5h4M25 38.5h4M30 38.5h1M32 38.5h1M34 38.5h3M39 38.5h1M4 39.5h1M10 39.5h1M13 39.5h1M15 39.5h2M19 39.5h1M21 39.5h1M24 39.5h3M29 39.5h2M37 39.5h2M4 40.5h7M13 40.5h4M19 40.5h2M22 40.5h2M25 40.5h1M35 40.5h1M37 40.5h4"/><rect x="17.5" y="17.5" width="10" height="10" rx="1.6" fill="#fff"/><image href="icons/next-libris-192.png" x="18.1" y="18.1" width="8.8" height="8.8"/></svg>
         <figcaption id="shareUrl">nextlibris.github.io</figcaption>
       </figure>
       <div class="share-btns">
@@ -699,6 +710,15 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         <button class="btn" id="copyApp" type="button">Copia il link</button>
       </div>
       <p class="hint">Chi apre il link in Chrome trova in alto il pulsante «Installa». Ognuno ha il proprio catalogo: i tuoi libri restano sul tuo telefono.</p>
+    </section>
+    <section class="opt-sec" data-sec="privacy" data-title="Privacy">
+      <div class="pv-body" id="pvBody"></div>
+    </section>
+    <section class="opt-sec" data-sec="contact" data-title="Contatti">
+      <p class="hint">Domande, problemi o idee per Next Libris? Scrivici: leggiamo tutto.</p>
+      <p class="ct-mail" id="ctMail">nextlibris.app@gmail.com</p>
+      <div class="row-btns"><button class="btn" type="button" id="ctCopy">Copia</button><button class="btn primary" type="button" id="ctWrite">Scrivici</button></div>
+      <p class="hint">«Scrivici» apre la tua email con l'oggetto già scritto e, in fondo, la versione dell'app, il tipo di telefono e gli ultimi errori dell'app (se ce ne sono stati): aiutano a capire un problema. Non parte niente da solo, e puoi cancellarli.</p>
     </section>
     <section class="opt-sec" data-sec="app" data-title="Installazione sul telefono">
       <p class="hint">Installata, Next Libris ha la sua icona tra le app del telefono, si apre a schermo intero e funziona anche senza rete. I libri restano gli stessi.</p>
@@ -759,27 +779,34 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <div id="drawerOpts" hidden>
       <div class="dlist dmenu dmain">
         <button type="button" class="dopt dgo" id="goFilters"><span><b>Filtri e ordine</b><small id="goFltTxt">Tutti i libri, dai più recenti</small></span><span class="dbadge" id="goFltN" hidden></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt dgo" id="goSugg"><span><b>Suggerimenti</b><small>Cosa leggere dopo e libri da scoprire</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo" id="goSugg"><span><b>Suggerimenti</b><small>Cosa leggere dopo, da scoprire</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt dgo dq-all" id="goQuotes" hidden><span><b>Tutte le citazioni</b><small id="goQTxt"></small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt dgo" id="goStats"><span><b>Statistiche</b><small>Libri, valore, pagine e letture</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo" id="goStats"><span><b>Statistiche</b><small>Libri, valore, pagine, letture</small></span><span class="n" aria-hidden="true">›</span></button>
+      </div>
+      <div class="dlist dmenu ddon">
+        <button type="button" class="dopt don-menu" id="donMenu"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span><b>Sostieni Next Libris</b><small>Se ti piace, offrimi una birra!</small></span><span class="n" aria-hidden="true">♥</span></button>
       </div>
       <h3>La tua libreria</h3>
       <div class="dlist dmenu">
-      <button type="button" class="dopt" data-sec="fix"><span><b>Sistema l'elenco</b><small>Doppioni, case editrici, copertine</small></span><span class="n" aria-hidden="true">›</span></button>
-      <button type="button" class="dopt" data-sec="export"><span><b>Backup ed esportazione</b><small>Backup, Excel, PDF</small><small class="dbk" id="optBackupHint"></small></span><span class="n" aria-hidden="true">›</span></button>
+      <button type="button" class="dopt" data-sec="fix"><span><b>Sistema l'elenco</b><small>Doppioni, editori, copertine</small></span><span class="n" aria-hidden="true">›</span></button>
+      <button type="button" class="dopt" data-sec="export"><span><b>Backup ed esportazione</b><small class="dbk" id="optBackupHint"></small></span><span class="n" aria-hidden="true">›</span></button>
       </div>
       <div class="dlist dmenu dset">
-        <button type="button" class="dopt dset-t" id="goSettings" aria-expanded="false" aria-controls="setList"><span class="dset-i" aria-hidden="true"></span><span><b>Impostazioni</b><small>Aspetto, ricerca e aggiunta dei libri, condivisione, installazione</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dset-t" id="goSettings" aria-expanded="false" aria-controls="setList"><span class="dset-i" aria-hidden="true"></span><span><b>Impostazioni</b><small>Account, amici, ricerca, aspetto</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
         <div class="dsub" id="setList" hidden>
-        <button type="button" class="dopt" data-sec="look"><span><b>Aspetto</b><small>Tema, colori e caratteri; riepilogo in alto</small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>Chiave Google, catalogo SBN, richieste di oggi</small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt" data-sec="cards"><span><b>Aggiunta dei libri</b><small>Prezzo, suoni, fotocamera e luce</small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt" data-sec="share"><span><b>Condivisione</b><small>Il tuo nome; link e QR code dell'app</small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt" data-sec="app"><span><b>Installazione sul telefono</b><small>Next Libris tra le app, a schermo intero e senza rete</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>Chiave Google, worker, SBN</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="cards"><span><b>Aggiunta dei libri</b><small>Prezzo, suoni, fotocamera</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="look"><span><b>Aspetto</b><small>Tema, colori, caratteri</small></span><span class="n" aria-hidden="true">›</span></button>
         </div>
       </div>
-      <div class="dlist dmenu">
-        <button type="button" class="dopt don-menu" id="donMenu"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span><b>Sostieni Next Libris</b><small>Niente pubblicità, niente abbonamenti. Se ti piace, offrimi una birra!</small></span><span class="n" aria-hidden="true">♥</span></button>
+      <div class="dlist dmenu dset dinfo">
+        <button type="button" class="dopt dset-t" id="goInfo" aria-expanded="false" aria-controls="infoList"><span class="dset-i" aria-hidden="true"></span><span><b>Info e aiuto</b><small>Condividi, installa, contatti</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
+        <div class="dsub" id="infoList" hidden>
+        <button type="button" class="dopt" data-sec="share"><span><b>Condivisione</b><small>Il tuo nome, link e QR code</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="app"><span><b>Installazione sul telefono</b><small>Tra le app, anche senza rete</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" id="goPrivacy" data-sec="privacy"><span><b>Privacy</b><small>Quali dati usa e dove stanno</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="contact"><span><b>Contatti</b><small>Domande, problemi o idee</small></span><span class="n" aria-hidden="true">›</span></button>
+        </div>
       </div>
       <div class="ver" id="verBox">
         <p class="ver-h"><b id="verNum"></b> <span id="verDate"></span></p>
@@ -801,6 +828,14 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <option value="scaffale">Scaffale</option>
       <option value="voto">Voto</option>
       <option value="letti">Letti di recente</option>
+    </select>
+    <h3 id="hGrp">Raggruppa per</h3>
+    <select id="grp" class="dsel" aria-labelledby="hGrp">
+      <option value="">Nessun gruppo</option>
+      <option value="aut">Autore</option>
+      <option value="gen">Genere</option>
+      <option value="genaut">Genere, poi autore</option>
+      <option value="read">Lettura</option>
     </select>
     <div id="drawerFlt"></div>
     <p class="dhint" id="drawerHint" hidden>Si apre anche trascinando il pollice dal bordo sinistro verso destra.</p>
@@ -977,6 +1012,9 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <script src="schede.js" defer></script><!-- modulo: aspetto della scheda aperta -->
 <script src="social.js" defer></script><!-- modulo: account e sincronizzazione -->
 <script src="amici.js" defer></script><!-- modulo: amici -->
+<script src="notifiche.js" defer></script><!-- modulo: notifiche (campanella) -->
+<script src="ricerche.js" defer></script><!-- modulo: ricerche condivise e archivio comune -->
+<script src="push.js" defer></script><!-- modulo: notifiche push -->
 <div id="printView" aria-hidden="true"></div>
 </body>
 </html>

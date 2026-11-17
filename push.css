@@ -1,0 +1,30 @@
+/* Next Libris · modulo «Notifiche push»: Impostazioni › Notifiche e riga dopo l'accesso. Colori e componenti dell'app. */
+.pu .check{margin:0}
+.pu-state{display:grid;gap:10px;justify-items:start;margin:-4px 0 2px;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.45;background:var(--surface2);color:var(--muted)}
+.pu-state span{overflow-wrap:anywhere}
+.pu-state.pu-ok{background:var(--accent-soft);color:var(--ink)}
+.pu-state.pu-ok span::before{content:"✓ ";color:var(--accent);font-weight:700}
+.pu-state.pu-warn{background:var(--warn-bg);color:var(--warn)}
+.pu-state.pu-wait{background:var(--surface2);color:var(--ink)}
+.pu-state .link{padding:0;min-height:32px}
+.pu-state .pu-allow{min-height:40px;padding:6px 14px;font-size:14px}
+.pu-hours{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:0}
+.pu-hours label{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--ink)}
+.pu-hours select{min-height:44px;padding:8px 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.pu-hours.pu-off{opacity:.5}
+.pu .choice .hint{margin:0}
+/* riga dopo l'accesso: stessi colori del riquadro «Installa» */
+.pu-ask{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0 0 14px;padding:14px;border-radius:16px;background:var(--accent-soft);color:var(--ink)}
+.pu-ask[hidden]{display:none}
+.pu-ask h2{font-size:18px;margin:0}
+.pu-ask p{margin:0;font-size:14px;line-height:1.4;color:var(--muted)}
+.pu-ask-t{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;margin:4px 0 0}
+.pu-ask-t .check{margin:4px 0;font-size:14.5px}
+.pu-ask-t .check small{display:none}
+.pu-ask .pu-ask-q{font-size:13px}
+.pu-acts{display:flex;gap:8px;margin-top:6px}
+.pu-acts .btn{flex:1 1 0}
+@media (min-width:700px){
+  .pu-ask-t{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+  .pu-acts .btn{flex:none;min-width:120px}
+}

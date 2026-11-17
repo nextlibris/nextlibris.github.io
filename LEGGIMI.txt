@@ -501,7 +501,8 @@ Per i libri italiani il catalogo SBN ha i dati piu' precisi su editore,
 anno di quell'edizione, pagine e genere (classificazione Dewey). Il
 browser non puo' interrogarlo direttamente, quindi serve un piccolo
 "intermediario" gratuito su Cloudflare (piano Free: 100.000 richieste al
-giorno, ne usi due per libro). Si fa una volta sola, da computer o tablet:
+giorno, ne usi due per libro). Si fa una volta sola, da computer o tablet (la stessa guida, con il
+pulsante "Copia il codice del worker", e' in Impostazioni > Ricerca dei libri):
 1. Vai su dash.cloudflare.com e crea un account gratuito.
 2. Menu a sinistra "Workers & Pages" (o "Compute (Workers)") > "Create" >
    "Create Worker" (o "Start with Hello World!"). Nome: sbn-libri.

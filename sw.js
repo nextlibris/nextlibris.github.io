@@ -1,17 +1,20 @@
 /* Next Libris: funziona anche senza rete. Le ricerche (Google Libri, Open Library) passano sempre dalla rete. */
-// le copie parallele (…/next-libris-prova/, …/next-libris-social/…) stanno allo stesso indirizzo di base: copie offline con un prefisso
+// le copie parallele (…/next-libris-prova/, in generale …/next-libris-NOME/) stanno allo stesso indirizzo di base: copie offline con un prefisso
 // loro, e ognuna cancella solo le proprie (la versione vera non tocca quelle che cominciano con «nome-catalogo-libri-»)
 const COPIA = (self.registration.scope.match(/\/next-libris-([a-z]+)\//) || [])[1] || '';
-const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v101';
+const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v102';
 const MINE = (k) => (COPIA ? k.startsWith(COPIA + '-') : !/^[a-z]+-catalogo-libri-/.test(k));
-const SHELL = ['./', 'index.html', 'indirizzo.js', 'style.css', 'app.js', 'lib.js', 'manifest.json',
-  'icons/next-libris-192.png', 'icons/next-libris-512.png', 'vendor/zxing.min.js', 'vendor/fonts/literata-latin.woff2', 'vendor/tesseract.min.js', 'vendor/worker.min.js', 'REGISTRO_MODIFICHE.md',
+const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app.js', 'lib.js', 'manifest.json',
+  'icons/next-libris-192.png', 'icons/next-libris-512.png', 'vendor/zxing.min.js', 'vendor/fonts/literata-latin.woff2', 'vendor/fonts/bricolage-latin.woff2', 'vendor/fonts/plex-latin-400.woff2', 'vendor/fonts/plex-latin-500.woff2', 'vendor/fonts/plex-latin-600.woff2', 'vendor/tesseract.min.js', 'vendor/worker.min.js', 'REGISTRO_MODIFICHE.md',
   'wrap.js', 'wrap.css',   // modulo: riepilogo ogni tre mesi
   'layout.js', 'layout.css',   // modulo: disposizione dello schermo
   'schede.js', 'schede.css',   // modulo: aspetto della scheda aperta
   'social.js', 'social.css',   // modulo: account e sincronizzazione
   'amici.js', 'amici.css',   // modulo: amici
-  'trasloco.html', 'trasloco.js'];   // trasloco da piero907.github.io (senza, la pagina arriverebbe come index.html)
+  'notifiche.js', 'notifiche.css',   // modulo: notifiche (campanella)
+  'ricerche.js', 'ricerche.css',   // modulo: ricerche condivise e archivio comune
+  'push.js', 'push.css',   // modulo: notifiche push
+  'trasloco.html', 'trasloco.js', 'privacy.html'];   // trasloco.html: senza, la pagina arriverebbe come index.html; privacy.html: letta anche dalla finestra Privacy (17/11/2026)
 
 self.addEventListener('install', (e) => {
   // un file mancante non deve impedire al service worker di partire (addAll fallirebbe per intero)
@@ -78,5 +81,32 @@ self.addEventListener('fetch', (e) => {
       if (req.mode === 'navigate') { const idx = await cache.match('index.html'); if (idx) return idx; }
       throw err;
     }
+  })());
+});
+
+/* Notifiche push (modulo push.js, funzione «push» su Supabase): stesso testo della campanella; numero sull'icona dove si
+   può (iPhone, computer; su Android il pallino lo mette il telefono). Con l'app in primo piano si aggiorna solo la campanella
+   (su iPhone la notifica va mostrata sempre, altrimenti il telefono toglie l'iscrizione). */
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil((async () => {
+    const cl = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    cl.forEach((c) => { try { c.postMessage({ nl: 'push' }); } catch (x) {} });
+    if (self.navigator.setAppBadge && d.n) { try { await self.navigator.setAppBadge(d.n); } catch (x) {} }
+    const apple = /iPhone|iPad|Macintosh/.test(self.navigator.userAgent);
+    if (!apple && cl.some((c) => c.visibilityState === 'visible' && c.focused)) return;
+    await self.registration.showNotification(d.title || 'Next Libris', {
+      body: d.body || 'Hai una novità in Next Libris', tag: d.tag || 'nl', icon: 'icons/next-libris-192.png', lang: 'it', data: { nt: 1 }
+    });
+  })());
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const cl = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const mine = cl.find((c) => c.url.startsWith(self.registration.scope));
+    if (mine) { try { await mine.focus(); } catch (x) {} mine.postMessage({ nl: 'apri-notifiche' }); return; }
+    await self.clients.openWindow(new URL('./?nt=1', self.registration.scope).href);
   })());
 });

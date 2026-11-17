@@ -14,7 +14,7 @@ var STYLES = [
 /* la pagina del libro e' la scheda dell'app (Piero, 16/11/2026); la classica resta solo per le prove automatiche (localhost) */
 var DEF = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'attuale' : 'd';
 var cur = DEF;
-try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); if (DEF === 'attuale' && STYLES.some(function (x) { return x.k === c0.v; })) cur = c0.v; } catch (e) {}   // fuori dalle prove: sempre la pagina del libro
+try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); if (DEF === 'attuale' && STYLES.some(function (x) { return x.k === c0.v; })) cur = c0.v; } catch (e) { if (window.nlErr) nlErr(e); }   // fuori dalle prove: sempre la pagina del libro
 function save() { NL.ls.set(LS, JSON.stringify({ v: cur })); }
 var root = document.documentElement;
 var editing = {}, descExp = {};                 // per libro: campi aperti, descrizione aperta
@@ -28,7 +28,7 @@ function doD(card, id) {
   var b = NL.get(id), head = q(card, '.head');
   if (!b || !head) return;
   dActs(card);
-  if (!b.t) return;                               // senza titolo (da completare) restano i campi
+  if (!b.t) { card.classList.add('cv-edit'); return; }   // senza titolo (da completare): i campi, nella stessa disposizione di «Modifica» (Piero, 17/11/2026: su PC era sballata)
   if (editing[id]) { card.classList.add('cv-edit'); addDone(card, id); return; }
   var img = NL.bigImg(b), dati = [b.e, b.y, b.pg ? b.pg + ' pagine' : '', b.c != null ? NL.eur(b.c) : ''].filter(Boolean);
   var names = NL.authorsOf(b);

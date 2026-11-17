@@ -15,7 +15,7 @@ var esc = NL.esc;
 /* Un progetto Supabase per copia, cosi' i libri delle copie non si mescolano nello stesso account (16/11/2026).
    Il piano gratuito di Supabase permette 2 progetti:
    - versione vera: progetto «next-libris» (Francoforte, ref fttdbqotjocjfjfcoyfv);
-   - copia di prova: progetto «next-libris-social» (nato per la copia social, che dal 16/11/2026 non si usa piu'). */
+   - copia di prova: progetto «next-libris-prova» (ref amkrkvkylprjasccxmzo; nato per la copia social, che non c'è più). */
 var SB_PROVA = { url: 'https://amkrkvkylprjasccxmzo.supabase.co', key: 'sb_publishable_OQFiirkpjbx5WLKNtm2u3w_0M0TX2HC' };
 var PROGETTI = {
   '': { url: 'https://fttdbqotjocjfjfcoyfv.supabase.co', key: 'sb_publishable_fkmJDyZX1Lq2YzaBWnWOLQ_x0VfnSXp' },
@@ -60,7 +60,7 @@ async function call(path, opt) {
   try { r = await fetch(CFG.url + path, { method: opt.method || 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined, cache: 'no-store' }); }
   catch (e) { throw Err('Senza rete: riprovo quando torna.', 'net'); }
   var txt = await r.text(), j = null;
-  try { j = txt ? JSON.parse(txt) : null; } catch (e) {}
+  try { j = txt ? JSON.parse(txt) : null; } catch (e) { if (window.nlErr) nlErr(e); }
   if (!r.ok) {
     var m = (j && (j.msg || j.message || j.error_description || j.error)) || ('errore ' + r.status);
     if (r.status === 401 && opt.user) throw Err('Accesso scaduto: entra di nuovo da Menu › Account.', 'auth');
@@ -78,7 +78,7 @@ async function token() {
   return auth.at;
 }
 var authFns = [];                                    // moduli che vogliono sapere quando si entra o si esce (amici.js)
-function authChanged() { authFns.forEach(function (f) { try { f(auth); } catch (e) {} }); }
+function authChanged() { authFns.forEach(function (f) { try { f(auth); } catch (e) { if (window.nlErr) nlErr(e); } }); }
 function setAuth(j) {
   var was = auth && auth.uid;
   auth = { at: j.access_token, rt: j.refresh_token, exp: Date.now() + (Number(j.expires_in) || 3600) * 1000,
@@ -186,11 +186,16 @@ async function doSync() {
 }
 
 /* ---------- accesso ---------- */
-var prov = null;                                       // provider attivi in Supabase (/auth/v1/settings): il pulsante Google compare solo se Google e' acceso
+var prov = null, provFail = false, provLoading = null;                                       // provider attivi in Supabase (/auth/v1/settings): il pulsante Google compare solo se Google e' acceso
 async function providers() {
   if (prov) return prov;
-  try { var j = await call('/auth/v1/settings'); prov = { google: !!(j && j.external && j.external.google) }; } catch (e) { return { google: false }; }
-  return prov;
+  if (provLoading) return provLoading;
+  provLoading = (async function () {
+    try { var j = await call('/auth/v1/settings'); prov = { google: !!(j && j.external && j.external.google) }; provFail = false; return prov; }
+    catch (e) { provFail = true; return { google: false }; }
+    finally { provLoading = null; }
+  })();
+  return provLoading;
 }
 function google() { location.href = CFG.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(home()); }   // riserva: passa da supabase.co
 /* Pulsante ufficiale di Google (Google Identity Services, 16/11/2026): Google consegna il token direttamente a questa pagina,
@@ -237,7 +242,7 @@ async function gisDone(r, raw) {
     setAuth(j);
   } catch (e) { err(e.code === 'net' ? e.message : 'Accesso con Google non riuscito (' + e.message + '). Riprova.'); return; }
   var md = (j.user && j.user.user_metadata) || {}, nome = NL.name() || String(md.full_name || md.name || '').split(' ')[0].slice(0, 30);
-  try { if (nome) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: nome } }); } catch (e) {}
+  try { if (nome) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: nome } }); } catch (e) { if (window.nlErr) nlErr(e); }
   NL.toast('Sei entrato. Sincronizzo i libri…'); paint();
   await run(false);
 }
@@ -252,7 +257,7 @@ async function fromLink() {
   var h = location.hash.replace(/^#/, '');
   if (!/(^|&)(access_token|error_code|error)=/.test(h)) return;
   var q = {}; h.split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) q[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); });
-  try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) {}   // i token non restano nell'indirizzo
+  try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) { if (window.nlErr) nlErr(e); }   // i token non restano nell'indirizzo
   if (!q.access_token) {
     NL.toast(q.error_code === 'otp_expired' ? 'Il link dell\'email è scaduto o già usato: chiedine uno nuovo.' : q.error === 'access_denied' && !q.error_code ? 'Accesso annullato.' : 'Accesso non riuscito: riprova.');
     setTimeout(open, 400); return;
@@ -264,7 +269,7 @@ async function fromLink() {
     j.user = u; auth = null; setAuth(j);
   } catch (e) { auth = null; NL.toast('Accesso non riuscito: ' + e.message); return; }
   var md = (j.user && j.user.user_metadata) || {}, nome = NL.name() || String(md.full_name || md.name || '').split(' ')[0].slice(0, 30);
-  try { if (nome) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: nome } }); } catch (e) {}
+  try { if (nome) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: nome } }); } catch (e) { if (window.nlErr) nlErr(e); }
   NL.toast('Sei entrato. Sincronizzo i libri…'); paint();
   await run(false); setTimeout(open, 300);
 }
@@ -272,10 +277,10 @@ async function verify(email, code) {
   var j = await call('/auth/v1/verify', { method: 'POST', body: { type: 'email', email: email, token: code } });
   if (!j || !j.access_token) throw Err('Codice non valido.', 'code');
   setAuth(j);
-  try { if (NL.name()) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: NL.name() } }); } catch (e) {}
+  try { if (NL.name()) await call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: auth.uid, nome: NL.name() } }); } catch (e) { if (window.nlErr) nlErr(e); }
 }
 async function logout() {
-  try { await call('/auth/v1/logout', { method: 'POST', user: true }); } catch (e) {}
+  try { await call('/auth/v1/logout', { method: 'POST', user: true }); } catch (e) { if (window.nlErr) nlErr(e); }
   logoutLocal();
 }
 
@@ -299,9 +304,10 @@ function sheet() {
   el.addEventListener('click', onClick);
   return el;
 }
+window.addEventListener('online', function () { if (!auth && !prov) { provFail = false; paintSheet(); } });   // torna la rete: si riprova
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var el = document.getElementById('accSheet'); if (el && !el.hidden) close(); } });
 async function open() {
-  var el = sheet(); confirmAct = ''; el.hidden = false; copyInfo = await getCopy(); paintSheet();
+  var el = sheet(); confirmAct = ''; el.hidden = false; provFail = false;   // a ogni apertura si riprova copyInfo = await getCopy(); paintSheet();
   if (!auth && !prov) { await providers(); paintSheet(); }
   var f = el.querySelector('input'); if (f) setTimeout(function () { f.focus(); }, 60);
 }
@@ -317,7 +323,10 @@ function paintSheet() {
     if (step === 'email' && gOn) h += '<div class="acc-g" id="accG"></div>' +
       '<p class="msg bad" id="accErr" hidden></p>' + (EMAIL ? '<p class="acc-or">oppure con la tua email</p>' : '');
     if (!EMAIL) {
-      if (!gOn) h += '<p class="msg' + (prov ? '' : ' bad') + '" id="accOff">' + (prov ? 'L\'accesso per ora non è attivo. Riprova più tardi.' : 'Per entrare serve la connessione a internet.') + '</p>';
+      /* dopo l'uscita dall'account i servizi di accesso non erano mai stati letti: prima si leggono, poi si decide il messaggio
+         (prima compariva «serve la connessione» anche con la rete, Piero 17/11/2026) */
+      if (!prov && !provFail) { h += '<p class="msg" id="accOff">Un attimo…</p>'; providers().then(function () { paintSheet(); }); }
+      else if (!gOn) h += '<p class="msg' + (prov ? '' : ' bad') + '" id="accOff">' + (prov ? 'L\'accesso per ora non è attivo. Riprova più tardi.' : navigator.onLine === false ? 'Per entrare serve la connessione a internet.' : 'Non riesco a raggiungere il servizio di accesso. Riprova tra poco.') + '</p>';
     } else if (step === 'email') {
       h += '<form id="accFormE"><label class="field"><span>La tua email</span><input type="email" id="accMail" autocomplete="email" inputmode="email" enterkeyhint="send" required value="' + esc(mail) + '"></label>' +
         '<p class="msg bad" id="accErr" hidden></p><button class="btn' + (prov && prov.google ? '' : ' primary') + '" type="submit" id="accSend">Mandami l\'email</button></form>';
@@ -411,7 +420,7 @@ async function onClick(e) {
 function paint() {
   var b = document.getElementById('goAcc');
   if (b) {
-    var t = !auth ? 'Salva i libri online e ritrovali su un altro telefono' : busy ? 'Sincronizzo…' : lastErr ? lastErr :
+    var t = !auth ? 'Libri online, su ogni telefono' : busy ? 'Sincronizzo…' : lastErr ? lastErr :
       sync.when && sync.uid === auth.uid ? 'Sincronizzato ' + when(sync.when) : 'Entrato come ' + (auth.email || '');
     document.getElementById('goAccTxt').textContent = t;
     b.classList.toggle('acc-on', !!auth);
@@ -425,7 +434,7 @@ function paintMenu() {
     b = document.createElement('button'); b.type = 'button'; b.id = 'goAcc'; b.className = 'dopt dgo';
     b.innerHTML = '<span><b>Account e sincronizzazione</b><small id="goAccTxt"></small></span><span class="n" aria-hidden="true">›</span>';
     set.insertBefore(b, set.firstChild);
-    b.addEventListener('click', function () { NL.closeDrawer(); setTimeout(open, 60); });
+    b.addEventListener('click', function () { NL.fromMenu(open); });
   }
   paint();
 }
