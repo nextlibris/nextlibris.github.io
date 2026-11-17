@@ -3,6 +3,11 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 104 · 17/11/2026
+> **Foto degli autori di nuovo complete** Wikipedia ha cambiato l'indirizzo delle foto e l'app le scartava: ora arrivano tutte, anche quella di Ennio Flaiano.
+- **Foto degli autori:** accettate le foto dal nuovo indirizzo di Wikipedia (thumb.wikimedia.org); gli autori rimasti senza foto si ricercano da soli una volta.
+- **Privacy:** titolare «Piero R., l'ideatore di Next Libris».
+
 ## Versione 103 · 17/11/2026
 > **Raggruppa a copertine** Gruppi per autore con la foto dell'autore, per genere con un'icona; anche Genere › Autore a copertine; Espandi e Comprimi tutto.
 > **Libreria di un amico più chiara** In alto le icone: prestiti e regali tra voi, chiave da prestare, togli dagli amici; sotto chi sta leggendo e cosa ha letto.
