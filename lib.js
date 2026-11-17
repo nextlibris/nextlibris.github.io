@@ -22,10 +22,37 @@
   }
   function fmtNum(n) { return n.toFixed(2).replace('.', ','); }
   function sortKeyTitle(t) { return norm(t).replace(/^(?:(?:il|lo|la|i|gli|le|un|uno|una|the|a|an)\s+|l['’]\s*)/, '').trim(); }
-  function sortKeyAuthor(a) {
-    var first = String(a || '').split(',')[0].trim();
-    var parts = first.split(/\s+/);
-    return norm(parts[parts.length - 1] || '') + ' ' + norm(first);
+  /* Autore «Nome Cognome» diviso in cognome e nome (Piero, 17/11/2026 notte). cut = parole del cognome scelte a mano
+     (0 = lasciarlo com'è, senza cognome). Particelle: maiuscole (De Amicis, Da Ponte) fanno parte del cognome e dell'ordine;
+     minuscole (van, von, de, du, di) restano col nome nell'ordine: «Beethoven, Ludwig van». Jr., II… non contano. */
+  var AU_PART = /^(de|di|da|del|dei|della|delle|dello|degli|dal|dalla|van|von|der|den|ter|ten|du|des|dos|das|do|le|la|lo|y|e|al|el|bin|ibn|mac)$/i;
+  var AU_SUFF = /^(jr\.?|sr\.?|junior|senior|i{2,3}|iv)$/i;
+  function authorParts(a, cut) {
+    var name = String(a || '').trim().replace(/\s+/g, ' '), w = name ? name.split(' ') : [];
+    var suff = [];
+    while (w.length > 1 && AU_SUFF.test(w[w.length - 1].replace(/,$/, ''))) suff.unshift(w.pop());
+    w = w.map(function (x, i) { return i === w.length - 1 ? x.replace(/,$/, '') : x; });
+    if (w.length < 2 || cut === 0) return { sur: '', given: name, key: norm(name), name: name, auto: w.length - 1 };
+    var n;
+    if (cut > 0 && cut < w.length) n = cut;
+    else {
+      n = 1;
+      while (n < w.length - 1 && AU_PART.test(w[w.length - n - 1])) n++;
+    }
+    var sw = w.slice(w.length - n), gw = w.slice(0, w.length - n);
+    var lead = [];                                                   // particelle minuscole in testa al cognome: con il nome
+    if (!(cut > 0)) while (sw.length > 1 && AU_PART.test(sw[0]) && sw[0] === sw[0].toLowerCase()) lead.push(sw.shift());
+    var given = gw.concat(lead).concat(suff).join(' ');
+    return { sur: sw.join(' '), given: given, key: norm(sw.join(' ')) + ' ' + norm(given), name: name, n: n };
+  }
+  function sortKeyAuthor(a, cuts) {
+    var first = String(a || '').split(/\s*[,;]\s*/)[0].trim();
+    var c = cuts && cuts[norm(first)];
+    return authorParts(first, c == null ? -1 : c).key;
+  }
+  function authorInv(a, cuts) {                                      // «Neruda, Pablo»
+    var c = cuts && cuts[norm(a)], p = authorParts(a, c == null ? -1 : c);
+    return p.sur ? p.sur + (p.given ? ', ' + p.given : '') : p.name;
   }
   function yearOf(s) { var m = String(s || '').match(/\b(1[4-9]\d\d|20\d\d)\b/); return m ? m[1] : ''; }
 
@@ -610,6 +637,9 @@
   }
   /* Versioni piu' grandi di una copertina su Open Library (grande dello stesso id, oppure per ISBN).
      Nessuna e' garantita: l'app le prova e tiene solo quelle che arrivano davvero e hanno le proporzioni di una copertina. */
+  /* Google Libri con zoom=0 non da' la copertina grande ma spesso la prima pagina del libro (o un'immagine grigia):
+     copertina sbagliata di «Latinoamericana», Piero 17/11/2026. Queste non si usano mai come copertina grande. */
+  function badBigCover(u) { return /^https?:\/\/books\.google(?:usercontent)?\.[a-z.]+\/books\/(?:publisher\/)?content\?/i.test(str(u)) && /[?&]zoom=0(?:&|$)/.test(str(u)); }
   function coverCandidates(img, isbn) {
     var out = [], u = str(img);
     var ol = u.match(/^(https:\/\/covers\.openlibrary\.org\/b\/(?:id|isbn|olid)\/[^\/?]+?)-[SM]\.jpg/i);
@@ -1158,7 +1188,7 @@
 
   return {
     str: str, norm: norm, parseNum: parseNum, fmtNum: fmtNum, yearOf: yearOf,
-    sortKeyTitle: sortKeyTitle, sortKeyAuthor: sortKeyAuthor,
+    sortKeyTitle: sortKeyTitle, sortKeyAuthor: sortKeyAuthor, authorParts: authorParts, authorInv: authorInv,
     isbnClean: isbnClean, isbn13Valid: isbn13Valid, isbn10Valid: isbn10Valid, isbn10to13: isbn10to13, isbn13to10: isbn13to10,
     toIsbn13: toIsbn13, fmtIsbn: fmtIsbn, extractIsbns: extractIsbns, ocrIsbns: ocrIsbns, parseIsbnList: parseIsbnList,
     parseGoogle: parseGoogle, parseOpenLibrary: parseOpenLibrary, lookupIsbn: lookupIsbn, parseCrossref: parseCrossref, isbnPrefix: isbnPrefix, guessPublisher: guessPublisher, diagnose: diagnose, openLibrarySearch: openLibrarySearch, searchText: searchText,
@@ -1166,7 +1196,7 @@
     scoreCandidate: scoreCandidate, rankCandidates: rankCandidates, strongMatch: strongMatch, extractPrice: extractPrice, findPrice: findPrice, buildShare: buildShare, parseShare: parseShare, shareHeading: shareHeading, shareLabel: shareLabel, shareText: shareText, SHARE_MAX: SHARE_MAX,
     csvCell: csvCell, buildCSV: buildCSV, buildTSV: buildTSV, rowsFor: rowsFor, colsFor: colsFor, itDate: itDate,
     genreIt: genreIt, crc32: crc32, zipStore: zipStore, buildXLSX: buildXLSX, publisherGroups: publisherGroups, pubTokens: pubTokens,
-    computeStats: computeStats, agoText: agoText, coverCandidates: coverCandidates, googleVolumeId: googleVolumeId, bestGoogleImage: bestGoogleImage, getJson: getJson,
+    computeStats: computeStats, agoText: agoText, coverCandidates: coverCandidates, badBigCover: badBigCover, googleVolumeId: googleVolumeId, bestGoogleImage: bestGoogleImage, getJson: getJson,
     parseSbn: parseSbn, sbnUrl: sbnUrl, deweyGenre: deweyGenre, dupGroups: dupGroups, analyzeDups: analyzeDups, mergeBooks: mergeBooks, serKey: serKey, seriesInfo: seriesInfo, titleKey: titleKey, pickNews: pickNews, nextReads: nextReads, genreSubject: genreSubject, authorList: authorList, ocrParagraph: ocrParagraph, cleanDesc: cleanDesc, guessLang: guessLang, pickDesc: pickDesc, olDesc: olDesc, DESC_MAX: DESC_MAX, READ_LABEL: READ_LABEL, GONE_LABEL: GONE_LABEL, RATE_WORDS: RATE_WORDS, rateWord: rateWord
   };
 });

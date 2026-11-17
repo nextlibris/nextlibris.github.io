@@ -3,6 +3,19 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 103 · 17/11/2026
+> **Raggruppa a copertine** Gruppi per autore con la foto dell'autore, per genere con un'icona; anche Genere › Autore a copertine; Espandi e Comprimi tutto.
+> **Libreria di un amico più chiara** In alto le icone: prestiti e regali tra voi, chiave da prestare, togli dagli amici; sotto chi sta leggendo e cosa ha letto.
+> **Prestiti a colpo d'occhio** «N in prestito» conta anche i libri ricevuti e li mostra divisi in Prestati a / Prestati da, per persona; «Restituiscilo» è un tasto vero.
+> **Ordina e Raggruppa sempre in vista** Una riga sotto la ricerca, con finestrelle dell'app al posto delle tendine; autori in ordine di cognome.
+- **Raggruppa per:** «In lettura» sempre a parte; per autore copertine con la foto (da Wikipedia o Wikidata, anche quando la foto non è «libera»), per genere icone a linee; senza foto nome e COGNOME; tocco = i libri si aprono sotto; Genere › Autore: generi e autori a copertine.
+- **Autori:** in ordine di cognome (particelle comprese); in Impostazioni › Aspetto «Cognome prima nei gruppi» o «Come sono scritti»; correzione a mano nella finestra «Chi è»; toccando la foto dell'autore si apre a tutto schermo.
+- **Libreria di un amico:** in testata «Libreria di …», amici e libri in comune, «Sta leggendo» e «Letti di recente»; icone ⇄ (prestiti e regali tra voi, con la storia), chiave (presta chiave Google e worker) e togli dagli amici (con conferma); Libreria e Desideri in basso portano sempre ai tuoi.
+- **Prestiti:** «N in prestito» conta anche quelli ricevuti; toccandolo Prestati a / Prestati da, un gruppo per persona; «Restituiscilo» e «È tornato: segna restituito» sono tasti pieni.
+- **Testata:** «Libreria di Piero» (nei Desideri «Desideri di Piero») e sotto i numeri.
+- **Copertine:** la copertina grande di Google non è più la «prima pagina» del libro (Google con zoom=0 a volte la dava al posto della copertina): le vecchie si ricercano da sole; aggiungendo un libro dai risultati della ricerca per titolo resta la copertina scelta.
+- **Finestre:** × in alto a destra in tutte le finestre del Menu; amici in ordine alfabetico; birra con i nuovi testi «Sostieni Next Libris».
+
 ## Versione 102 · 17/11/2026
 > **Campanella e notifiche push** Tutte le novità degli amici nella campanella, e con il permesso anche a app chiusa (con orari di silenzio).
 > **Raggruppa per** Copertine ed elenco si possono raggruppare per autore, genere o lettura, anche genere › autore.

@@ -161,6 +161,7 @@ function paint() {
 function go(i) { if (i < 0 || i >= W.sl.length) return; W.i = i; paint(); }
 function pickQ(i) { if (i < 0 || i >= W.list.length) return; W.qi = i; W.data = W.list[i]; W.sl = slides(W.data); W.i = 0; paint(); }
 function open(key) {
+  if (NL.guest && NL.guest()) NL.guestExit();   // la stagione e' sempre la tua, anche dalla libreria di un amico
   W.list = quarters();
   if (!W.list.length) { NL.toast('Per il riepilogo servono libri letti (con la data) o libri aggiunti.'); return; }
   var now = Date.now(), last = prevQ(quarterOf(now)).key, i = -1;

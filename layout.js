@@ -81,7 +81,7 @@ function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') 
 function sheetsClose() { ['#layAdd', '#layYou'].forEach(function (k) { var s = $(k); if (s) s.hidden = true; }); }
 function act(l) {
   sheetsClose();
-  if (l === 'lib' || l === 'wish') { NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); }
+  if (l === 'lib' || l === 'wish') { if (NL.guest && NL.guest()) NL.guestExit(); NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); }   // sempre i tuoi, anche dalla libreria di un amico (17/11/2026 sera)
   else if (l === 'add') sheetOpen('#layAdd');
   else if (l === 'you') sheetOpen('#layYou');
   else if (l === 'menu') NL.openMenu();
@@ -111,7 +111,7 @@ window.addEventListener('keydown', function (e) {
 }, true);
 function paintNav() {
   var n = $('#layNav'); if (!n) return;
-  var t = NL.tab();
+  var t = NL.guest && NL.guest() ? '' : NL.tab();   // nella libreria di un amico non sei nella tua Libreria ne' nei tuoi Desideri
   Array.prototype.forEach.call(n.querySelectorAll('[data-l="lib"],[data-l="wish"]'), function (b) { var on = b.dataset.l === t; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
 }
 

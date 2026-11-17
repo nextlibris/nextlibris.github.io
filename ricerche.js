@@ -70,11 +70,13 @@ NL.archive = {
     if (!d || typeof d !== 'object' || !d.t || !d.a || !(d.e || d.y)) return null;   // incompleto: si cerca come sempre (e si completa l'archivio)
     var r = { i: isbn, src: 'Archivio comune' };
     KEEP.forEach(function (k) { if (d[k]) r[k] = String(d[k]); });
+    if (r.imgL && NL.L.badBigCover && NL.L.badBigCover(r.imgL)) delete r.imgL;   // zoom=0 di Google: non e' la copertina (17/11/2026)
     return r;
   },
   put: function (isbn, r) {
     if (!uid() || !r || !r.t || !/^97[89]\d{10}$/.test(isbn || '')) return;
     var o = {}; KEEP.forEach(function (k) { if (r[k] != null && r[k] !== '') o[k] = String(r[k]); });
+    if (o.imgL && NL.L.badBigCover && NL.L.badBigCover(o.imgL)) delete o.imgL;
     rpc('archivia', { isbn: isbn, dati: o }).catch(function () {});
   }
 };

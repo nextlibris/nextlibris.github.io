@@ -87,10 +87,10 @@ body.selecting .fri-note,body.scanning .fri-note{display:none}
 .guest-bar{display:grid;gap:4px;margin:0 0 12px;padding:0 2px 12px;border-bottom:1px solid var(--line);grid-template-columns:minmax(0,1fr)}   /* striscia sobria (Piero, 16/11/2026: il riquadro verde era troppo in evidenza) */
 .guest-bar[hidden]{display:none}
 .guest-bar p{margin:0;line-height:1.4}
-.guest-bar .gb-top{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
-.guest-bar .gb-top .link{font-size:15px}
-.guest-bar .gb-back{font-weight:600}
-.guest-bar .gb-more{font-weight:400}
+/* riga in testata: solo «Libreria di Anna» (i numeri sono già sui tasti Libreria/Desideri; Piero, 17/11/2026 notte) */
+html.guest header.top #summary{display:none}
+html.guest header.top .top-meta .owner::after{content:none}
+html.guest #btnNews{display:none!important}
 .guest-bar .gb-num{font-size:14px;color:var(--muted)}
 .guest-bar .gb-line{font-size:14px;overflow-wrap:anywhere}
 .guest-bar .gb-line small{color:var(--muted)}
@@ -160,3 +160,15 @@ html.guest #list .row.g-noread :is(.cv-strip,.read){display:none}
 
 /* «Aggiungi ai miei desideri» in alto nella scheda di un libro dell'amico (17/11/2026) */
 .g-wish.on svg path:first-child{fill:currentColor;fill-opacity:.25}
+/* libro di un amico: «Anna lo sta leggendo» / «Anna l'ha letto» al posto dei tasti di lettura (17/11/2026 sera) */
+html.guest #list .g-read .g-rs{margin:0;font-size:14.5px;color:var(--muted)}
+html.guest #list .g-read .g-rs b{color:var(--ink);font-weight:600}
+/* libreria e desideri dell'amico (17/11/2026 sera): due tasti nella sua striscia; chiave e worker con un'icona sulla riga del nome */
+.guest-bar .gb-tabs{margin:6px 0 2px}
+html.guest header.top .top-meta .gb-icos{position:absolute;right:max(4px,env(safe-area-inset-right));margin-top:-8px;display:flex;gap:2px}   /* in alto a destra, sulla riga del nome: ⇄ prestiti e regali, chiave (17/11/2026) */
+.gb-icos:empty{display:none}
+.gb-key{position:relative;width:36px;height:36px;min-width:36px;padding:0;border-radius:50%;color:var(--muted)}
+.gb-key svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gb-key.on{color:var(--accent)}
+.gb-key .gk-ok{position:absolute;right:1px;bottom:2px;min-width:14px;height:14px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 9px/14px var(--font-body);text-align:center}
+.gb-key[hidden]{display:none}

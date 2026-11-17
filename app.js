@@ -112,7 +112,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 /* ---------- stato ---------- */
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 102, date: '2026-11-17', note: 'Campanella, notifiche push, Raggruppa per, amici degli amici e tutte le novità della prova' };
+var APP_VERSION = { v: 103, date: '2026-11-17', note: 'Raggruppa a copertine, libreria di un amico con le icone, prestiti per persona, autori per cognome' };
 var state = { books: [], updated: 0 };
 var hooks = {};                              // moduli aggiuntivi (vedi window.NL in fondo): si agganciano dopo l'avvio
 function emit(name, arg) { (hooks[name] || []).forEach(function (fn) { try { fn(arg); } catch (e) { if (window.console) console.warn('modulo', name, e); } }); }
@@ -268,7 +268,7 @@ function cleanBook(x) {
     i: L.str(x.i).replace(/[^\dXx]/g, '').toUpperCase(),
     g: Array.isArray(x.g) ? x.g.filter(function (k) { return ['t', 'a', 'e', 'y', 'i'].indexOf(k) >= 0; }) : [],
     img: /^https:\/\//.test(img) ? img : '',
-    imgL: /^https:\/\//.test(L.str(x.imgL)) ? L.str(x.imgL) : '',
+    imgL: /^https:\/\//.test(L.str(x.imgL)) && !L.badBigCover(x.imgL) ? L.str(x.imgL) : '',   // via le «grandi» di Google con zoom=0 (17/11/2026): si ricerca con zoom=3
     nf: !!x.nf,
     ts: Number(x.ts) || 0,
     sh: L.str(x.sh).slice(0, 80), n: L.str(x.n).slice(0, 2000), gen: L.str(x.gen).slice(0, 80),
@@ -432,6 +432,11 @@ function loadAll() {
     settings.grp = GRP_TXT[s.grp] ? s.grp : '';                                        // raggruppa per (copertine ed elenco, 17/11/2026)
     settings.grpOpen = {};                                                            // gruppi aperti (chiusi di partenza)
     if (s.grpOpen && typeof s.grpOpen === 'object') Object.keys(s.grpOpen).slice(0, 400).forEach(function (k) { if (typeof k === 'string' && k.length < 200) settings.grpOpen[k] = 1; });
+    settings.grpExp = s.grpExp ? 1 : 0; 
+    settings.auInv = s.auInv === 0 ? 0 : 1;                                          // autori nei gruppi «Neruda, Pablo» (1, predefinito) o come sono scritti (0) (17/11/2026 notte)
+    settings.auCut = {};                                                             // cognome corretto a mano: parole del cognome (0 = com'è scritto)
+    if (s.auCut && typeof s.auCut === 'object') Object.keys(s.auCut).slice(0, 500).forEach(function (k) { var v = Number(s.auCut[k]); if (k.length < 200 && v >= 0 && v < 10) settings.auCut[k] = Math.floor(v); });
+                                             // «Espandi tutto» dei gruppi (17/11/2026 sera)
     oldApp = typeof s.look === 'string';                                             // impostazioni salvate da una versione precedente dell'app (non una prima installazione)                                                   // la pagina delle novita' funziona anche per chi aggiorna (dalla 96)
     settings.seenB = L.str(s.seenB).slice(0, 12);                                   // nella copia di prova: ultima prova vista («94.17»)
     settings.suggAuto = s.suggAuto !== false;                                       // «Da scoprire»: cerca da solo una volta a settimana
@@ -628,7 +633,7 @@ function applyResult(b, r, code) {
   if (!b.y) b.y = r.y;
   if (!b.gen && r.gen) b.gen = r.gen;
   if (!b.pg && r.pg) b.pg = r.pg;
-  if (r.img) b.img = r.img;
+  if (r.img && !(S[b.id] && S[b.id].keepImg && b.img)) b.img = r.img;
   b.i = code; b.nf = false;
   b.g = b.g.filter(function (k) { return ['t', 'a', 'e', 'y', 'i'].indexOf(k) < 0; });
   guessEditor(b);
@@ -1547,13 +1552,14 @@ function visible() {
   if (edFlt) a = a.filter(function (b) { return facetKey(b.e) === edFlt; });
   if (readFlt && tab === 'lib') a = a.filter(function (b) { return readFlt === 'no' ? !b.rs : b.rs === readFlt; });
   if (flt === 'loan') {
-    return a.filter(function (b) { return b.p; }).sort(function (x, y) { return (x.pd || '9') < (y.pd || '9') ? -1 : (x.pd || '9') > (y.pd || '9') ? 1 : cmpFor('titolo')(x, y); });
+    return a.filter(isLoan).sort(function (x, y) { return (x.pd || '9') < (y.pd || '9') ? -1 : (x.pd || '9') > (y.pd || '9') ? 1 : cmpFor('titolo')(x, y); });
   }
   return a.sort(cmpFor(sortBy));
 }
+function isLoan(b) { return !!b.p || ((b.sk === 'p' || b.sk === 'q') && !b.xs); }   // prestato da te, o ricevuto da un amico (Piero, 17/11/2026)
 function cmpFor(k) {
   var byTitle = function (x, y) { return coll.compare(L.sortKeyTitle(x.t) || '~', L.sortKeyTitle(y.t) || '~'); };
-  var byAuthor = function (x, y) { return coll.compare(L.sortKeyAuthor(x.a) || '~', L.sortKeyAuthor(y.a) || '~'); };
+  var byAuthor = function (x, y) { return coll.compare(L.sortKeyAuthor(x.a, settings.auCut) || '~', L.sortKeyAuthor(y.a, settings.auCut) || '~'); };
   if (k === 'titolo') return byTitle;
   if (k === 'autore') return function (x, y) { return byAuthor(x, y) || byTitle(x, y); };
   if (k === 'editore') return function (x, y) { return coll.compare(x.e || '~', y.e || '~') || byAuthor(x, y) || byTitle(x, y); };
@@ -1586,7 +1592,7 @@ function flagsHTML(b, dups) {
     '<button type="button" class="btn sm ret-btn" data-act="returned">È tornato: segna restituito</button>';
   o += goneTag(b);
   o += recvTag(b);
-  if (b.sk === 'p' && !b.xs) o += '<button type="button" class="btn sm ret-btn" data-act="recv">L\'ho restituito</button>';
+  if (b.sk === 'p' && !b.xs) o += '<button type="button" class="btn sm ret-btn" data-act="recv">Restituiscilo</button>';   // tasto vero, pieno (Piero, 17/11/2026)
   o += fromTag(b);
   if (b.g.length) o += '<span class="tag warn tap" data-act="verify" role="button" tabindex="0" title="Dati dedotti (dalla copertina o dal codice ISBN): controllali, potrebbero non coincidere con il tuo libro. Toccalo quando hai controllato.">Da verificare ✓</span>';
   o += dupTag(dups && dups[b.id]);
@@ -2584,7 +2590,8 @@ async function auLookup(name) {
   async function summary(title) {
     var j = await L.getJson(fetch, 'https://it.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title.replace(/ /g, '_')) + '?redirect=true', { waits: [], timeout: 8000 });
     return j && j.type !== 'disambiguation' && j.extract ? { title: j.title, desc: L.str(j.description), text: L.str(j.extract), url: (j.content_urls && j.content_urls.mobile && j.content_urls.mobile.page) || auWikiUrl(j.title),
-      img: j.thumbnail && /^https:\/\/upload\.wikimedia\.org\//.test(j.thumbnail.source || '') ? j.thumbnail.source : '' } : null;   // foto dell'autore, se Wikipedia ce l'ha
+      img: j.thumbnail && /^https:\/\/upload\.wikimedia\.org\//.test(j.thumbnail.source || '') ? j.thumbnail.source : '',   // foto dell'autore, se Wikipedia ce l'ha
+      qid: /^Q\d{1,12}$/.test(j.wikibase_item || '') ? j.wikibase_item : '' } : null;
   }
   var r = null;
   try { r = await summary(name); } catch (e) { if (!(e && e.status === 404)) throw e; }
@@ -2607,8 +2614,36 @@ async function auLookup(name) {
     }
     if (!r) r = direct || other;                        // nessuno scrittore: la voce col suo nome (fotografo, cuoco…) o il primo trovato
   }
+  if (r && !r.img) {                                    // il riassunto da' solo le foto libere: quella caricata solo su it.wikipedia (Ennio Flaiano, 17/11/2026)
+    try { r.img = await auPageImg(r.title); } catch (e) { if (!(e && e.status)) r.retry = true; }   // senza rete: non si salva «senza foto», si riprova
+  }
+  if (r && !r.img && !r.retry && r.qid) {               // la voce italiana senza foto (Antonio Tabucchi, 17/11/2026): la foto di Wikidata
+    try { r.img = await auWdImg(r.qid); } catch (e) { r.retry = true; }
+  }
+  if (r && r.retry) return r;
   auCache[name] = r || { none: true };
   return auCache[name];
+}
+/* foto della voce di it.wikipedia di qualunque licenza (le foto «di pubblico dominio in Italia» stanno solo li', non su Commons) */
+async function auPageImg(title) {
+  if (!title) return '';
+  var j = await L.getJson(fetch, 'https://it.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail&pithumbsize=330&pilicense=any&titles=' + encodeURIComponent(title), { waits: [], timeout: 8000 });
+  var pg = (j && j.query && j.query.pages) || {}, u = '';
+  Object.keys(pg).forEach(function (k) { var t = pg[k] && pg[k].thumbnail && pg[k].thumbnail.source; if (!u && typeof t === 'string' && /^https:\/\/upload\.wikimedia\.org\//.test(t)) u = t; });
+  return u;
+}
+/* foto della persona su Wikidata (proprieta' P18) e la sua miniatura su Commons: 2 richieste, solo per chi non ha la foto su it.wikipedia */
+async function auWdImg(qid) {
+  var o = { waits: [], timeout: 8000 }, file = '';
+  var j = await L.getJson(fetch, 'https://www.wikidata.org/w/api.php?action=wbgetclaims&format=json&origin=*&property=P18&entity=' + encodeURIComponent(qid), o);
+  var cl = (j && j.claims && j.claims.P18) || [];
+  cl = cl.filter(function (c) { return c && c.rank !== 'deprecated'; }).sort(function (a, b) { return (b.rank === 'preferred') - (a.rank === 'preferred'); });
+  for (var i = 0; i < cl.length && !file; i++) { var v = cl[i].mainsnak && cl[i].mainsnak.datavalue && cl[i].mainsnak.datavalue.value; if (typeof v === 'string' && v.length < 250) file = v; }
+  if (!file) return '';
+  var c = await L.getJson(fetch, 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=330&titles=' + encodeURIComponent('File:' + file), o);
+  var pg = c && c.query && c.query.pages, u = '';
+  if (pg) Object.keys(pg).forEach(function (k) { var ii = pg[k] && pg[k].imageinfo && pg[k].imageinfo[0]; if (!u && ii && typeof ii.thumburl === 'string') u = ii.thumburl; });
+  return /^https:\/\/upload\.wikimedia\.org\//.test(u) ? u : '';
 }
 async function openAuthor(id, name) {
   auNow = { id: id, name: name };
@@ -2616,6 +2651,7 @@ async function openAuthor(id, name) {
   $('#auH').textContent = name; $('#auDesc').textContent = ''; $('#auSrc').hidden = true; $('#auWiki').hidden = true; auPic('');
   $('#auMine').textContent = mine > 1 ? 'I suoi libri nella tua libreria (' + mine + ')' : 'Il suo libro nella tua libreria';
   $('#auMine').hidden = mine < 2;
+  auCutPaint(name);
   $('#auTxt').innerHTML = '<p class="desc-wait"><span class="spin" aria-hidden="true"></span>Cerco chi è…</p>';
   $('#auSheet').hidden = false;
   if (navigator.onLine === false) { $('#auTxt').innerHTML = '<p class="desc-none">Senza connessione: le informazioni sull\'autore si cercano online.</p>'; return; }
@@ -2625,6 +2661,7 @@ async function openAuthor(id, name) {
     if (r.none) { $('#auTxt').innerHTML = '<p class="desc-none">Non ho trovato una voce di Wikipedia su questo autore. Prova «Cerca sul web».</p>'; return; }
     $('#auDesc').textContent = r.desc ? r.desc.charAt(0).toUpperCase() + r.desc.slice(1) : '';
     auPic(r.img || '', name);
+    if (r.img && aufGet(name) !== r.img) { aufSave(name, r.img); aufPaint(name, r.img); }   // la stessa foto anche sulla copertina dell'autore
     $('#auTxt').innerHTML = r.text.split(/\n+/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('');
     $('#auSrc').hidden = false;
     var w = $('#auWiki'); w.href = r.url; w.hidden = false;
@@ -2634,15 +2671,52 @@ async function openAuthor(id, name) {
 }
 function auPic(src, name) {                        // foto dell'autore da Wikipedia (Commons); se non c'e' o non si carica, niente riquadro
   var f = $('#auPic'), im = f.querySelector('img');
-  f.hidden = true; f.classList.remove('big'); im.removeAttribute('src');
+  f.hidden = true; im.removeAttribute('src');
   if (!src) return;
   im.onload = function () { if (auNow && auNow.name === name) f.hidden = false; };
   im.onerror = function () { f.hidden = true; };
   im.alt = 'Foto di ' + name; im.src = src;
 }
+/* cognome dell'autore, corretto a mano (Piero, 17/11/2026 notte): «In ordine come: Márquez, Gabriel García · Correggi» */
+function auCutPaint(name, open) {
+  var box = $('#auCut'), k = L.norm(name), w = String(name || '').trim().split(/\s+/);
+  if (!box) return;
+  box.hidden = w.length < 2;
+  if (w.length < 2) return;
+  var cur = settings.auCut[k];
+  var h = '<p class="auc-now">In ordine come <b>' + esc(L.authorInv(name, settings.auCut)) + '</b>' + (cur != null ? ' <small>(corretto)</small>' : '') +
+    ' <button type="button" class="link" data-auc="open" aria-expanded="' + !!open + '">' + (open ? 'Chiudi' : 'Correggi') + '</button></p>';
+  if (open) {
+    var opts = [];
+    for (var n = 1; n < w.length; n++) opts.push([n, w.slice(w.length - n).join(' ') + ', ' + w.slice(0, w.length - n).join(' ')]);
+    opts.push([0, name + ' (com\'è scritto)']);
+    var sel = cur != null ? cur : -1, auto = L.authorInv(name);
+    h += '<div class="auc-opts" role="radiogroup" aria-label="Cognome">' + opts.map(function (o) {
+      var on = sel === -1 ? o[0] !== 0 && o[1] === auto : sel === o[0];   // senza correzione: acceso quello della regola, se c'è tra i tagli
+      return '<button type="button" class="pk-o" role="radio" data-auc="' + o[0] + '" aria-checked="' + on + '" aria-selected="' + on + '"><span class="pk-dot" aria-hidden="true"></span><span>' + esc(o[1]) + '</span></button>';
+    }).join('') + (cur != null ? '<button type="button" class="link auc-auto" data-auc="auto">Torna alla regola automatica (' + esc(L.authorInv(name)) + ')</button>' : '') + '</div>';
+  }
+  box.innerHTML = h;
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('#auCut [data-auc]'); if (!b || !auNow) return;
+  var v = b.dataset.auc, k = L.norm(auNow.name);
+  if (v === 'open') { auCutPaint(auNow.name, b.getAttribute('aria-expanded') !== 'true'); return; }
+  if (v === 'auto') delete settings.auCut[k]; else settings.auCut[k] = Number(v) || 0;
+  saveSettings(); auCutPaint(auNow.name, false);
+  if (grpMode() || sortBy === 'autore') renderList();
+  toast('Ora in ordine come ' + L.authorInv(auNow.name, settings.auCut) + '.');
+});
 function closeAuthor() { $('#auSheet').hidden = true; auNow = null; }
 $('#auClose').addEventListener('click', closeAuthor);
-$('#auPic').addEventListener('click', function () { var f = $('#auPic'), on = !f.classList.contains('big'); f.classList.toggle('big', on); f.setAttribute('aria-label', on ? 'Rimpicciolisci la foto' : 'Ingrandisci la foto'); });
+/* tocco sulla foto dell'autore: a tutto schermo nel visore delle foto, piu' nitida (Piero, 17/11/2026); se la grande non c'e', la piccola */
+function auBig(src) { return /^https:\/\/upload\.wikimedia\.org\/.+\/thumb\//.test(src) ? src.replace(/\/\d+px-([^\/]+)$/, '/960px-$1') : src; }
+$('#auPic').addEventListener('click', function () {
+  var im = $('#auPic img'), src = im.getAttribute('src'); if (!src || !auNow) return;
+  var big = auBig(src), ph = $('#phImg');
+  openPh(big, auNow.name); $('#phView').classList.add('au');
+  if (big !== src) ph.onerror = function () { ph.onerror = null; ph.src = src; };
+});
 $('#auSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeAuthor(); });
 $('#auWeb').addEventListener('click', function () { if (auNow) window.open('https://www.google.com/search?q=' + encodeURIComponent(auNow.name + ' scrittore'), '_blank', 'noopener'); });
 $('#auMine').addEventListener('click', function () { if (!auNow) return; var n = auNow.name; closeAuthor(); applyFacet('a', L.norm(n), n); });
@@ -2809,7 +2883,8 @@ function donPaint() {
 function donSnooze(ms) { settings.donUntil = Math.max(settings.donUntil, Date.now() + ms); saveSettings(); donPaint(); }
 function paintDonAmt() {
   Array.prototype.forEach.call(document.querySelectorAll('.don-amt'), function (x) { x.setAttribute('aria-checked', x.dataset.amt === donAmt ? 'true' : 'false'); });
-  $('#donGo').textContent = donAmt ? 'Dona ' + donAmt + ' € con PayPal' : 'Dona con PayPal';
+  var SIZE = { 2: 'una piccola', 3: 'una media', 5: 'una grande' };   // importi come birre (Piero, 17/11/2026 sera)
+  $('#donGo').textContent = SIZE[donAmt] ? 'Offri ' + SIZE[donAmt] + ' con PayPal' : donAmt ? 'Offri ' + donAmt + ' € con PayPal' : 'Offri una birra con PayPal';
 }
 function openDon(reuse) {
   paintDonAmt();
@@ -2837,7 +2912,7 @@ function donBack() {
   if (spent >= DON_MIN_MS) { settings.donUntil = Math.max(settings.donUntil, Date.now() + DON_THANKS); settings.donMs = Math.max(settings.donMs || 0, Math.floor(donCount() / DON_STEP) * DON_STEP); }
   else settings.donUntil = Math.max(settings.donUntil, Date.now() + DON_SNOOZE);
   saveSettings(); donPaint();
-  toast('Grazie se hai donato! ♥', null, 3500);
+  toast('Grazie se mi hai offerto la birra! ♥', null, 3500);
 }
 function donAccess() { settings.donOpens = Math.min(9999, (settings.donOpens || 0) + 1); saveSettings(); donPaint(); }
 document.addEventListener('visibilitychange', function () {      // l'app installata spesso resta in memoria: un ritorno dopo una lunga pausa e' un nuovo accesso
@@ -2993,7 +3068,7 @@ function openPh(src, cap, many) {
 }
 function closePh(fromPop) {
   if ($('#phView').hidden) return;
-  $('#phView').hidden = true; $('#phImg').removeAttribute('src');
+  $('#phView').hidden = true; $('#phView').classList.remove('au'); $('#phImg').onerror = null; $('#phImg').removeAttribute('src');
   if (phPushed && !fromPop) { phPushed = false; try { history.back(); } catch (e) { nlErr(e); } }
 }
 $('#phClose').addEventListener('click', function () { closePh(false); });
@@ -3424,6 +3499,7 @@ function setSgTab(t) {
 }
 function renderSugg() { if (sgTab === 'disc') renderDisc(); else renderNext(); }
 function openSugg(t) {
+  if (guest) guestExit(true);                      // «Per te» e il Menu parlano sempre della tua libreria (Piero, 17/11/2026 sera)
   $('#sgAuto').checked = settings.suggAuto !== false;
   $('#sgLang').checked = settings.suggLang === 'all';
   $('#suggSheet').hidden = false;
@@ -3504,6 +3580,7 @@ function renderAllQuotes() {
   }).join('');
 }
 function openAllQuotes() {
+  if (guest) guestExit(true);                      // «Per te» e il Menu parlano sempre della tua libreria (Piero, 17/11/2026 sera)
   $('#allqQ').value = '';
   renderAllQuotes();
   $('#allqSheet').hidden = false;
@@ -3589,6 +3666,14 @@ var RD_CAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" widt
 var RATE_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="pg" d="M3 6a9 9 0 0 1 9 0v13a9 9 0 0 0-9 0z"/><path class="pg" d="M12 6a9 9 0 0 1 9 0v13a9 9 0 0 0-9 0z"/></svg>';   // libro aperto (Piero: «era più bella l'icona con il libro aperto»)
 function readHTML(b, off) {
   if (b.w) return '';
+  if (guest) {                                     // libro di un amico: una frase al posto dei tasti; niente se non l'ha segnato (Piero, 17/11/2026 sera)
+    if (b.rs !== 'in' && b.rs !== 'ok') return '';
+    var who = esc(guest.name), bits = [];
+    if (b.rs === 'ok' && b.rd) bits.push('il ' + esc(rdLong(b.rd)));
+    if (b.rt) bits.push('«' + esc(L.rateWord(b.rt)) + '»');
+    return '<div class="read g-read"><p class="g-rs"><b>' + who + (b.rs === 'in' ? ' lo sta leggendo' : ' l\'ha letto') + '</b>' + (bits.length ? ' · ' + bits.join(' · ') : '') + '</p>' +
+      (b.rs === 'in' ? ppHTML(b, ' disabled') : '') + '</div>';
+  }
   var d = off ? ' disabled' : '';
   var seg = [['da', 'Da leggere'], ['in', 'In lettura'], ['ok', 'Letto']].map(function (x) {
     return '<button type="button" data-act="rs" data-v="' + x[0] + '" aria-pressed="' + (b.rs === x[0]) + '"' + d + '>' + x[1] + '</button>';
@@ -3840,6 +3925,7 @@ function renderList() {
       : '<p class="none">Nessun libro corrisponde ' + (activeCount() ? (q ? 'alla ricerca e ai filtri.' : 'ai filtri.') : 'alla ricerca.') + '</p><p><button class="btn" data-act="clearflt">' + (activeCount() ? (q ? 'Azzera ricerca e filtri' : 'Azzera i filtri') : 'Cancella la ricerca') + '</button></p>';
     return;
   }
+  if (flt === 'loan' && tab === 'lib') { renderLoans(list, vis); return; }
   var g = grpMode();
   if (g) { renderGroups(list, vis, g); return; }
   /* i libri «In lettura» in cima, in una sezione che si apre e chiude; sotto gli altri (solo Libreria, ordine «Più recenti», senza ricerca ne' filtri) */
@@ -3866,51 +3952,281 @@ function renderList() {
   autosizeAll(list);
   paintSel();
 }
-/* ---- Raggruppa per (Piero, 17/11/2026): autore, genere, genere e poi autore, lettura; nelle copertine e nell'elenco.
-   Gruppi chiusi di partenza (si aprono con un tocco e se lo ricorda); aperti tutti con una ricerca, e sempre quello del libro aperto.
+/* «N in prestito» toccato (Piero, 17/11/2026): «Prestati a» (i tuoi) e «Prestati da» (ricevuti dagli amici), dentro un gruppo per persona;
+   sezioni che si aprono e chiudono come «In lettura» (aperte di partenza, se lo ricorda); dentro, dai prestiti piu' vecchi */
+function loanKey(n) { return L.norm(n).replace(/[^a-z0-9]+/g, '-').slice(0, 40) || 'x'; }
+function renderLoans(list, vis) {
+  var grid = settings.view === 'grid', dups = grid ? null : computeDups();
+  var inner = function (a) { return grid ? '<div class="grid">' + a.map(coverHTML).join('') + '</div>' : a.map(function (b) { return rowHTML(b, dups); }).join(''); };
+  var sec = function (k, cls, title, n, body) {
+    var open = !(settings.shelfShut || {})[k];
+    return '<section class="shelf grp' + cls + ' shelf-' + k + '"><button type="button" class="shelf-h" data-shelf="' + k + '" aria-expanded="' + open + '" aria-controls="shelf-' + k + '">' +
+      '<span class="sh-t">' + esc(title) + '</span><span class="sh-n">' + n + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      '<div class="shelf-b" id="shelf-' + k + '"' + (open ? '' : ' hidden') + '>' + body + '</div></section>';
+  };
+  var parts = [['lo-a', 'Prestati a', vis.filter(function (b) { return b.p; }), function (b) { return b.p; }],
+    ['lo-da', 'Prestati da', vis.filter(function (b) { return !b.p && b.sda; }), function (b) { return b.sda; }]];
+  list.innerHTML = '<div class="loan-groups">' + parts.filter(function (x) { return x[2].length; }).map(function (x) {
+    return sec(x[0], '', x[1], x[2].length, groupBy(x[2], x[3], '?').map(function (pp) { return sec(x[0] + '-' + loanKey(pp[1]), ' grp-sub', pp[1], pp[2].length, inner(pp[2])); }).join(''));
+  }).join('') + '</div>';
+  if (!grid) { emit('rows', list); autosizeAll(list); }
+  paintSel();
+}
+/* ---- Raggruppa per (Piero, 17/11/2026; nuovo modo 17/11 sera): autore, genere, genere e poi autore, lettura; nelle copertine e nell'elenco.
+   «In lettura» non si raggruppa mai: resta in cima; si raggruppano solo «Gli altri libri».
+   Autore e genere: ogni gruppo e' una copertina (foto dell'autore da Wikipedia, salvata sul telefono; iniziale del genere) con il numero
+   di libri; un tocco apre i suoi libri in un riquadro sotto la riga. Genere › Autore: i generi sono sezioni, gli autori copertine.
+   In cima «Espandi tutto» (ogni gruppo come sezione aperta) e «Comprimi tutto». Con una ricerca o dei filtri: tutto espanso.
    Dentro un gruppo vale l'ordine scelto. Un libro con piu' autori sta nel gruppo del primo. ---- */
-var READ_GRP = [['in', 'In lettura'], ['da', 'Da leggere'], ['ok', 'Letti']];
+var READ_GRP = [['da', 'Da leggere'], ['ok', 'Letti']];   // «In lettura» sta sempre a parte, in cima
+var grpFltShut = '';                                     // «Comprimi tutto» con filtri o ricerca: vale finché non cambiano (17/11/2026 notte)
+function fltSig() { return [tab, q, flt, frFlt, readFlt, shFlt, genFlt, autFlt, edFlt].join('|'); }
+var grpShutX = {};                                       // sezioni chiuse a mano quando e' tutto espanso (solo finche' l'app e' aperta)
 function grpMode() {
   var g = settings.grp || '';
   if (g === 'read' && tab === 'wish') return '';           // nei Desideri la lettura non c'e'
   return g;
 }
-function groupBy(books, keyOf, none) {                     // [[chiave, nome, libri]] in ordine alfabetico, «senza» in fondo
+function auShow(name) { return settings.auInv && name ? L.authorInv(name, settings.auCut) : name; }   // «Neruda, Pablo» nei gruppi e nei filtri
+function groupBy(books, keyOf, none, sk) {                 // [[chiave, nome, libri]] in ordine alfabetico (sk: chiave d'ordine), «senza» in fondo
   var m = {}, order = [];
   books.forEach(function (b) {
     var name = keyOf(b), k = name ? L.norm(name) : '';
     if (!m[k]) { m[k] = { name: name || none, books: [] }; order.push(k); }
     m[k].books.push(b);
   });
-  order.sort(function (a, b) { return !a ? 1 : !b ? -1 : coll.compare(m[a].name, m[b].name); });
+  order.sort(function (a, b) { return !a ? 1 : !b ? -1 : sk ? coll.compare(sk(m[a].name), sk(m[b].name)) : coll.compare(m[a].name, m[b].name); });
   return order.map(function (k) { return [k || '~', m[k].name, m[k].books]; });
 }
 function grpParts(vis, g) {
-  if (g === 'read') return READ_GRP.map(function (r) { return [r[0], r[1], vis.filter(function (b) { return (b.rs === 'in' || b.rs === 'ok' ? b.rs : 'da') === r[0]; })]; }).filter(function (x) { return x[2].length; });
+  if (g === 'read') return READ_GRP.map(function (r) { return [r[0], r[1], vis.filter(function (b) { return (b.rs === 'ok' ? 'ok' : 'da') === r[0]; })]; }).filter(function (x) { return x[2].length; });
   var aut = function (b) { return authorsOf(b)[0] || ''; }, gen = function (b) { return L.str(b.gen).trim(); };
-  if (g === 'aut') return groupBy(vis, aut, 'Senza autore');
+  var ak = function (n) { return L.sortKeyAuthor(n, settings.auCut); };   // autori per cognome anche nei gruppi (prima per nome intero)
+  if (g === 'aut') return groupBy(vis, aut, 'Senza autore', ak);
   var gs = groupBy(vis, gen, 'Senza genere');
-  if (g === 'genaut') gs.forEach(function (x) { x[3] = groupBy(x[2], aut, 'Senza autore'); });
+  if (g === 'genaut') gs.forEach(function (x) { x[3] = groupBy(x[2], aut, 'Senza autore', ak); });
   return gs;
 }
+/* foto degli autori: Wikipedia (auLookup), cercate una alla volta e solo per i gruppi che si vedono; salvate sul telefono */
+var AUF_LS = 'catalogo-libri-aufoto', AUF_RETRY = 30 * 864e5, aufo = null, aufQ = [], aufBusy = false, aufIO = null;
+function aufMap() {
+  if (!aufo) {
+    try { aufo = JSON.parse(ls.get(AUF_LS) || '{}'); } catch (e) { nlErr(e); }
+    if (!aufo || typeof aufo !== 'object') aufo = {};
+    if (aufo['~v'] !== 3) {                              // 17/11/2026: i vecchi «senza foto» si ricercano (v2: anche Wikidata; v3: anche le foto non libere di it.wikipedia, Flaiano)
+      Object.keys(aufo).forEach(function (k) { if (!Array.isArray(aufo[k]) || !aufo[k][0]) delete aufo[k]; });
+      aufo['~v'] = 3;
+      try { ls.set(AUF_LS, JSON.stringify(aufo)); } catch (e) { nlErr(e); }
+    }
+  }
+  return aufo;
+}
+function aufGet(name) {                                  // indirizzo della foto; '' = cercata, non c'e'; null = da cercare
+  var x = aufMap()[L.norm(name)];
+  if (!Array.isArray(x)) return null;
+  if (!x[0] && Date.now() - (Number(x[1]) || 0) > AUF_RETRY) return null;
+  return /^https:\/\/upload\.wikimedia\.org\//.test(x[0] || '') ? x[0] : '';
+}
+function aufSave(name, url) {
+  var m = aufMap(), ks = Object.keys(m).filter(function (k) { return k.charAt(0) !== '~'; });
+  if (ks.length >= 2000) ks.sort(function (a, b) { return (m[a][1] || 0) - (m[b][1] || 0); }).slice(0, 200).forEach(function (k) { delete m[k]; });
+  m[L.norm(name)] = [url || '', Date.now()];
+  try { ls.set(AUF_LS, JSON.stringify(m)); } catch (e) { nlErr(e); }
+}
+function aufImg(url) { return '<img class="gc-img" src="' + esc(url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-rm>'; }
+function aufPaint(name, url) {
+  var k = L.norm(name);
+  Array.prototype.forEach.call(document.querySelectorAll('.gc-face[data-aun]'), function (el) {
+    if (L.norm(el.dataset.aun) !== k) return;
+    el.removeAttribute('data-auf');
+    var im = el.querySelector('.gc-img');
+    if (im && url && im.getAttribute('src') !== url) { im.remove(); im = null; }
+    if (url && !im) el.insertAdjacentHTML('beforeend', aufImg(url));
+  });
+}
+var aufFails = 0, aufLater = 0;
+async function aufRun() {
+  if (aufBusy) return; aufBusy = true;
+  try {
+    while (aufQ.length) {
+      if (navigator.onLine === false) { aufQ = []; aufAgain(); break; }
+      var name = aufQ.shift();
+      if (aufGet(name) !== null) { aufPaint(name, aufGet(name)); continue; }
+      try {
+        var r = await auLookup(name);
+        if (r && r.retry) throw r;
+        aufFails = 0; aufSave(name, (r && r.img) || ''); aufPaint(name, (r && r.img) || '');
+      } catch (e) {                                     // errore: si salta solo questo autore (17/11/2026; prima si buttava via tutta la coda)
+        if (++aufFails >= 3) { aufQ = []; aufFails = 0; aufAgain(); break; }   // tre di fila: rete assente o lenta, si riprova tra un minuto
+      }
+    }
+  } finally { aufBusy = false; }
+}
+function aufAgain() {                                    // si riguardano le copertine ancora senza foto che si vedono
+  clearTimeout(aufLater);
+  aufLater = setTimeout(function () { if (aufIO) Array.prototype.forEach.call(document.querySelectorAll('#list [data-auf]'), function (el) { aufIO.unobserve(el); aufIO.observe(el); }); }, 60000);
+}
+window.addEventListener('online', function () { if (aufIO) Array.prototype.forEach.call(document.querySelectorAll('#list [data-auf]'), function (el) { aufIO.unobserve(el); aufIO.observe(el); }); });
+function aufWant(name) { if (aufQ.indexOf(name) < 0) aufQ.push(name); aufRun(); }
+function aufWatch(root) {                                // si cercano solo le foto dei gruppi che si vedono
+  var els = root.querySelectorAll('[data-auf]'); if (!els.length) return;
+  if (!window.IntersectionObserver) { Array.prototype.forEach.call(els, function (el) { aufWant(el.dataset.aun); }); return; }
+  if (!aufIO) aufIO = new IntersectionObserver(function (es) {
+    es.forEach(function (x) { if (x.isIntersecting) { aufIO.unobserve(x.target); if (x.target.dataset.auf) aufWant(x.target.dataset.aun); } });
+  }, { rootMargin: '200px' });
+  Array.prototype.forEach.call(els, function (el) { aufIO.observe(el); });
+}
+function grpInitials(name) { return name.split(/\s+/).filter(function (w) { return /^[\p{L}\d]/u.test(w); }).map(function (w) { return w.charAt(0); }).slice(-2).join('').toUpperCase() || '?'; }
+/* icone a linee dei generi (24×24, tratto) e regole per riconoscerle dal nome del genere (Piero, 17/11/2026: al posto dell'iniziale);
+   generi non riconosciuti: un libro chiuso */
+var GEN_ICO = {
+  lente: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/>',
+  fantasma: '<path d="M6 20.5V10a6 6 0 0 1 12 0v10.5l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5z"/><circle cx="10" cy="10.5" r=".6"/><circle cx="14" cy="10.5" r=".6"/>',
+  razzo: '<path d="M12 2.5c3 2.5 4.5 6 4.5 10l-1.5 3.5h-6L7.5 12.5c0-4 1.5-7.5 4.5-10z"/><circle cx="12" cy="9.5" r="1.8"/><path d="M7.6 12.8L5 16.5h3.6M16.4 12.8L19 16.5h-3.6M10.5 19l1.5 2.5 1.5-2.5"/>',
+  bacchetta: '<path d="M4 20L15 9"/><path d="M17 3v4M15 5h4M20 10v2M19 11h2M10.5 3v2M9.5 4h2"/>',
+  cuore: '<path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7.5 3c0 5.4-7.5 10-7.5 10z"/>',
+  bussola: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  globo: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.5-3.8-9S9.5 5.5 12 3z"/>',
+  colonna: '<path d="M4 9h16L12 4zM6 9v8M10 9v8M14 9v8M18 9v8M5 17h14M4 20h16"/>',
+  persona: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6"/>',
+  piuma: '<path d="M20 4C12 4 7 9 6 17l-2 3"/><path d="M20 4c0 7-4 12-12.5 13"/><path d="M9 13h5"/>',
+  maschera: '<path d="M5 4h14v7a7 7 0 0 1-14 0z"/><path d="M8.5 9h2M13.5 9h2M9 14c1.8 1.5 4.2 1.5 6 0"/>',
+  palloncino: '<path d="M12 3c3.3 0 5.5 2.6 5.5 5.8 0 3.6-2.8 6.7-5.5 6.7S6.5 12.4 6.5 8.8C6.5 5.6 8.7 3 12 3z"/><path d="M12 15.5l-1 1.5h2zM12 17c0 2-2 2.5-1 4.5"/>',
+  fumetto: '<path d="M4 5h16v11H10l-4 4v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  atomo: '<circle cx="12" cy="12" r="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(-60 12 12)"/>',
+  bilancia: '<path d="M12 4v16M8 20h8M5 7h14M5 7l-2.5 6a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+  grafico: '<path d="M4 4v16h16"/><path d="M7.5 15l3.5-4 3 3 5-6.5"/>',
+  lampadina: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.3 1 2.1v.5h5V16c0-.8.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  candela: '<path d="M9 21h6V10.5H9zM12 10.5V8.5"/><path d="M12 3c1.2 1.5 1.5 2.6 0 4.2-1.5-1.6-1.2-2.7 0-4.2z"/>',
+  fotocamera: '<path d="M4 7.5h3l2-2.5h6l2 2.5h3V19H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  tavolozza: '<path d="M12 3a9 9 0 0 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/>',
+  nota: '<path d="M9 18V5.5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16.5" r="2.5"/>',
+  forchetta: '<path d="M7 3v6a2 2 0 0 0 4 0V3M9 11v10M17 21V3c-2 1-3 4-3 8h3"/>',
+  foglia: '<path d="M5 19C5 10 10 5 20 4c-1 10-6 15-15 15z"/><path d="M5 19l8-8"/>',
+  pallone: '<circle cx="12" cy="12" r="9"/><path d="M12 8l3.8 2.8-1.5 4.4H9.7l-1.5-4.4zM12 3v5M15.8 10.8l4.6-1.6M14.3 15.2l2.7 4M9.7 15.2L7 19.2M8.2 10.8L3.6 9.2"/>',
+  battito: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+  faccina: '<circle cx="12" cy="12" r="9"/><path d="M8 14c2 2.5 6 2.5 8 0"/><circle cx="9" cy="9.5" r=".6"/><circle cx="15" cy="9.5" r=".6"/>',
+  computer: '<path d="M4 5h16v10H4zM2 19h20"/>',
+  casa: '<path d="M3 11l9-7 9 7M5 9.5V20h14V9.5"/><path d="M10 20v-5h4v5"/>',
+  dialogo: '<path d="M3 4h11v7H7.5L4.5 14v-3H3z"/><path d="M10 14h6.5l3 3v-3H21V8h-4"/>',
+  libroAperto: '<path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5c-3.5-.5-6.5 0-8.5 1.5zM12 6.5v13"/>',
+  libro: '<path d="M5 19.5V4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5 1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 7h6"/>'
+};
+var GEN_RULES = [
+  ['fumetto', /fumett|graphic|manga|comics/], ['lente', /giall|thriller|noir|polizi|mystery|investig|spionag|crime/],
+  ['fantasma', /horror|orror|paura|gotic/], ['razzo', /fantascien|science fiction|sci-fi|distop|cyberpunk/],
+  ['bacchetta', /fantasy|fantastic|magia|fiab|favol|mitolog/], ['cuore', /\brosa\b|romance|amor|sentimental|erotic/],
+  ['bussola', /avventur|western|pirat/], ['globo', /viagg|geograf|turism/], ['persona', /biograf|memori|diari|autobiograf/],
+  ['colonna', /storia|storic|archeolog|classic/], ['piuma', /poesi|poet|versi/], ['maschera', /teatr|dramm|spettacol|cinema/],
+  ['palloncino', /ragazz|bambin|infanzia|young|junior|scolast/], ['bilancia', /politic|diritto|giurid|social|sociolog|attualit|cronaca/],
+  ['grafico', /econom|finanz|business|management|marketing/], ['atomo', /scienz|fisic|chimic|biolog|matemat|astronom/],
+  ['candela', /religi|spiritual|teolog|bibbi/], ['lampadina', /saggi|filosof|psicolog|crescita|self|manual|divulgaz|pensiero/],
+  ['fotocamera', /fotograf/], ['tavolozza', /\barte\b|\barti\b|pittur|design|architett/], ['nota', /music|canzon|lirica/],
+  ['forchetta', /cucin|ricett|gastronom|enolog|\bvin/], ['foglia', /natur|animal|giardin|ambient|ecolog|botanic/],
+  ['pallone', /sport|calcio|montagn|alpinism/], ['battito', /medicin|salute|benessere|fitness/],
+  ['faccina', /umoris|comic|satir|ironi/], ['computer', /informat|tecnolog|computer|programmaz|ingegner/],
+  ['casa', /famigl|\bcasa\b|genitor|hobby|bricol/], ['dialogo', /lingu|dizionar|consultaz|studio|grammatic/],
+  ['libroAperto', /romanz|narrativ|raccont|fiction|letteratur|novell|antolog/]
+];
+function genIco(name) {
+  var k = String(name || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''), ico = 'libro';
+  for (var i = 0; i < GEN_RULES.length; i++) if (GEN_RULES[i][1].test(k)) { ico = GEN_RULES[i][0]; break; }
+  return '<svg class="gc-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + GEN_ICO[ico] + '</svg>';
+}
+/* figura del gruppo (17/11/2026): genere = icona e nome al centro; autore = foto, senza foto nome piccolo e COGNOME grande al centro;
+   nel tondo piccolo (elenco, sezioni aperte) icona del genere e iniziali dell'autore */
+function grpFace(kind, name, none, small) {
+  var url = kind === 'aut' && !none ? aufGet(name) : '';
+  var wait = kind === 'aut' && !none && url === null, inner;
+  if (none) inner = '<b>?</b>';
+  else if (kind === 'gen') inner = small ? genIco(name) : genIco(name) + '<b class="gc-gn">' + esc(name) + '</b>';
+  else if (small) inner = '<b>' + esc(grpInitials(name)) + '</b>';
+  else {
+    var pp = L.authorParts(name, settings.auCut[L.norm(name)]), sur = pp.sur || pp.name, giv = pp.sur ? pp.given : '';
+    var lw = Math.max.apply(null, sur.split(/\s+/).map(function (w) { return w.length; }));   // la parola piu' lunga del cognome deve stare in una riga
+    inner = (giv ? '<small class="gc-nm">' + esc(giv) + '</small>' : '') + '<b class="gc-sur" style="--fs:' + Math.max(12, Math.min(20, Math.floor(94 / (0.8 * Math.max(lw, 4))))) + 'px">' + esc(sur) + '</b>';
+  }
+  return '<span class="gc-face' + (small ? ' sm' : '') + (kind === 'gen' ? ' gc-gen' : '') + '"' + (kind === 'aut' && !none ? ' data-aun="' + esc(name) + '"' : '') + (wait ? ' data-auf="' + esc(L.norm(name)) + '"' : '') + '>' +
+    '<span class="ph gc-ph' + (kind === 'aut' ? ' gc-au' : '') + (!small && !none ? ' gc-big' : '') + '" style="--h:' + (none ? 200 : hue(name)) + '">' + inner + '</span>' + (url ? aufImg(url) : '') + '</span>';
+}
+function grpLibri(n) { return n + (n === 1 ? ' libro' : ' libri'); }
 function renderGroups(list, vis, g) {
-  var all = !!(q || activeCount()), dups = settings.view === 'grid' ? null : computeDups(), n = 0;
-  var inner = function (a) { return settings.view === 'grid' ? '<div class="grid">' + a.map(coverHTML).join('') + '</div>' : a.map(function (b) { return rowHTML(b, dups); }).join(''); };
+  var isGrid = settings.view === 'grid', dups = isGrid ? null : computeDups(), n = 0, forced = !!(q || activeCount());
+  var exp = forced ? grpFltShut !== fltSig() : !!settings.grpExp;   // con filtri o ricerca si parte tutto aperto, ma si può comprimere
+  var inner = function (a) { return isGrid ? '<div class="grid">' + a.map(coverHTML).join('') + '</div>' : a.map(function (b) { return rowHTML(b, dups); }).join(''); };
   var hasOpen = function (a) { return a.some(function (b) { return openState[b.id] && b.t; }); };
-  var sec = function (key, title, books, body, sub) {
-    var id = 'grp-' + (n++), open = all || !!settings.grpOpen[key] || hasOpen(books);
+  var isOpen = function (key, books) { return exp ? !grpShutX[key] : (!!settings.grpOpen[key] || hasOpen(books)); };
+  var kindOf = function (lvl) { return g === 'aut' || (g === 'genaut' && lvl === 2) ? 'aut' : 'gen'; };
+  var lab = function (x, kind) { return kind === 'aut' && x[0] !== '~' ? auShow(x[1]) : x[1]; };   // nome mostrato; x[1] resta il nome vero (foto, «Chi è»)
+  /* sezione apribile (gruppi espansi, lettura, generi di Genere › Autore) */
+  var sec = function (key, x, body, sub, kind) {
+    var id = 'grp-' + (n++), open = isOpen(key, x[2]);
     return '<section class="shelf grp' + (sub ? ' grp-sub' : '') + '"><button type="button" class="shelf-h" data-gk="' + esc(key) + '" aria-expanded="' + open + '" aria-controls="' + id + '">' +
-      '<span class="sh-t">' + esc(title) + '</span><span class="sh-n">' + books.length + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      (kind ? grpFace(kind, x[1], x[0] === '~', true) : '') +
+      '<span class="sh-t">' + esc(lab(x, kind)) + '</span><span class="sh-n">' + x[2].length + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
       '<div class="shelf-b" id="' + id + '"' + (open ? '' : ' hidden') + '>' + body + '</div></section>';
   };
-  list.innerHTML = grpParts(vis, g).map(function (x) {
-    var key = g + ':' + tab + ':' + x[0];
-    var body = x[3] ? x[3].map(function (y) { return sec(key + '/' + y[0], y[1], y[2], inner(y[2]), true); }).join('') : inner(x[2]);
-    return sec(key, x[1], x[2], body, false);
-  }).join('');
-  if (settings.view !== 'grid') { emit('rows', list); autosizeAll(list); }
+  /* gruppi come copertine (o righe nell'elenco); il riquadro con i libri si apre sotto */
+  var panel = function (key, x, kind, i, open, id, inside) {
+    return '<div class="gpanel" id="' + id + '" data-gi="' + i + '"' + (open ? '' : ' hidden') + '><div class="gp-h"><b>' + esc(lab(x, kind)) + '</b><small>' + grpLibri(x[2].length) + '</small><span class="gp-sp"></span>' +
+      (kind === 'aut' && x[0] !== '~' ? '<button type="button" class="link gp-who" data-gau="' + esc(x[1]) + '" data-gid="' + esc(x[2][0].id) + '">Chi è ›</button>' : '') +
+      '<button type="button" class="ico gp-x" data-gk="' + esc(key) + '" aria-label="Chiudi">×</button></div>' + (inside != null ? inside : inner(x[2])) + '</div>';
+  };
+  var cards = function (groups, kind, base, sub) {     // sub: Genere › Autore, nel riquadro del genere le copertine degli autori (17/11/2026)
+    var h = groups.map(function (x, i) {
+      var key = base + '/' + x[0], open = isOpen(key, x[2]), id = 'grp-' + (n++), none = x[0] === '~';
+      var aria = ' data-gk="' + esc(key) + '" aria-expanded="' + open + '" aria-controls="' + id + '" aria-label="' + esc(lab(x, kind) + ', ' + grpLibri(x[2].length)) + '"';
+      var card = isGrid
+        ? '<button type="button" class="cover gcard' + (open ? ' on' : '') + '" style="order:' + (2 * i) + '"' + aria + '><span class="art">' + grpFace(kind, x[1], none) + '<span class="gc-n">' + x[2].length + '</span></span>' +
+            '<span class="cap">' + esc(lab(x, kind)) + '</span><span class="cap2">' + grpLibri(x[2].length) + '</span></button>'
+        : '<button type="button" class="grow' + (open ? ' on' : '') + '"' + aria + '>' + grpFace(kind, x[1], none, true) + '<span class="gr-t"><b>' + esc(lab(x, kind)) + '</b><small>' +
+            esc(x[2].slice(0, 2).map(function (b) { return '«' + (b.t || 'senza titolo') + '»'; }).join(', ') + (x[2].length > 2 ? '…' : '')) + '</small></span><span class="sh-n">' + x[2].length + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>';
+      return card + panel(key, x, kind, i, open, id, sub && x[3] ? cards(x[3], 'aut', key) : null);
+    }).join('');
+    return isGrid ? '<div class="grid gcards">' + h + '</div>' : '<div class="glist">' + h + '</div>';
+  };
+  var body = function (parts) {
+    var base = g + ':' + tab;
+    if (g === 'read') return parts.map(function (x) { return sec(base + ':' + x[0], x, inner(x[2]), false); }).join('');
+    if (exp) return parts.map(function (x) {
+      var key = base + ':' + x[0];
+      if (x[3]) return sec(key, x, x[3].map(function (y) { return sec(key + '/' + y[0], y, inner(y[2]), true, 'aut'); }).join(''), false);
+      return sec(key, x, inner(x[2]), false, kindOf(1));
+    }).join('');
+    if (g === 'genaut') return cards(parts, 'gen', base, true);   // generi a copertine, dentro gli autori a copertine (Piero, 17/11/2026)
+    return cards(parts, kindOf(1), base);
+  };
+  var tools = '<div class="grp-tools"><button type="button" class="gx" data-gx="1"' + (exp ? ' disabled' : '') + '>Espandi tutto</button><button type="button" class="gx" data-gx="0">Comprimi tutto</button></div>';
+  var now = tab === 'lib' ? vis.filter(function (b) { return b.rs === 'in'; }) : [], rest = now.length ? vis.filter(function (b) { return b.rs !== 'in'; }) : vis;
+  var html = body(grpParts(rest, g));
+  if (now.length) {
+    var sh = function (k, title, inside, cnt) {
+      var open = !(settings.shelfShut || {})[k];
+      return '<section class="shelf shelf-' + k + '"><button type="button" class="shelf-h" data-shelf="' + k + '" aria-expanded="' + open + '" aria-controls="shelf-' + k + '">' +
+        (k === 'now' ? '<svg class="sh-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z"/></svg>' : '') +
+        '<span>' + esc(title) + '</span><span class="sh-n">' + cnt + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
+        '<div class="shelf-b" id="shelf-' + k + '"' + (open ? '' : ' hidden') + '>' + inside + '</div></section>';
+    };
+    list.innerHTML = sh('now', 'In lettura', inner(now), now.length) + (rest.length ? sh('all', 'Gli altri libri', tools + html, rest.length) : '');
+  } else list.innerHTML = tools + html;
+  list.classList.toggle('grp-exp', exp);
+  gcPlace(list); aufWatch(list);
+  if (!isGrid) { emit('rows', list); autosizeAll(list); }
   paintSel();
 }
+/* riquadro dei libri subito dopo la riga di copertine del suo gruppo (con «order»: le colonne cambiano con la larghezza) */
+function gcPlace(root) {
+  Array.prototype.forEach.call(root.querySelectorAll('.gcards'), function (gr) {
+    if (!gr.offsetParent) return;
+    var cols = getComputedStyle(gr).gridTemplateColumns.split(' ').filter(Boolean).length || 1, cnt = gr.querySelectorAll(':scope > .gcard').length;
+    Array.prototype.forEach.call(gr.querySelectorAll(':scope > .gpanel'), function (p) {
+      var i = Number(p.dataset.gi) || 0, end = Math.min(cnt - 1, Math.floor(i / cols) * cols + cols - 1);
+      p.style.order = 2 * end + 1;
+      p.style.setProperty('--x', (((i % cols) + 0.5) / cols * 100).toFixed(1) + '%');
+    });
+  });
+}
+window.addEventListener('resize', function () { var l = $('#list'); if (l && grpMode()) gcPlace(l); });
 function rowEl(id) { return $('#list').querySelector('[data-id="' + id + '"]'); }
 function refreshRow(id) {
   if (scanning) return;
@@ -3929,11 +4245,12 @@ function refreshRow(id) {
 }
 function eur(n) { return eurFmt.format(n); }
 function updateSummary() {
+  renderOwner();                                   // «Libreria di» / «Desideri di» segue la scheda
   var all = tabBooks().filter(hasData), done = all.filter(function (b) { return !b.xs; });
   var gone = all.length - done.length;
   var total = done.reduce(function (a, b) { return a + (b.c || 0); }, 0);
   var g = all.filter(function (b) { return b.g.length; }).length;
-  var loans = tab === 'lib' ? done.filter(function (b) { return b.p; }).length : 0;
+  var loans = tab === 'lib' ? done.filter(isLoan).length : 0;
   var n = done.length;
   $('#summary').innerHTML = tab === 'wish'
     ? (n ? '<b>' + n + '</b> da comprare · <b>' + esc(eur(total)) + '</b>' : 'Nessun libro da comprare')
@@ -3945,6 +4262,7 @@ function updateSummary() {
   $('#cntLib').textContent = nl; $('#cntWish').textContent = nw;
   $('#tabLib').setAttribute('aria-selected', tab === 'lib' ? 'true' : 'false');
   $('#tabWish').setAttribute('aria-selected', tab === 'wish' ? 'true' : 'false');
+  $('#sort').value = sortBy; $('#grp').value = settings.grp || ''; pickSync();   // riga «Ordina · Raggruppa» sempre in vista
   nxBoxPaint(); emit('list');
   $('#btnNews').hidden = tab !== 'wish' || !state.books.some(function (b) { return !b.w && b.a; });
   $('#btnShareWish').hidden = !shareable().length || !(tab === 'wish' || activeCount() || q);     // Desideri, oppure una selezione (preferiti, genere, ricerca...)
@@ -4065,6 +4383,7 @@ function pickTitle(i) {
     if (res.moved) { openState[res.moved.id] = false; renderList(); updateSummary(); toast('Era nei Desideri: spostato in Libreria. ' + (res.moved.t || code)); return; }
     var b = res.book;
     b.t = c.t; b.a = c.a; if (c.img) b.img = c.img;           // si vede subito; il resto arriva dalle banche dati
+    if (c.img && S[b.id]) S[b.id].keepImg = true;              // la copertina toccata nei risultati resta: la ricerca per ISBN non la cambia (Piero, 17/11/2026)
     openState[b.id] = false;
     renderList(); updateSummary(); addedToast(b); askPrice(b.id);
     return;
@@ -4456,7 +4775,7 @@ function testImage(u) {
   return new Promise(function (res) {
     var im = new Image(), t = setTimeout(function () { res(false); }, 12000);
     im.referrerPolicy = 'no-referrer';
-    im.onload = function () { clearTimeout(t); var w = im.naturalWidth, r = im.naturalHeight / Math.max(1, w); res(w >= 250 && r > 1.05 && r < 2.1); };
+    im.onload = function () { clearTimeout(t); var w = im.naturalWidth, h = im.naturalHeight, r = h / Math.max(1, w); res(w >= 250 && r > 1.05 && r < 2.1 && !(w === 575 && h === 750 && /books\.google/.test(u))); };   // 575x750: «immagine non disponibile» di Google
     im.onerror = function () { clearTimeout(t); res(false); };
     im.src = u;
   });
@@ -4465,7 +4784,8 @@ function testImage(u) {
 function googleBig(img) {
   if (!L.googleVolumeId(img)) return [];
   var u = String(img).replace(/^http:\/\//i, 'https://').replace(/&edge=curl/g, '');
-  return ['0', '3'].map(function (z) { return /[?&]zoom=\d/.test(u) ? u.replace(/([?&]zoom=)\d/, '$1' + z) : u + '&zoom=' + z; }).filter(function (x) { return x !== img; });
+  /* solo zoom=3 (medium): zoom=0 spesso da' la prima pagina del libro, non la copertina (17/11/2026) */
+  return ['3'].map(function (z) { return /[?&]zoom=\d/.test(u) ? u.replace(/([?&]zoom=)\d/, '$1' + z) : u + '&zoom=' + z; }).filter(function (x) { return x !== img; });
 }
 function probeCover(id) {
   var b = get(id);
@@ -4721,7 +5041,7 @@ function updateActiveFilters() {
   if (readFlt && tab === 'lib') chip('read', READ_TXT[readFlt]);
   if (shFlt) chip('sh', shFlt === NONE ? 'Senza scaffale' : 'Scaffale: ' + facetName('sh', shFlt));
   if (genFlt) chip('gen', genFlt === NONE ? 'Senza genere' : 'Genere: ' + facetName('gen', genFlt));
-  if (autFlt) chip('aut', 'Autore: ' + autName);
+  if (autFlt) chip('aut', 'Autore: ' + auShow(autName));
   if (edFlt) chip('ed', 'Casa editrice: ' + facetName('e', edFlt));
   $('#activeFlt').innerHTML = o;
   var n = activeCount(), bd = $('#fltBadge');
@@ -4729,7 +5049,7 @@ function updateActiveFilters() {
   $('#btnFilters').setAttribute('aria-pressed', n ? 'true' : 'false');
   $('#edgeTab').classList.toggle('on', !!n);
   $('#edgeTab').setAttribute('aria-label', 'Apri il menu' + (n ? ' (' + n + (n === 1 ? ' attivo)' : ' attivi)') : ''));
-  $('#btnFilters').setAttribute('aria-label', 'Filtri e ordine' + (n ? ' (' + n + (n === 1 ? ' filtro attivo)' : ' filtri attivi)') : ''));
+  $('#btnFilters').setAttribute('aria-label', 'Filtri' + (n ? ' (' + n + (n === 1 ? ' filtro attivo)' : ' filtri attivi)') : ''));
 }
 $('#activeFlt').addEventListener('click', function (e) {
   var x = e.target.closest('[data-clear]');
@@ -4779,7 +5099,7 @@ function renderDrawer() {
   var fix = ['guess', 'dup'].filter(function (k) { return cnt[k] || flt === k; });
   if (fix.length) o += '<h3>Da sistemare</h3><div class="dpills">' + fix.map(function (k) { return pill('flt', k, FLT_TXT[k], cnt[k], flt, ' fix'); }).join('') + '</div>';
   var pre = '';
-  if (autFlt) pre += '<p class="dq"><span>Autore: ' + esc(autName) + '</span><button type="button" class="ico" data-g="aut" data-v="" aria-label="Togli il filtro autore">×</button></p>';
+  if (autFlt) pre += '<p class="dq"><span>Autore: ' + esc(auShow(autName)) + '</span><button type="button" class="ico" data-g="aut" data-v="" aria-label="Togli il filtro autore">×</button></p>';
   if (edFlt) pre += '<p class="dq"><span>Casa editrice: ' + esc(facetName('e', edFlt)) + '</span><button type="button" class="ico" data-g="ed" data-v="" aria-label="Togli il filtro casa editrice">×</button></p>';
   o = pre + o;
   var body = $('#drawerBody'), st = body.scrollTop;
@@ -4787,6 +5107,7 @@ function renderDrawer() {
   body.scrollTop = st;
   $('#sort').value = sortBy;
   $('#grp').value = settings.grp || '';
+  pickSync(); pickClose();
   paintMenuHome();
   $('#drawerHint').hidden = !!settings.swiped;
   updateDrawerFoot();
@@ -4836,7 +5157,7 @@ function releaseDrawerStyles() {
 var drawerTab = 'opt', drawerSub = false;      // 'opt' = pagina principale del menu, 'flt' = filtri e ordine
 function setDrawerTab(t) {
   drawerTab = t === 'flt' ? 'flt' : 'opt';
-  $('#drawerH').textContent = drawerTab === 'flt' ? 'Filtri e ordine' : 'Menu';
+  $('#drawerH').textContent = drawerTab === 'flt' ? 'Filtri' : 'Menu';
   $('#drawerBack').hidden = drawerTab !== 'flt';
   $('#drawerFilters').hidden = drawerTab !== 'flt';
   $('#drawerOpts').hidden = drawerTab !== 'opt';
@@ -4848,7 +5169,7 @@ var SORT_TXT = { recent: 'dai più recenti', titolo: 'per titolo', autore: 'per 
 function paintMenuHome() {                        // la pagina principale riassume filtri e ordine, senza mostrarli
   var n = activeCount(), lib = tab === 'lib';
   var what = n ? (n === 1 ? '1 filtro attivo' : n + ' filtri attivi') : (lib ? 'Tutti i libri' : 'Tutti i desideri');
-  $('#goFltTxt').textContent = what + (q ? ', con ricerca' : '') + ', ' + (SORT_TXT[sortBy] || 'dai più recenti') + (grpMode() ? ', ' + GRP_TXT[grpMode()] : '');
+  $('#goFltTxt').textContent = what + (q ? ', con ricerca' : '');   // ordine e gruppi stanno nella riga sotto la ricerca (17/11/2026 notte)
   $('#goFltN').hidden = !n; $('#goFltN').textContent = n;
   $('#goFilters').classList.toggle('on', !!(n || q));
   var nq = allQuotes().length;
@@ -5019,6 +5340,7 @@ function applyLook(rerender) {
   ['theme', 'pal', 'ft', 'fb', 'viewDef'].forEach(function (k) {
     Array.prototype.forEach.call(document.querySelectorAll('input[name="' + k + '"]'), function (r) { r.checked = r.value === settings[k]; });
   });
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="auInv"]'), function (r) { r.checked = Number(r.value) === settings.auInv; });
   $('#icoLoan').innerHTML = icon('loan');
   if (rerender) { renderList(); updateSummary(); }
 }
@@ -5029,6 +5351,7 @@ document.addEventListener('change', function (e) {
   else if (t.name === 'pal' && PALS[t.value]) { settings.pal = t.value; saveSettings(); applyLook(false); }
   else if (t.name === 'ft' && FONTS_T.indexOf(t.value) >= 0) { settings.ft = t.value; saveSettings(); applyLook(false); }
   else if (t.name === 'fb' && FONTS_B.indexOf(t.value) >= 0) { settings.fb = t.value; saveSettings(); applyLook(false); }
+  else if (t.name === 'auInv') { settings.auInv = t.value === '0' ? 0 : 1; saveSettings(); renderList(); updateActiveFilters(); }
   else if (t.name === 'viewDef') { settings.viewDef = t.value === 'list' ? 'list' : 'grid'; setView(settings.viewDef); collapseCards(); renderList(); toast(settings.viewDef === 'grid' ? 'All\'apertura: copertine.' : 'All\'apertura: elenco.'); }
 });
 $('#lookReset').addEventListener('click', function () {
@@ -5426,7 +5749,7 @@ function saveName(v) {
 function renderOwner() {
   var el = $('#owner');
   if (guest) { el.innerHTML = 'Libreria di <b>' + esc(guest.name) + '</b>'; return; }
-  el.innerHTML = settings.name ? '<b>' + esc(settings.name) + '</b>'   // una riga sola con i numeri: «Piero R. · 120 libri» (17/11/2026)
+  el.innerHTML = settings.name ? (tab === 'wish' ? 'Desideri di ' : 'Libreria di ') + '<b>' + esc(settings.name) + '</b>'   // «Libreria di Piero R. · 120 libri», nei Desideri «Desideri di Piero R.» (Piero, 17/11/2026)
     : '<button type="button" class="link" id="ownerSet">Scrivi il tuo nome</button>';
 }
 $('#owner').addEventListener('click', function (e) { if (e.target.closest('#ownerSet')) { openOptions('share'); setTimeout(function () { try { $('#optName').focus(); } catch (x) {} }, 80); } });
@@ -5904,6 +6227,7 @@ function saveGoal() {
   toast(v ? 'Obiettivo: ' + v + (v === 1 ? ' libro' : ' libri') + ' quest\'anno.' : 'Obiettivo tolto.');
 }
 function openStats() {
+  if (guest) guestExit(true);                      // «Per te» e il Menu parlano sempre della tua libreria (Piero, 17/11/2026 sera)
   var books = tabBooks().filter(hasData);
   if (!books.length) { toast('Aggiungi qualche libro per vedere le statistiche.'); return; }
   var st = L.computeStats(books);
@@ -6061,17 +6385,35 @@ list.addEventListener('keydown', function (e) {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && (((e.target.dataset.act === 'verify' || e.target.dataset.act === 'loan' || e.target.dataset.act === 'recv' || e.target.dataset.act === 'dup') && e.target.classList.contains('tag')) || (e.target.dataset.act === 'toggle' && e.target.classList.contains('sum')) || (e.target.dataset.act === 'zoom' && e.target.classList.contains('thumb')))) { e.preventDefault(); e.target.click(); return; }
   if (e.key === 'Enter' && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) { e.preventDefault(); e.target.blur(); }
 });
+function grpToggle(h, open) {                          // apre o chiude un gruppo (sezione, copertina o riga) e se lo ricorda
+  var key = h.dataset.gk, gb = document.getElementById(h.getAttribute('aria-controls'));
+  h.setAttribute('aria-expanded', open ? 'true' : 'false'); h.classList.toggle('on', open);
+  if (gb) { gb.hidden = !open; if (open) { gcPlace(gb); aufWatch(gb); } }
+  if ($('#list').classList.contains('grp-exp')) { if (open) delete grpShutX[key]; else grpShutX[key] = 1; return; }
+  if (open) settings.grpOpen[key] = 1; else delete settings.grpOpen[key];
+  saveSettings();
+}
+list.addEventListener('click', function (e) {          // gruppi a copertine o a righe, riquadro dei libri, Espandi / Comprimi tutto
+  var x = e.target.closest('.gcard, .grow, .gp-x, [data-gx], .gp-who'); if (!x || selOn) return;
+  e.stopImmediatePropagation();
+  if (x.dataset.gx) {
+    var on = x.dataset.gx === '1'; grpShutX = {};
+    if (q || activeCount()) grpFltShut = on ? '' : fltSig();   // con filtri o ricerca non cambia la scelta di sempre
+    else { settings.grpExp = on ? 1 : 0; grpFltShut = ''; }
+    if (!on) settings.grpOpen = {};
+    saveSettings(); renderList(); return;
+  }
+  if (x.classList.contains('gp-who')) { openAuthor(x.dataset.gid, x.dataset.gau); return; }
+  if (x.classList.contains('gp-x')) { var c = $('#list').querySelector('.gcard[data-gk="' + CSS.escape(x.dataset.gk) + '"], .grow[data-gk="' + CSS.escape(x.dataset.gk) + '"]'); if (c) { grpToggle(c, false); try { c.focus({ preventScroll: true }); } catch (er) { nlErr(er); } } return; }
+  grpToggle(x, x.getAttribute('aria-expanded') !== 'true');
+}, true);
 list.addEventListener('click', function (e) {          // sezioni «In lettura» / «Gli altri libri»: si aprono e chiudono, e se lo ricorda
   var sh = e.target.closest('.shelf-h'); if (!sh) return;
   e.stopImmediatePropagation();
   var k = sh.dataset.shelf, open = sh.getAttribute('aria-expanded') !== 'true';
   sh.setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (sh.dataset.gk) {                                   // gruppo di «Raggruppa per»
-    var gb = document.getElementById(sh.getAttribute('aria-controls')); if (gb) gb.hidden = !open;
-    if (open) settings.grpOpen[sh.dataset.gk] = 1; else delete settings.grpOpen[sh.dataset.gk];
-    saveSettings(); return;
-  }
-  var body = document.getElementById('shelf-' + k); if (body) body.hidden = !open;
+  if (sh.dataset.gk) { grpToggle(sh, open); return; }  // gruppo di «Raggruppa per»
+  var body = document.getElementById('shelf-' + k); if (body) { body.hidden = !open; if (open) { gcPlace(body); aufWatch(body); } }
   settings.shelfShut = settings.shelfShut || {}; if (open) delete settings.shelfShut[k]; else settings.shelfShut[k] = 1; saveSettings();
 }, true);
 list.addEventListener('click', function (e) {
@@ -6305,6 +6647,87 @@ function endSheetDrag() {
 document.addEventListener('touchend', endSheetDrag);
 document.addEventListener('touchcancel', endSheetDrag);
 $('#q').addEventListener('input', function (e) { q = e.target.value; collapseCards(); renderList(); });
+/* × in alto a destra in tutte le finestre (Piero, 17/11/2026 sera): si aggiunge da sola a ogni finestra che ha «Chiudi» o «Ho capito»
+   (anche a quelle create dai moduli) e fa lo stesso tocco di quel tasto, che resta in fondo. Le richieste con «Annulla» restano com'erano. */
+function sheetCloser(s) {
+  var bs = Array.prototype.slice.call(s.querySelectorAll('.sheet-in button')).filter(function (b) { return !b.classList.contains('sh-x') && !b.closest('.sheet-in .sheet'); });
+  return bs.filter(function (b) { return /^\s*Chiudi\s*$/.test(b.textContent); }).pop() || bs.filter(function (b) { return /^\s*Ho capito\s*$/.test(b.textContent); }).pop() || null;
+}
+function sheetX(s) {
+  if (s.dataset.x) return;
+  var inn = s.querySelector(':scope > .sheet-in'); if (!inn) return;
+  var has = Array.prototype.some.call(inn.querySelectorAll('button'), function (b) { return /^×$/.test(b.textContent.trim()); });   // ha gia' la sua ×
+  if (has) { s.dataset.x = '1'; return; }
+  if (!sheetCloser(s)) return;                     // senza «Chiudi»: si riprova quando la finestra cambia
+  s.dataset.x = '1';
+  var x = document.createElement('button'); x.type = 'button'; x.className = 'ico sh-x'; x.setAttribute('aria-label', 'Chiudi'); x.textContent = '×';
+  x.addEventListener('click', function (e) { e.stopPropagation(); var c = sheetCloser(s); if (c) c.click(); else s.hidden = true; });
+  inn.insertBefore(x, inn.firstChild); inn.classList.add('has-x');
+}
+function sheetsX() { Array.prototype.forEach.call(document.querySelectorAll('.sheet:not([data-x])'), sheetX); }
+if (window.MutationObserver) new MutationObserver(function (ms) {
+  if (ms.some(function (m) { return m.type === 'childList' ? m.addedNodes.length : m.target.classList && m.target.classList.contains('sheet') && !m.target.hidden; })) sheetsX();
+}).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+sheetsX();
+/* «Ordina per» e «Raggruppa per»: al posto della tendina del telefono (Android la apre scura e fuori stile) un tasto che apre
+   una finestrella dell'app con l'elenco e i pallini (Piero, 17/11/2026 sera). La <select> resta, nascosta: tiene il valore. */
+var pickOpen = null;
+function pickSync() {
+  Array.prototype.forEach.call(document.querySelectorAll('select.dsel'), function (s) {
+    var b = s.nextElementSibling; if (!b || !b.classList.contains('dpick')) return;
+    var o = s.options[s.selectedIndex], pre = s.dataset.pre || '';   // nella riga sotto la ricerca: «Raggruppa: Autore», senza gruppo solo «Raggruppa»
+    b.querySelector('.dp-t').textContent = !o ? '' : !o.value && s.dataset.none ? s.dataset.none : pre + (o.dataset.s || o.textContent);
+    b.classList.toggle('sb-on', !!(o && o.value && s.dataset.none));
+  });
+}
+function pickClose(focus) {
+  var m = $('#pickPop'); if (!m || m.hidden) return;
+  m.hidden = true; if (pickOpen) { pickOpen.btn.setAttribute('aria-expanded', 'false'); if (focus) pickOpen.btn.focus(); }
+  pickOpen = null;
+}
+function pickShow(s, btn) {
+  var m = $('#pickPop');
+  if (!m) {
+    m = document.createElement('div'); m.id = 'pickPop'; m.className = 'pick-pop'; m.setAttribute('role', 'listbox'); m.hidden = true;
+    m.addEventListener('click', function (e) {
+      var o = e.target.closest('[data-v]'); if (!o || !pickOpen) return;
+      var sel = pickOpen.sel; pickClose(true);
+      if (sel.value !== o.dataset.v) { sel.value = o.dataset.v; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      pickSync();
+    });
+  }
+  var bar = btn.closest('.sortbar');                       // nella riga «Ordina · Raggruppa» l'elenco va sotto la riga intera
+  if (bar) bar.appendChild(m); else btn.parentNode.insertBefore(m, btn.nextSibling);
+  var lab = document.getElementById(s.getAttribute('aria-labelledby'));
+  m.setAttribute('aria-label', lab ? lab.textContent : '');
+  m.innerHTML = Array.prototype.map.call(s.options, function (o) {
+    var on = o.value === s.value;
+    return '<button type="button" class="pk-o" role="option" data-v="' + esc(o.value) + '" aria-selected="' + on + '"><span class="pk-dot" aria-hidden="true"></span><span>' + esc(o.textContent) + '</span></button>';
+  }).join('');
+  m.hidden = false; pickOpen = { sel: s, btn: btn }; btn.setAttribute('aria-expanded', 'true');
+  var cur = m.querySelector('[aria-selected="true"]') || m.querySelector('.pk-o'); try { cur.focus({ preventScroll: true }); } catch (e) { nlErr(e); }
+  try { m.scrollIntoView({ block: 'nearest' }); } catch (e) { nlErr(e); }
+}
+Array.prototype.forEach.call(document.querySelectorAll('select.dsel'), function (s) {
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'dpick'; b.setAttribute('aria-haspopup', 'listbox'); b.setAttribute('aria-expanded', 'false');
+  if (s.getAttribute('aria-labelledby')) b.setAttribute('aria-labelledby', s.getAttribute('aria-labelledby') + ' ' + (s.id + 'Pick'));
+  var ic = s.id === 'sort' ? '<svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>'
+    : s.id === 'grp' ? '<svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>' : '';
+  b.innerHTML = ic + '<span class="dp-t" id="' + s.id + 'Pick"></span><svg class="dp-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  s.hidden = true; s.tabIndex = -1; s.parentNode.insertBefore(b, s.nextSibling);
+  b.addEventListener('click', function () { if (pickOpen && pickOpen.btn === b) pickClose(); else { pickClose(); pickShow(s, b); } });
+  s.addEventListener('change', pickSync);
+});
+document.addEventListener('click', function (e) { if (pickOpen && !e.target.closest('#pickPop, .dpick')) pickClose(); }, true);
+window.addEventListener('keydown', function (e) {
+  if (!pickOpen) return;
+  if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); pickClose(true); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    var os = Array.prototype.slice.call(document.querySelectorAll('#pickPop .pk-o')), i = os.indexOf(document.activeElement);
+    e.preventDefault(); (os[Math.max(0, Math.min(os.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))] || os[0]).focus();
+  }
+}, true);
+pickSync();
 $('#sort').addEventListener('change', function (e) { sortBy = e.target.value; renderList(); });
 $('#grp').addEventListener('change', function (e) { settings.grp = GRP_TXT[e.target.value] ? e.target.value : ''; saveSettings(); renderList(); if (drawerOpen) { updateDrawerFoot(); renderDrawer(); } });
 $('#fltGuess').addEventListener('click', function () { flt = flt === 'guess' ? '' : 'guess'; collapseCards(); updateSummary(); renderList(); });
@@ -6317,11 +6740,11 @@ $('#fltLoan').addEventListener('click', function () {
   if (on) toast(allLoansText());
 });
 function allLoansText() {
-  var n = state.books.filter(function (b) { return !b.w && b.p; }).length;
-  return n ? (n === 1 ? '1 libro in prestito.' : n + ' libri in prestito, dai più vecchi.') + (document.querySelector('#fltLoan') && document.querySelector('#fltLoan').offsetParent ? ' Tocca di nuovo «Prestati» per vederli tutti.' : ' Tocca di nuovo «in prestito» per vederli tutti.') : 'Nessun libro in prestito.';
+  var n = state.books.filter(function (b) { return !b.w && !b.xs && isLoan(b); }).length;
+  return n ? (n === 1 ? '1 libro in prestito.' : n + ' libri in prestito: prestati a e prestati da, per persona.') + (document.querySelector('#fltLoan') && document.querySelector('#fltLoan').offsetParent ? ' Tocca di nuovo «Prestati» per vederli tutti.' : ' Tocca di nuovo «in prestito» per vederli tutti.') : 'Nessun libro in prestito.';
 }
-$('#tabLib').addEventListener('click', function () { setTab('lib'); });
-$('#tabWish').addEventListener('click', function () { setTab('wish'); });
+$('#tabLib').addEventListener('click', function () { if (guest) guestExit(true); setTab('lib'); });   // Libreria e Desideri: sempre i tuoi (Piero, 17/11/2026 sera)
+$('#tabWish').addEventListener('click', function () { if (guest) guestExit(true); setTab('wish'); });
 $('#btnView').addEventListener('click', function () {
   gridRet = null;
   setView(settings.view === 'grid' ? 'list' : 'grid'); renderList();
@@ -6342,6 +6765,7 @@ $('#statsBody').addEventListener('click', function (e) {
   applyFacet(f, facetKey(v), v);
 });
 function openExport() {
+  if (guest) guestExit(true);                      // «Per te» e il Menu parlano sempre della tua libreria (Piero, 17/11/2026 sera)
   var n = exportBooks().length;
   $('#exportMsg').textContent = n ? 'Esporto i ' + n + (n === 1 ? ' libro' : ' libri') + ' della scheda ' + (tab === 'wish' ? 'Desideri' : 'Libreria') + ', con le colonne che hanno dei dati.' : 'La scheda ' + (tab === 'wish' ? 'Desideri' : 'Libreria') + ' è vuota.';
   updateBackupInfo();
