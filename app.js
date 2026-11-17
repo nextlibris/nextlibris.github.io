@@ -1,0 +1,6671 @@
+(function () {
+'use strict';
+var L = window.Lib;
+
+/* ---------- utilità ---------- */
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+/* Copie parallele (piero907.github.io/next-libris-prova/, …/next-libris-social/, …): stesso codice, ma dati tutti loro. Stanno allo
+   stesso indirizzo di base della versione vera, quindi sul telefono condividerebbero lo stesso spazio: ogni nome di dato ha il
+   prefisso della copia («prova:», «social:»…). COPIA e' il nome della copia ('' per la versione vera); PROVA vale solo per la prova. */
+var COPIA = (location.pathname.match(/\/next-libris-([a-z]+)(\/|$)/) || [])[1] || '';
+var PROVA = COPIA === 'prova';
+function lsKey(k) { return COPIA ? COPIA + ':' + k : k; }
+var ls = {
+  get: function (k) { try { return localStorage.getItem(lsKey(k)); } catch (e) { return null; } },
+  set: function (k, v) { try { localStorage.setItem(lsKey(k), v); return true; } catch (e) { return false; } }
+};
+var ICON = {
+  pen: '<path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20z"/><path d="M13.5 7.5l3 3"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
+  scan: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/>',
+  cam: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  euro: '<path d="M17.5 6.8A6.5 6.5 0 0 0 7 12a6.5 6.5 0 0 0 10.5 5.2M5 10.5h9M5 13.5h9"/>',
+  key: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  redo: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+  fav: '<path d="M12 3.3l2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.7l6-.9z"/>',   // stella (prima segnalibro: si confondeva, Piero 16/11/2026)
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="17.5" cy="5.5" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.1-4.1M8.2 13.2l7.1 4.1"/>',
+  pricetag: '<path d="M3.5 12V5a1.5 1.5 0 0 1 1.5-1.5h7l8.5 8.5a1.5 1.5 0 0 1 0 2.1l-6.4 6.4a1.5 1.5 0 0 1-2.1 0z"/><circle cx="8.2" cy="8.2" r="1.5"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+  filt: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+  chart: '<path d="M4 20h16M7 16v-5M12 16V7M17 16v-8"/>',
+  check: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',
+  down: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  loan: '<path d="M5 4h9a2 2 0 0 1 2 2v3M5 4v14a2 2 0 0 0 2 2h7"/><path d="M13 15h8M18 12l3 3-3 3"/>',
+  bag: '<path d="M6 8h12l-1 12H7z"/><path d="M9 8a3 3 0 0 1 6 0"/><path d="M9.5 14l2 2 3.5-3.5"/>',
+  chev: '<path d="M6 9l6 6 6-6"/>',
+  right: '<path d="M9 5l7 7-7 7"/>',
+  swap: '<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>',
+  tolib: '<path d="M2.5 20.5h14"/><path d="M4 20.5V10h3v10.5M4 12.5h3M4 18h3"/><path d="M8.2 20.5V7.5h3.4v13M8.2 10h3.4M8.2 18h3.4"/><path d="M12.8 20.5l2-8.4 2.7.6-1.9 7.8"/><path d="M19.5 2.5v8.5M16.5 8l3 3 3-3"/>',
+  towish: '<path d="M8.8 20.5S2.5 16.9 2.5 12.6A3.2 3.2 0 0 1 8.8 11a3.2 3.2 0 0 1 6.3 1.6c0 4.3-6.3 7.9-6.3 7.9z"/><path d="M19.5 2.5v8.5M16.5 8l3 3 3-3"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  pub: '<path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6M4 20h16"/>',
+  tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',
+  shelf: '<path d="M4 4v16M20 4v16M4 9h16M4 15h16"/><path d="M8 9V5M11 9V6M15 15v-4"/>',
+  img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  left: '<path d="M15 5l-7 7 7 7"/>'
+};
+/* qualche icona disegnata apposta per l'aspetto «Nuovo» */
+var ICON_NEW = {
+  loan: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M7 8h1.5"/><path d="M14 12h7M18 8.5l3.5 3.5-3.5 3.5"/>',
+  bag: '<path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'
+};
+function icon(n) { var p = (document.documentElement.getAttribute('data-look') === 'nuovo' && ICON_NEW[n]) || ICON[n]; return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+$('#btnScan').innerHTML = icon('scan') + 'Scansiona';
+$('#icoFilt').innerHTML = icon('filt');
+$('#edgeTab').innerHTML = icon('right');
+$('#btnOpts').innerHTML = icon('gear');
+$('#optBack').innerHTML = icon('left');
+$('#photoCam').innerHTML = icon('cam') + 'Scatta una foto';
+$('#photoGal').innerHTML = icon('img') + 'Scegli dalla galleria';
+$('#scanPriceIco').innerHTML = icon('key');
+$('#btnPhoto').innerHTML = icon('cam') + 'Foto';
+$('#btnType').innerHTML = icon('key') + 'Digita';
+$('#btnCheck').innerHTML = icon('check') + 'Ce l\'ho già?';
+$('#icoLoan').innerHTML = icon('loan');
+$('#btnStats').innerHTML = icon('chart') + 'Statistiche';
+$('#btnExport').innerHTML = icon('down') + 'Esporta';
+
+function pool(n) {
+  var active = 0, q = [];
+  function next() {
+    while (active < n && q.length) {
+      var f = q.shift(); active++;
+      f().then(function () { active--; next(); }, function () { active--; next(); });
+    }
+  }
+  return function (fn) { return new Promise(function (res, rej) { q.push(function () { return fn().then(res, rej); }); next(); }); };
+}
+var lookupPool = pool(2), photoPool = pool(1), coverPool = pool(2);
+var eurFmt = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
+
+/* ---------- stato ---------- */
+var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
+/* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
+var APP_VERSION = { v: 100, date: '2026-11-17', note: 'Nuovo indirizzo nextlibris.github.io e trasloco dei libri' };
+var state = { books: [], updated: 0 };
+var hooks = {};                              // moduli aggiuntivi (vedi window.NL in fondo): si agganciano dopo l'avvio
+function emit(name, arg) { (hooks[name] || []).forEach(function (fn) { try { fn(arg); } catch (e) { if (window.console) console.warn('modulo', name, e); } }); }
+var S = {};                                  // stato di sessione per riga: st, msg, thumb, err, cands, lines, price, retry
+var settings = { gbKey: '', price: true, extra: true, lastBackup: 0, snooze: 0, view: 'grid', viewDef: 'grid', openAll: false, sbnUrl: '', loanSnooze: 0, look: 'nuovo', theme: 'light', pal: 'bosco', ft: 'literata', fb: 'plex' };
+var PALS = { inchiostro: ['#EDF0F5', '#10141D'], bordeaux: ['#F2EFEE', '#161112'], bosco: ['#EEF1EE', '#0F1513'] };
+var FONTS_T = ['literata', 'garamond', 'playfair', 'lora', 'merriweather', 'montserrat', 'roboto'], FONTS_B = ['plex', 'roboto', 'lato', 'atkinson', 'lora'];
+var openState = {}, autoOpened = {};
+function collapseCards() { if (!settings.openAll) openState = {}; if (cardPushed) { cardPushed = null; try { history.back(); } catch (e) {} } }   // quando si filtra l'elenco torna compatto   // schede aperte/chiuse in questa sessione (true/false); se manca vale la regola di isOpen
+var q = '', sortBy = 'recent', flt = '', tab = 'lib', readFlt = '', shFlt = '', genFlt = '', autFlt = '', autName = '', edFlt = '';   // shFlt, genFlt: chiave normalizzata, NONE = senza   // flt: '' | 'guess' | 'loan'; tab: 'lib' (Libreria) | 'wish' (Desideri)
+var tSave = null, toastTimer = null, scanning = false, offlineNoted = false;
+
+function newId() { return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function get(id) { for (var i = 0; i < state.books.length; i++) if (state.books[i].id === id) return state.books[i]; return null; }
+function smallImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.img || b.imgL || s.thumb || ''; }
+function bigImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.imgL || b.img || s.big || s.thumb || ''; }
+/* Richieste di oggi a Google Libri e al worker SBN. Il giorno di Google finisce a mezzanotte ora del Pacifico (le 9 da noi),
+   quello di Cloudflare a mezzanotte UTC (l'1 o le 2 di notte da noi). */
+var G_LIMIT = 1000, G_STOP = 950, G_EXTRA = 700;          // con la chiave: 1.000 al giorno; le copertine grandi si fermano prima
+var quota = { d: '', g: 0, ds: '', s: 0 };
+function pacificDay() { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
+function utcDay() { return new Date().toISOString().slice(0, 10); }
+function loadQuota() { try { var q = JSON.parse(ls.get('catalogo-libri-quota') || '{}'); if (q && q.d) quota = { d: q.d, g: q.g | 0, ds: q.ds || q.d, s: q.s | 0 }; } catch (e) {} }
+function rollQuota() {
+  var d = pacificDay(), ds = utcDay();
+  if (quota.d !== d) { quota.d = d; quota.g = 0; }
+  if (quota.ds !== ds) { quota.ds = ds; quota.s = 0; }
+}
+function countCall(k) { rollQuota(); quota[k]++; ls.set('catalogo-libri-quota', JSON.stringify(quota)); if ($('#optSheet').hidden) return; updateQuotaInfo(); }
+function googleLeft(extra) { rollQuota(); return !settings.gbKey || quota.g < (extra ? G_EXTRA : G_STOP); }
+function updateQuotaInfo() {
+  rollQuota();
+  var nf = new Intl.NumberFormat('it-IT');
+  $('#gbCount').innerHTML = 'Richieste oggi: <b>' + nf.format(quota.g) + '</b>' + (settings.gbKey
+    ? ' su 1.000 · si azzera verso le 9' + (quota.g >= G_STOP ? '. Limite quasi raggiunto: le ricerche riprendono domattina' : quota.g >= G_EXTRA ? '. Le copertine grandi aspettano domani' : '')
+    : ' · senza chiave il limite lo decide Google');
+  $('#sbnCount').innerHTML = 'Richieste oggi: <b>' + nf.format(quota.s) + '</b>' + (settings.sbnUrl ? ' su 100.000 · si azzera nella notte' : '');
+}
+/* Worker SBN e chiave Google: quelli usati restano tra i «salvati» (anche dopo «Cancella») per rimetterli con un tocco */
+var LS_SAVED = 'catalogo-libri-saved', saved = { sbn: [], key: [] };
+function loadSaved() {
+  try {
+    var o = JSON.parse(ls.get(LS_SAVED) || '{}');
+    ['sbn', 'key'].forEach(function (k) { saved[k] = Array.isArray(o[k]) ? o[k].filter(function (x) { return typeof x === 'string' && x; }).slice(0, 4) : []; });
+  } catch (e) {}
+  if (settings.sbnUrl && saved.sbn.indexOf(settings.sbnUrl) < 0) remember('sbn', settings.sbnUrl);
+  if (settings.gbKey && saved.key.indexOf(settings.gbKey) < 0) remember('key', settings.gbKey);
+}
+function remember(k, v) { if (!v) return; saved[k] = [v].concat(saved[k].filter(function (x) { return x !== v; })).slice(0, 4); ls.set(LS_SAVED, JSON.stringify(saved)); }
+function svcVal(k) { return k === 'sbn' ? settings.sbnUrl : settings.gbKey; }
+function svcShort(k, v) { return k === 'sbn' ? v.replace(/^https:\/\//, '') : (v.length > 14 ? v.slice(0, 6) + '…' + v.slice(-4) : v); }
+function setSvc(k, v) {
+  if (k === 'sbn') settings.sbnUrl = v; else settings.gbKey = v;
+  backupReady = null;
+  saveSettings(); remember(k, v); renderSvc();
+}
+function renderSvc() {
+  var sb = settings.sbnUrl, gk = settings.gbKey;
+  if (document.activeElement !== $('#sbnUrl')) $('#sbnUrl').value = sb;
+  if (document.activeElement !== $('#gbKey')) $('#gbKey').value = gk;
+  $('#sbnSt').textContent = sb ? 'In uso' : 'Non impostato'; $('#sbnSt').className = 'svc-st' + (sb ? ' on' : '');
+  $('#gbSt').textContent = gk ? 'In uso' : 'Nessuna chiave'; $('#gbSt').className = 'svc-st' + (gk ? ' on' : '');
+  $('#sbnClear').hidden = !sb; $('#gbClear').hidden = !gk;
+  ['sbn', 'key'].forEach(function (k) {
+    var cur = svcVal(k), box = $(k === 'sbn' ? '#sbnSaved' : '#gbSaved'), html = '';
+    saved[k].forEach(function (x, i) {
+      if (x === cur) return;
+      html += '<span class="schip"><button type="button" class="schip-use" data-k="' + k + '" data-i="' + i + '" title="Usa ' + esc(svcShort(k, x)) + '">' + esc(svcShort(k, x)) + '</button>' +
+        '<button type="button" class="schip-x" data-k="' + k + '" data-forget="' + i + '" aria-label="Togli ' + esc(svcShort(k, x)) + ' dai salvati">×</button></span>';
+    });
+    box.innerHTML = html ? '<span class="svc-saved-l">' + (k === 'sbn' ? 'Worker salvati:' : 'Chiavi salvate:') + '</span>' + html : '';
+    box.hidden = !html;
+  });
+  var rs = !sb && saved.sbn.length, rk = !gk && saved.key.length;
+  $('#svcRestore').hidden = !(rs || rk);
+  $('#svcRestore').textContent = rs && rk ? 'Rimetti chiave e worker salvati' : rs ? 'Rimetti il worker salvato' : 'Rimetti la chiave salvata';
+  updateQuotaInfo();
+}
+/* fetch che conta le richieste e, con la chiave, non supera il limite giornaliero di Google (ne lascia un margine) */
+function apiFetch(url, init) {
+  var u = String(url);
+  if (/googleapis\.com\/books\//.test(u)) {
+    var extra = /\/volumes\/[^?]/.test(u);                  // scheda del volume = solo per la copertina grande
+    if (!googleLeft(extra)) return Promise.resolve({ ok: false, status: 429, local: true, json: function () { return Promise.resolve({}); } });
+    countCall('g');
+  } else if (settings.sbnUrl && u.indexOf(settings.sbnUrl) === 0) countCall('s');
+  return fetch(url, init);
+}
+function lookupOpts() { return { gbKey: settings.gbKey, sbnUrl: settings.sbnUrl, fetch: apiFetch, lean: !googleLeft(true) }; }
+function hasData(b) { return !!(b.t || b.a || b.e || b.y || b.i || b.c != null || b.n); }
+function inTab(b) { return !!b.w === (tab === 'wish'); }
+function tabBooks() { return state.books.filter(inTab); }
+function blankBook(o) {
+  var b = Object.assign({ id: newId(), t: '', a: '', e: '', y: '', c: null, i: '', g: [], img: '', nf: false, ts: Date.now(),
+    sh: '', n: '', gen: '', pg: '', p: '', pd: '', w: tab === 'wish', rs: '', rt: 0, rd: '', pp: '', ppd: '', cp: false, ck: '', nb: false, xs: '', xd: '', xa: '', sx: '', sk: '', sda: '', fav: false, fr: '', fl: '', ds: '', dsf: '', dsl: '', dsn: 0, dsq: 0, se: '', sn: '', sq: '', qs: [] }, o || {});
+  if (!b.w && !(o && o.rs != null)) b.rs = 'da';        // un libro appena entrato in libreria e' da leggere
+  return b;
+}
+var FIELDS = ['id', 't', 'a', 'e', 'y', 'c', 'i', 'g', 'img', 'imgL', 'nf', 'ts', 'sh', 'n', 'gen', 'pg', 'p', 'pd', 'w', 'rs', 'rt', 'rd', 'pp', 'ppd', 'cp', 'ck', 'nb', 'xs', 'xd', 'xa', 'fav', 'fr', 'fl', 'ds', 'dsf', 'dsl', 'dsn', 'dsq', 'se', 'sn', 'sq', 'qs', 'sx', 'sk', 'sda'];
+function isBusy(b) { var st = (S[b.id] || {}).st; return st === 'queued' || st === 'reading' || st === 'lookup' || st === 'search'; }
+function cleanBook(x) {
+  if (!x || typeof x !== 'object') return null;
+  var img = L.str(x.img);
+  return {
+    id: String(x.id || '').replace(/[^\w-]/g, '') || newId(),
+    t: L.str(x.t), a: L.str(x.a), e: L.str(x.e),
+    y: L.str(x.y).replace(/\D/g, '').slice(0, 4),
+    c: (typeof x.c === 'number' && isFinite(x.c)) ? x.c : null,
+    i: L.str(x.i).replace(/[^\dXx]/g, '').toUpperCase(),
+    g: Array.isArray(x.g) ? x.g.filter(function (k) { return ['t', 'a', 'e', 'y', 'i'].indexOf(k) >= 0; }) : [],
+    img: /^https:\/\//.test(img) ? img : '',
+    imgL: /^https:\/\//.test(L.str(x.imgL)) ? L.str(x.imgL) : '',
+    nf: !!x.nf,
+    ts: Number(x.ts) || 0,
+    sh: L.str(x.sh).slice(0, 80), n: L.str(x.n).slice(0, 2000), gen: L.str(x.gen).slice(0, 80),
+    pg: L.str(x.pg).replace(/\D/g, '').slice(0, 5), p: L.str(x.p).slice(0, 80),
+    pd: /^\d{4}-\d\d-\d\d$/.test(L.str(x.pd)) ? x.pd : '',
+    w: !!x.w,
+    rs: ['da', 'in', 'ok'].indexOf(x.rs) >= 0 ? x.rs : '',
+    rt: Math.max(0, Math.min(5, parseInt(x.rt, 10) || 0)),
+    rd: /^\d{4}-\d\d-\d\d$/.test(L.str(x.rd)) ? x.rd : '',
+    pp: String(L.str(x.pp)).replace(/\D/g, '').slice(0, 5), ppd: /^\d{4}-\d\d-\d\d$/.test(L.str(x.ppd)) ? x.ppd : '',   // segnalibro (16/11/2026)
+    cp: !!x.cp,
+    ck: /^\d{4}-\d\d-\d\d$/.test(L.str(x.ck)) ? x.ck : '',
+    nb: !!x.nb,
+    xs: ['v', 'r', 's', 'b'].indexOf(x.xs) >= 0 ? x.xs : '',   // b: libro ricevuto in prestito da un amico e restituito
+    xd: /^\d{4}-\d\d-\d\d$/.test(L.str(x.xd)) ? x.xd : '',
+    xa: L.str(x.xa).slice(0, 80),
+    sx: /^[0-9a-f-]{36}$/.test(L.str(x.sx)) ? x.sx : '',                 // prestito o regalo tra amici dell'app (modulo amici, 16/11/2026)
+    sk: ['p', 'q', 'r'].indexOf(x.sk) >= 0 ? x.sk : '', sda: L.str(x.sda).slice(0, 30),   // q: prestito ricevuto che hai restituito, da confermare da chi l'ha prestato;   // ricevuto: in prestito (p) o in regalo (r), da chi
+    fav: !!x.fav,                                   // preferito
+    fr: L.str(x.fr).slice(0, 30), fl: L.str(x.fl).slice(0, 40),     // ricevuto da (nome) e da quale lista
+    ds: L.str(x.ds).slice(0, L.DESC_MAX + 1), dsf: x.dsf === 'g' || x.dsf === 'o' ? x.dsf : '',   // descrizione e fonte (Google, Open Library)
+    dsl: /^[a-z]{2}$/.test(L.str(x.dsl)) ? x.dsl : '', dsn: Number(x.dsn) || 0, dsq: x.dsq ? 1 : 0,                     // lingua; quando non e' stata trovata
+    se: L.str(x.se).slice(0, 80), sn: L.str(x.sn).replace(/\D/g, '').slice(0, 3), sq: L.str(x.sq).replace(/\D/g, '').slice(0, 3),   // serie, volume, di quanti
+    qs: (Array.isArray(x.qs) ? x.qs : []).map(function (c) { return c && typeof c === 'object' ? { x: L.str(c.x).slice(0, 1500).trim(), pg: L.str(c.pg).replace(/\D/g, '').slice(0, 5), d: Number(c.d) || 0, phs: (Array.isArray(c.phs) ? c.phs : c.ph ? [c.ph] : []).map(L.str).filter(function (k) { return /^q:[\w-]{4,40}$/.test(k); }).slice(0, 10) } : null; })
+      .filter(function (c) { return c && (c.x || c.phs.length); }).slice(0, 200)                                      // citazioni e appunti
+  };
+}
+function storable() {
+  return myBooks().filter(hasData).map(function (b) {
+    var o = {}; FIELDS.forEach(function (k) { o[k] = k === 'g' ? b.g.slice() : k === 'qs' ? (b.qs || []).slice() : b[k]; }); return o;
+  });
+}
+function persist() {
+  var ok = ls.set(LS_KEY, JSON.stringify({ books: storable(), updated: guest ? guest.upd : state.updated }));
+  var el = $('#sync');
+  $('#syncTxt').textContent = ok ? (navigator.onLine === false ? 'Offline · salvato su questo telefono' : 'Salvato su questo telefono') : 'Impossibile salvare: scarica un backup';
+  el.classList.toggle('off', !ok || navigator.onLine === false);
+  el.classList.toggle('quiet-ok', ok && navigator.onLine !== false && settings.showSync === false);
+  checkBackupNag();
+  if (ok) emit('saved');                                // i moduli (es. la sincronizzazione della copia social) sanno che i libri sono cambiati
+}
+function touch() {
+  if (guest) { clearTimeout(tSave); tSave = setTimeout(persist, 350); return; }   // nella libreria di un amico: si salvano solo i tuoi (storable usa myBooks), i suoi mai
+  state.updated = Date.now();
+  backupReady = null;
+  clearTimeout(tSave);
+  tSave = setTimeout(persist, 350);
+}
+/* ---------- la libreria di un amico, in sola lettura (modulo amici, 16/11/2026) ----------
+   I suoi libri prendono il posto dei tuoi solo sullo schermo, con gli stessi filtri, ricerca e viste. I tuoi restano in guest.mine:
+   sono gli unici che si salvano (storable usa myBooks) e la sincronizzazione aspetta (NL.guest). Le modifiche sono spente (html.guest).
+   Indietro o «‹ La tua libreria» tornano ai tuoi, con filtri, ricerca, scheda aperta e vista com'erano. */
+var guest = null;
+function myBooks() { return guest ? guest.mine : state.books; }
+function bookKeys(b) { var k = []; var i = b.i && (L.toIsbn13(b.i) || b.i); if (i) k.push('i:' + i); var t = L.titleKey(b.t); if (t) k.push('t:' + t + '|' + L.norm(authorsOf(b)[0] || '')); return k; }
+function guestEnter(name, books, info) {
+  if (scanning) return false;
+  if (guest) guestExit(true);
+  if (selOn) endSel(false);
+  clearTimeout(tSave); persist();                  // quello che c'era da salvare dei tuoi libri, prima
+  var mineKeys = {};
+  state.books.forEach(function (b) { if (!b.w && !b.xs) bookKeys(b).forEach(function (k) { mineKeys[k] = 1; }); });
+  guest = { name: name, info: info || {}, mine: state.books, upd: state.updated, mineKeys: mineKeys, y: window.scrollY,
+    keep: { q: q, sortBy: sortBy, flt: flt, tab: tab, readFlt: readFlt, shFlt: shFlt, genFlt: genFlt, autFlt: autFlt, autName: autName, edFlt: edFlt, frFlt: frFlt, view: settings.view, open: openState, gridRet: gridRet } };
+  state.books = (books || []).map(cleanBook).filter(Boolean);
+  openState = {}; gridRet = null;
+  q = ''; $('#q').value = ''; sortBy = 'recent'; readFlt = '';
+  document.documentElement.classList.add('guest');
+  setTab('lib');                                   // azzera i filtri e ridisegna
+  renderOwner(); updateActiveFilters && updateActiveFilters();
+  window.scrollTo(0, 0);
+  emit('guest', name);
+  return true;
+}
+function guestExit(quiet) {
+  if (!guest) return;
+  var k = guest.keep, y = guest.y;
+  state.books = guest.mine; state.updated = guest.upd;
+  guest = null;
+  document.documentElement.classList.remove('guest');
+  q = k.q; $('#q').value = q; sortBy = k.sortBy; readFlt = k.readFlt; openState = k.open; gridRet = k.gridRet;
+  tab = k.tab === 'wish' ? 'wish' : 'lib'; document.body.classList.toggle('wishtab', tab === 'wish');
+  flt = k.flt; shFlt = k.shFlt; genFlt = k.genFlt; autFlt = k.autFlt; autName = k.autName; edFlt = k.edFlt; frFlt = k.frFlt;
+  if (settings.view !== k.view) setView(k.view);
+  renderOwner(); renderList(); updateSummary(); updateActiveFilters && updateActiveFilters();
+  if (!quiet) window.scrollTo(0, y || 0);
+  emit('guest', null);
+}
+/* un libro dalla libreria dell'amico nei TUOI desideri (anche mentre guardi la sua) */
+function showBook(id) {
+  if (guest) guestExit(true);
+  var b = get(id); if (!b) return false;
+  if (b.w !== (tab === 'wish')) setTab(b.w ? 'wish' : 'lib');
+  if (!visible().some(function (x) { return x.id === id; })) clearFilters();
+  if (settings.view === 'grid') { openFromGrid(id); return true; }
+  openState[id] = true; renderList();
+  var el = rowEl(id); if (el) el.scrollIntoView({ block: 'start' });
+  return true;
+}
+function addMine(o) {
+  var b = cleanBook(Object.assign({}, o, { id: newId(), ts: Date.now() })); if (!b) return null;
+  myBooks().unshift(b);
+  if (guest) { bookKeys(b).forEach(function (k) { if (!b.w) guest.mineKeys[k] = 1; }); clearTimeout(tSave); tSave = setTimeout(persist, 350); emit('mine', b); }
+  else { touch(); renderList(); updateSummary(); }
+  return b.id;
+}
+function isMine(b) { var keys = guest ? guest.mineKeys : null; if (!keys) { keys = {}; state.books.forEach(function (x) { if (!x.w && !x.xs) bookKeys(x).forEach(function (k) { keys[k] = 1; }); }); } return bookKeys(b).some(function (k) { return keys[k]; }); }
+function loadAll() {
+  try {
+    var d = JSON.parse(ls.get(LS_KEY) || '{}');
+    state.books = (d.books || []).map(cleanBook).filter(Boolean);
+    state.updated = Number(d.updated) || 0;
+  } catch (e) {}
+  try {
+    var s = JSON.parse(ls.get(LS_SET) || '{}');
+    settings.gbKey = L.str(s.gbKey); settings.price = s.price !== false; settings.extra = true;   // scaffale, genere, pagine e note sempre visibili (opzione tolta il 16/11/2026)
+    settings.lastBackup = Number(s.lastBackup) || 0; settings.snooze = Number(s.snooze) || 0;
+    settings.viewDef = s.viewDef === 'list' ? 'list' : 'grid';                       // vista all'apertura: copertine (predefinita) o elenco
+    settings.view = settings.viewDef;                                               // il pulsante sopra i libri la cambia fino alla prossima apertura
+    settings.openAll = s.openAll === true && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);   // «schede sempre aperte» tolta il 16/11/2026: resta solo per le prove automatiche
+    settings.sbnUrl = /^https:\/\//.test(L.str(s.sbnUrl)) ? L.str(s.sbnUrl) : '';
+    settings.loanSnooze = Number(s.loanSnooze) || 0;
+    settings.swiped = s.swiped === true;
+    settings.pubFix = s.pubFix === true;
+    settings.look = 'nuovo';                       // lo stile «Classico» non c'e' piu': resta solo il nuovo, con palette e caratteri
+    // da questa versione il tema chiaro e' il predefinito: chi non aveva scelto «Scuro» passa al chiaro (una volta sola)
+    settings.theme = s.themeV2 ? (s.theme === 'dark' || s.theme === 'auto' ? s.theme : 'light') : (s.theme === 'dark' ? 'dark' : 'light');
+    settings.themeV2 = true;
+    settings.pal = s.palV2 && PALS[s.pal] ? s.pal : 'bosco';   // da questa versione il verde (Bosco) e' la palette principale
+    settings.palV2 = true;
+    settings.ft = FONTS_T.indexOf(s.ft) >= 0 ? s.ft : 'literata';
+    settings.fb = FONTS_B.indexOf(s.fb) >= 0 ? s.fb : 'plex';
+    settings.installed = s.installed === true && s.instScope === location.pathname.replace(/[^/]*$/, '');   // installata a questo indirizzo (non a uno vecchio)
+    settings.instScope = settings.installed ? s.instScope : '';
+    settings.name = L.str(s.name).replace(/\s+/g, ' ').trim().slice(0, 30);
+    settings.instSnooze = Number(s.instSnooze) || 0;
+    settings.goal = Math.max(0, Math.min(999, parseInt(s.goal, 10) || 0));          // obiettivo di lettura
+    settings.newsAuto = s.newsAuto !== false;                                       // novita' degli autori: controllo automatico
+    settings.sumEur = s.sumEur === true;                                            // riepilogo in alto: valore in euro (spento di predefinito)
+    settings.sumLoan = s.sumLoan !== false;                                         // riepilogo: «N in prestito» (si tocca per vederli)
+    settings.sumGone = s.sumGone === true;                                          // riepilogo: «N non più in libreria» (spento di predefinito)
+    settings.showSync = s.syncOff ? s.showSync === true : false;                     // «Salvato su questo telefono»: spento di predefinito (16/11/2026); gli errori si vedono sempre
+    settings.syncOff = 1;
+    settings.seenV = Number(s.seenV) || 0;                                         // ultima versione di cui si sono viste le novita'
+    settings.wn2 = s.wn2 ? 1 : 0;
+    settings.shelfShut = s.shelfShut && typeof s.shelfShut === 'object' ? { now: s.shelfShut.now ? 1 : 0, all: s.shelfShut.all ? 1 : 0 } : {};   // sezioni dell'elenco chiuse
+    oldApp = typeof s.look === 'string';                                             // impostazioni salvate da una versione precedente dell'app (non una prima installazione)                                                   // la pagina delle novita' funziona anche per chi aggiorna (dalla 96)
+    settings.seenB = L.str(s.seenB).slice(0, 12);                                   // nella copia di prova: ultima prova vista («94.17»)
+    settings.suggAuto = s.suggAuto !== false;                                       // «Da scoprire»: cerca da solo una volta a settimana
+    settings.suggLang = s.suggLang === 'all' ? 'all' : 'it';                        // «Da scoprire»: solo italiano o tutte le lingue
+    settings.nxSeen = L.str(s.nxSeen).slice(0, 40);                                 // riquadro «Cosa leggere dopo» chiuso per questo libro finito
+    settings.selTip = s.selTip ? 1 : 0;
+    settings.sound = s.sound !== false;                                             // suoni: bip della scansione e «fatto» (accesi di predefinito)
+    settings.camNative = s.camNative === true;                                      // foto con la fotocamera del telefono (flash del telefono)
+    settings.torchCam = typeof s.torchCam === 'string' ? s.torchCam : '';            // obiettivo con la luce ('none' = nessuno, o non si accende davvero)
+    settings.lightOk = s.lightOk === true;                                          // «Prova la luce»: vista accendersi
+    settings.quoteOcrAuto = false;                                                  // citazioni: il testo delle foto si legge quando tocchi «Leggi il testo» (opzione tolta il 16/11/2026)
+    settings.donUntil = Number(s.donUntil) || 0;                                    // donazioni: richieste in pausa fino a
+    settings.donNever = s.donNever === true;                                        // promemoria ogni 50 libri spento
+    settings.donMs = typeof s.donMs === 'number' ? s.donMs : null;                  // ultimo traguardo gia' visto (multiplo di 50)
+    settings.donGo = Number(s.donGo) || 0;                                          // quando e' stato aperto PayPal (0 = no)
+    settings.donHid = s.donHid === true;                                            // l'app e' passata in secondo piano dopo
+    settings.donOpens = Math.max(0, parseInt(s.donOpens, 10) || 0);                  // aperture dell'app (la riga compare dalla sesta)
+  } catch (e) {}
+}
+function saveSettings() { ls.set(LS_SET, JSON.stringify(settings)); }
+
+/* ---------- avvisi ---------- */
+function toast(msg, action, ms) {
+  var t = $('#toast');
+  $('#toastTxt').textContent = msg;
+  var btn = $('#toastBtn');
+  btn.hidden = !action;
+  btn.onclick = null;
+  if (action) { btn.textContent = action.label; btn.onclick = function () { t.hidden = true; action.fn(); }; }
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  // quanto resta: con un tasto (Annulla...) 4 secondi; senza, secondo la lunghezza del testo, da 2,5 a 5 secondi
+  if (!ms) ms = action ? 4000 : Math.min(5000, Math.max(2500, 1800 + String(msg).length * 45));
+  toastTimer = setTimeout(function () { t.hidden = true; }, ms);
+}
+var noticeKind = '';
+function notice(msg, label, fn, onClose, kind) {
+  $('#noticeTxt').textContent = msg;
+  var b = $('#noticeBtn');
+  b.hidden = !label;
+  b.textContent = label || '';
+  b.onclick = function () { $('#notice').hidden = true; noticeKind = ''; if (fn) fn(); };
+  $('#noticeX').onclick = function () { $('#notice').hidden = true; noticeKind = ''; if (onClose) onClose(); updateSummary(); };
+  noticeKind = kind || '';
+  $('#notice').hidden = false;
+}
+function beep(ok) {
+  if (settings.sound === false) return;
+  try {
+    beep.ctx = beep.ctx || new (window.AudioContext || window.webkitAudioContext)();
+    var o = beep.ctx.createOscillator(), g = beep.ctx.createGain();
+    o.frequency.value = ok ? 880 : 320; g.gain.value = 0.08;
+    o.connect(g); g.connect(beep.ctx.destination);
+    o.start(); o.stop(beep.ctx.currentTime + 0.09);
+    beep.n = (beep.n || 0) + 1;
+  } catch (e) {}
+}
+// suono di «fatto» (prezzo salvato): due note che salgono, piu' morbide del bip della scansione
+function chime() {
+  if (settings.sound === false) return;
+  try {
+    beep.ctx = beep.ctx || new (window.AudioContext || window.webkitAudioContext)();
+    var ctx = beep.ctx, t0 = ctx.currentTime + 0.01;
+    [[784, 0], [1175, 0.11]].forEach(function (n) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + n[1];
+      o.type = 'sine'; o.frequency.value = n[0];
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.34);
+    });
+    chime.n = (chime.n || 0) + 1;
+  } catch (e) {}
+}
+// suono di «non trovato»: due note basse che scendono, un po' ruvide. Si sente quando il codice e' stato letto ma
+// le banche dati non danno titolo e autore (o la foto non porta a nessun libro), solo per i libri appena aggiunti a mano.
+function failSound() {
+  if (settings.sound === false) return;
+  try {
+    beep.ctx = beep.ctx || new (window.AudioContext || window.webkitAudioContext)();
+    var ctx = beep.ctx, t0 = ctx.currentTime + 0.01, f = ctx.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 1400; f.connect(ctx.destination);
+    [[392, 0], [262, 0.17]].forEach(function (n) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + n[1];
+      o.type = 'square'; o.frequency.value = n[0];
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.01); g.gain.setValueAtTime(0.05, t + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      o.connect(g); g.connect(f); o.start(t); o.stop(t + 0.22);
+    });
+    failSound.n = (failSound.n || 0) + 1;
+  } catch (e) {}
+}
+function heardFail(id) {                           // il libro appena aggiunto (scansione, ISBN scritto, foto) non e' stato trovato
+  var s = S[id];
+  if (!s || !s.heard) return;
+  delete s.heard;
+  failSound(); vibrate([90, 70, 90]);
+}
+function paintSound() {
+  var on = settings.sound !== false, b = $('#scanSound');
+  if (b) { b.textContent = on ? '🔊' : '🔇'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Suoni accesi: tocca per spegnerli' : 'Suoni spenti: tocca per accenderli'); }
+  var o = $('#optSound'); if (o) o.checked = on;
+}
+function setSound(on, say) {
+  settings.sound = !!on; saveSettings(); paintSound();
+  if (say) { if (scanning) scanMsg(on ? 'Suoni accesi.' : 'Suoni spenti.'); else toast(on ? 'Suoni accesi.' : 'Suoni spenti.'); }
+  if (on) beep(true);                              // si sente subito che sono tornati
+}
+function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+
+/* ---------- lettura di codici a barre ---------- */
+var detector = null;
+(async function () {
+  try {
+    if ('BarcodeDetector' in window) {
+      var f = await window.BarcodeDetector.getSupportedFormats();
+      if (f.indexOf('ean_13') >= 0) detector = new window.BarcodeDetector({ formats: ['ean_13'] });
+    }
+  } catch (e) {}
+})();
+var zx = null;
+function zxReader() {
+  if (zx) return zx;
+  var hints = new Map();
+  hints.set(window.ZXing.DecodeHintType.POSSIBLE_FORMATS, [window.ZXing.BarcodeFormat.EAN_13]);
+  hints.set(window.ZXing.DecodeHintType.TRY_HARDER, true);
+  zx = new window.ZXing.MultiFormatReader();
+  zx.setHints(hints);
+  return zx;
+}
+function zxDecode(canvas) {
+  try {
+    var src = new window.ZXing.HTMLCanvasElementLuminanceSource(canvas);
+    var bmp = new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(src));
+    return L.toIsbn13(zxReader().decode(bmp).getText());
+  } catch (e) { return ''; }
+}
+function scaled(canvas, max) {
+  var k = Math.min(1, max / Math.max(canvas.width, canvas.height));
+  if (k >= 1) return canvas;
+  var c = document.createElement('canvas');
+  c.width = Math.round(canvas.width * k); c.height = Math.round(canvas.height * k);
+  c.getContext('2d', { willReadFrequently: true }).drawImage(canvas, 0, 0, c.width, c.height);
+  return c;
+}
+async function decodeCanvasBarcode(canvas) {
+  if (detector) {
+    try {
+      var r = await detector.detect(canvas);
+      for (var i = 0; i < r.length; i++) { var v = L.toIsbn13(r[i].rawValue); if (v) return v; }
+    } catch (e) {}
+  }
+  var sizes = [2000, 1400, 900];
+  for (var j = 0; j < sizes.length; j++) {
+    var code = zxDecode(scaled(canvas, sizes[j]));
+    if (code) return code;
+    await new Promise(function (r2) { setTimeout(r2, 0); });
+  }
+  // codice piccolo in una foto grande (il retro di un libro): provo a leggere solo una parte della foto, soprattutto la metà bassa
+  var tiles = [[0, .5, 1, .5], [0, .66, 1, .34], [0, .5, .6, .5], [.4, .5, .6, .5], [0, 0, 1, .5], [0, .25, 1, .5]];
+  for (var ti = 0; ti < tiles.length; ti++) {
+    var T = tiles[ti], t = document.createElement('canvas');
+    t.width = Math.max(1, Math.round(canvas.width * T[2])); t.height = Math.max(1, Math.round(canvas.height * T[3]));
+    t.getContext('2d', { willReadFrequently: true }).drawImage(canvas, canvas.width * T[0], canvas.height * T[1], canvas.width * T[2], canvas.height * T[3], 0, 0, t.width, t.height);
+    var c2 = zxDecode(t);
+    if (c2) return c2;
+    await new Promise(function (r3) { setTimeout(r3, 0); });
+  }
+  return '';
+}
+
+/* ---------- ISBN: aggiunta e ricerca ---------- */
+function findByIsbn(code) { return state.books.find(function (b) { return L.toIsbn13(b.i) === code; }); }
+/* opts.wish: aggiunge ai Desideri (di default: la scheda aperta). opts.pre: risultato della ricerca gia' pronto.
+   Se il libro e' nei Desideri e lo aggiungo alla Libreria, lo sposto (vuol dire che l'ho comprato). */
+function addIsbn(code, opts) {
+  opts = opts || {};
+  var wish = opts.wish != null ? !!opts.wish : tab === 'wish';
+  var ex = findByIsbn(code);
+  if (ex) {
+    if (ex.w && !wish) { ex.w = false; ex.ts = Date.now(); if (!ex.rs) ex.rs = 'da'; touch(); return { moved: ex }; }
+    return { dup: ex };
+  }
+  var b = blankBook({ i: code, w: wish });
+  state.books.push(b);
+  if (opts.pre) { applyResult(b, opts.pre, code); touch(); return { book: b, done: Promise.resolve() }; }
+  S[b.id] = { st: 'queued' };
+  touch();
+  return { book: b, done: lookupPool(function () { return doLookup(b.id); }) };
+}
+function takeDesc(b, ds, lang) { if (ds && !b.ds) { b.ds = ds; b.dsf = 'g'; b.dsl = lang || L.guessLang(ds) || ''; b.dsn = 0; b.dsq = 0; } }
+function applyResult(b, r, code) {
+  takeDesc(b, r.ds, r.dsl);
+  if (!b.t) b.t = r.t;
+  if (!b.a) b.a = r.a;
+  if (!b.e) b.e = r.e;
+  if (!b.y) b.y = r.y;
+  if (!b.gen && r.gen) b.gen = r.gen;
+  if (!b.pg && r.pg) b.pg = r.pg;
+  if (r.img) b.img = r.img;
+  b.i = code; b.nf = false;
+  b.g = b.g.filter(function (k) { return ['t', 'a', 'e', 'y', 'i'].indexOf(k) < 0; });
+  guessEditor(b);
+}
+/* Se manca la casa editrice, la deduce dall'ISBN (codice dell'editore). Se la copia dai tuoi libri gia' verificati con lo
+   stesso codice, e quei libri hanno tutti lo stesso editore, e' affidabile: niente "da verificare". Se viene dalla
+   tabellina generica, o i tuoi libri con quel codice hanno editori diversi, resta "da verificare". */
+/* ISBN 979-8: quasi sempre l'ISBN gratuito che Amazon (KDP) da' a chi si pubblica da solo; le banche dati di solito non lo conoscono */
+var KDP_E = 'Amazon (pubblicazione in proprio)';
+function isKdp(b) { return /^9798/.test(L.toIsbn13(b && b.i) || ''); }
+function markKdp(b) { if (b && b.nf && !b.t && !b.e && isKdp(b)) { b.e = KDP_E; b.g = b.g.filter(function (k) { return k !== 'e'; }); return true; } return false; }
+function guessEditor(b) {
+  if (b.e) return false;
+  var g = L.guessPublisher(b.i, state.books);
+  if (!g) return false;
+  b.e = g.name;
+  if (g.sure) b.g = b.g.filter(function (k) { return k !== 'e'; });
+  else if (b.g.indexOf('e') < 0) b.g.push('e');
+  return g.sure ? 'sure' : 'guess';
+}
+/* Una volta sola: toglie «Da verificare» dalle case editrici gia' dedotte che coincidono con quella dei tuoi libri verificati. */
+function confirmLearnedPublishers() {
+  if (settings.pubFix) return;
+  settings.pubFix = true; saveSettings();
+  var done = [];
+  state.books.forEach(function (b) {
+    if (b.g.length !== 1 || b.g[0] !== 'e' || !b.e || !L.toIsbn13(b.i)) return;
+    var g = L.guessPublisher(b.i, state.books);
+    if (g && g.sure && L.norm(g.name) === L.norm(b.e)) { b.g = []; done.push(b.id); }
+  });
+  if (!done.length) return;
+  touch();
+  setTimeout(function () {
+    notice('Ho tolto «Da verificare» da ' + done.length + (done.length === 1 ? ' casa editrice: coincide' : ' case editrici: coincidono') + ' con quella dei tuoi libri già verificati con lo stesso codice editore.',
+      'Annulla', function () { done.forEach(function (id) { var x = get(id); if (x && x.g.indexOf('e') < 0) x.g.push('e'); }); renderList(); touch(); updateSummary(); });
+  }, 800);
+}
+async function doLookup(id) {
+  var b = get(id);
+  if (!b) return;
+  var s = S[id] || (S[id] = {});
+  var code = L.toIsbn13(b.i);
+  if (!code) { delete s.st; refreshRow(id); return; }
+  if (navigator.onLine === false) {
+    s.st = 'wait'; s.err = 'Senza connessione: lo cerco da solo appena torna la rete.'; s.retry = 'lookup';
+    refreshRow(id); updateSummary();
+    if (!offlineNoted) { offlineNoted = true; toast('Sei offline: i libri restano salvati con l\'ISBN e li cerco da soli appena torna la rete.'); }
+    return;
+  }
+  s.st = 'lookup';
+  refreshRow(id);
+  try {
+    var r = await L.lookupIsbn(code, lookupOpts());
+    b = get(id);
+    if (!b) return;
+    clearTimeout(s.timer); delete s.tries;
+    b.ck = today();
+    if (r) {
+      applyResult(b, r, code);
+      delete s.st;
+      coverPool(function () { return probeCover(id); });
+      queueDesc(id);
+      delete s.heard;
+    } else {
+      b.nf = true;
+      if (!markKdp(b)) guessEditor(b);           // 979-8 non trovato: e' una pubblicazione Amazon
+      delete s.st;
+      heardFail(id);
+    }
+    touch();
+  } catch (e) {
+    b = get(id);
+    if (!b) return;
+    if (e && (e.code === 'network' || e.code === 'rate')) {
+      // rete debole o limite di Google: riprovo da solo, sempre piu' di rado
+      s.tries = (s.tries || 0) + 1;
+      var rate = e.code === 'rate', waits = rate ? [90, 180, 300, 600] : [20, 60, 180, 600];
+      var sec = waits[Math.min(s.tries - 1, waits.length - 1)];
+      var when = sec < 60 ? sec + ' secondi' : sec === 90 ? 'un minuto e mezzo' : Math.round(sec / 60) + (sec === 60 ? ' minuto' : ' minuti');
+      s.retry = 'lookup';
+      if (rate && s.tries > waits.length) {
+        s.st = 'error'; heardFail(id);
+        s.err = settings.gbKey ? 'Google Libri ha raggiunto il limite di richieste della tua chiave. Riprova più tardi.'
+          : 'Google Libri rifiuta le richieste senza chiave (limite raggiunto). Soluzione stabile: inserisci la tua chiave gratuita in Menu › Impostazioni › Ricerca dei libri. Intanto puoi premere Riprova.';
+      } else {
+        s.st = 'wait';
+        s.err = (rate ? (settings.gbKey && !googleLeft(false) ? 'Ricerche di oggi su Google quasi finite (' + quota.g + ' su 1.000): riprovo con le altre banche dati tra ' + when + ' (Google riparte verso le 9 del mattino)' : 'Google Libri è al limite di richieste' + (settings.gbKey ? '' : ' (senza chiave)')) : (navigator.onLine === false ? 'Senza connessione' : 'Connessione debole')) + (rate && settings.gbKey && !googleLeft(false) ? '.' : ': riprovo da solo tra ' + when + '.');
+        clearTimeout(s.timer);
+        s.timer = setTimeout(function () { var x = S[id]; if (x && x.st === 'wait' && get(id)) { x.st = 'queued'; refreshRow(id); lookupPool(function () { return doLookup(id); }); } }, sec * 1000);
+      }
+    }
+    else { delete s.st; }
+  }
+  refreshRow(id);
+  updateSummary();
+}
+function todoRows() {
+  return state.books.filter(function (b) { return !b.t && !b.nf && L.toIsbn13(b.i) && !isBusy(b); });
+}
+function runTodo() {
+  if (guest) return;                               // i libri di un amico non si toccano
+  if (navigator.onLine === false) { toast('Sei offline. Riprova quando c\'è connessione.'); return; }
+  todoRows().forEach(function (b) {
+    autoOpened[b.id] = 1;                          // ricerca di libri gia' in elenco: la scheda non si apre da sola se non trova (Piero, 16/11/2026)
+    S[b.id] = Object.assign(S[b.id] || {}, { st: 'queued' });
+    lookupPool(function () { return doLookup(b.id); });
+    refreshRow(b.id);
+  });
+  updateSummary();
+}
+
+/* ---------- foto: codice a barre oppure copertina ---------- */
+async function loadCanvas(file, max) {
+  var bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) { bmp = await createImageBitmap(file); }
+  var k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  var c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+  c.getContext('2d', { willReadFrequently: true }).drawImage(bmp, 0, 0, c.width, c.height);
+  if (bmp.close) bmp.close();
+  return c;
+}
+function thumbOf(canvas) {
+  var k = Math.min(1, 140 / Math.max(canvas.width, canvas.height));
+  var t = document.createElement('canvas');
+  t.width = Math.max(1, Math.round(canvas.width * k)); t.height = Math.max(1, Math.round(canvas.height * k));
+  t.getContext('2d').drawImage(canvas, 0, 0, t.width, t.height);
+  return t.toDataURL('image/jpeg', 0.7);
+}
+var ocrP = null;
+var ocrMsg = null;                                // chi sta leggendo riceve l'avanzamento (caricamento e lettura)
+function getOcr() {
+  if (ocrP) return ocrP;
+  ocrP = (async function () {
+    if (!window.Tesseract) throw { code: 'ocr' };
+    var abs = function (p) { return new URL(p, location.href).href; };
+    var w = await window.Tesseract.createWorker(['ita', 'eng'], 1, {
+      workerPath: abs('vendor/worker.min.js'),
+      corePath: abs('vendor/core'),
+      langPath: abs('vendor/lang'),
+      logger: function (m) { if (ocrMsg && m) { try { ocrMsg(m); } catch (e) {} } }
+    });
+    await w.setParameters({ tessedit_pageseg_mode: String(window.Tesseract.PSM.SPARSE_TEXT), preserve_interword_spaces: '1' });
+    return w;
+  })();
+  ocrP.catch(function () { ocrP = null; });
+  return ocrP;
+}
+function setStatusText(id, txt) {
+  var el = rowEl(id);
+  var span = el && el.querySelector('.status .txt');
+  if (span) span.textContent = txt;
+}
+function capFirst(s) { s = s.toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
+function niceCase(s, words) {
+  if (s !== s.toUpperCase()) return s;
+  return words ? s.toLowerCase().replace(/(^|[\s'’-])(\S)/g, function (m, a, c) { return a + c.toUpperCase(); }) : capFirst(s);
+}
+var sameAs = {};                                  // foto di un libro gia' in elenco -> id del libro esistente
+function fromIsbn(id, code, price) {
+  var b = get(id), s = S[id];
+  if (!b) return;
+  var ex = findByIsbn(code);
+  if (ex && ex.id !== id) {
+    sameAs[id] = ex.id;
+    state.books = state.books.filter(function (x) { return x.id !== id; });
+    delete S[id];
+    refreshRow(id); touch(); updateSummary();
+    toast('Già in elenco: ' + (ex.t || code));
+    return;
+  }
+  b.i = code;
+  if (price != null && b.c == null) b.c = price;
+  s.st = 'lookup';
+  touch();
+  refreshRow(id);
+  return lookupPool(function () { return doLookup(id); });
+}
+function applyCandidate(id, c) {
+  var b = get(id), s = S[id];
+  if (!b) return;
+  var keep = s && s.keep;                          // libro col suo ISBN (es. pubblicazione Amazon) riconosciuto dalla foto: il codice resta il suo
+  b.t = c.t; b.a = c.a; if (c.e || !keep) b.e = c.e; b.y = c.y;
+  if (c.gen && !b.gen) b.gen = c.gen;
+  if (c.pg && !b.pg) b.pg = c.pg;
+  takeDesc(b, c.ds, '');
+  if (c.i && !findByIsbn(c.i) && !keep) b.i = c.i;
+  if (c.img) b.img = c.img;
+  if (!b.img && s.big && !coverURL[id]) saveCoverData(id, s.big);
+  b.g = (keep ? ['y'] : ['e', 'y', 'i']).filter(function (k) { return b[k] && !(k === 'e' && b.e === KDP_E); });
+  if (s.price != null && b.c == null) b.c = s.price;
+  b.nf = false;
+  ['st', 'cands', 'lines', 'price', 'err', 'retry', 'keep'].forEach(function (k) { delete s[k]; });
+  touch(); refreshRow(id); updateSummary();
+  queueDesc(id);
+}
+function applyOcrText(id) {
+  var b = get(id), s = S[id];
+  if (!b) return;
+  var ta = L.splitTitleAuthor(s.lines || []);
+  if (ta.t) { b.t = niceCase(ta.t, false); b.g.push('t'); }
+  if (s.big && !b.img && !coverURL[id]) saveCoverData(id, s.big);
+  if (ta.a) { b.a = niceCase(ta.a, true); b.g.push('a'); }
+  if (s.price != null && b.c == null) b.c = s.price;
+  ['st', 'cands', 'lines', 'price', 'err', 'retry'].forEach(function (k) { delete s[k]; });
+  if (!hasData(b)) { s.st = 'error'; s.err = 'Non ho letto nulla di utile. Scrivi i dati a mano o prova con il codice a barre.'; }
+  touch(); refreshRow(id); updateSummary();
+}
+/* Lettori leggeri solo per il prezzo: lingua inglese (cifre e «€» bastano) e solo i caratteri di un prezzo, si avviano
+   in fretta e si preparano in anticipo. Due in parallelo sui telefoni con piu' processori: a ogni giro ciascuno legge
+   una versione diversa della stessa immagine, e il primo che trova un prezzo con «€» chiude la lettura. */
+var priceOcrP = null, PRICE_CHARS = '0123456789.,€EeUuRrOo ';
+function getPriceOcr() {
+  if (priceOcrP) return priceOcrP;
+  priceOcrP = (async function () {
+    if (!window.Tesseract) throw { code: 'ocr' };
+    var abs = function (p) { return new URL(p, location.href).href; };
+    var n = (navigator.hardwareConcurrency || 2) >= 4 ? 2 : 1;
+    return Promise.all(Array.apply(null, Array(n)).map(async function () {
+      var w = await window.Tesseract.createWorker('eng', 1, { workerPath: abs('vendor/worker.min.js'), corePath: abs('vendor/core'), langPath: abs('vendor/lang') });
+      await w.setParameters({ tessedit_pageseg_mode: String(window.Tesseract.PSM.SPARSE_TEXT) });
+      w._chars = ''; w._chain = Promise.resolve();
+      return w;
+    }));
+  })();
+  priceOcrP.catch(function () { priceOcrP = null; });
+  return priceOcrP;
+}
+/* Una lettura su un lettore, con i suoi caratteri ammessi ('' = tutti): i lavori sullo stesso lettore vanno in fila,
+   cosi' prezzo e ISBN scritto non si scambiano le impostazioni. Restituisce solo il testo (piu' veloce). */
+function ocrText(w, chars, img) {
+  var job = w._chain.then(async function () {
+    if (w._chars !== chars) { await w.setParameters({ tessedit_char_whitelist: chars }); w._chars = chars; }
+    var o = await w.recognize(img, {}, { text: true, blocks: false, hocr: false, tsv: false });
+    return (o.data || {}).text || '';
+  });
+  w._chain = job.catch(function () {});
+  return job;
+}
+function warmPriceOcr() { setTimeout(function () { getPriceOcr().catch(function () {}); }, 300); }
+/* Immagine ripulita per l'OCR: grigi, luce uniformata (divisa per lo sfondo locale), testo scuro su fondo chiaro, contrasto pieno */
+function prepPrice(src, k) {
+  var w = Math.max(1, Math.round(src.width * k)), h = Math.max(1, Math.round(src.height * k));
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(src, 0, 0, w, h);
+  var id = x.getImageData(0, 0, w, h), d = id.data, n = w * h, g = new Float32Array(n), i, j;
+  for (i = 0, j = 0; i < n; i++, j += 4) g[i] = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+  var hist = new Uint32Array(256), acc = 0, med = 0;
+  for (i = 0; i < n; i++) hist[g[i] | 0]++;
+  for (i = 0; i < 256; i++) { acc += hist[i]; if (acc >= n / 2) { med = i; break; } }
+  if (med < 128) for (i = 0; i < n; i++) g[i] = 255 - g[i];                 // fondo scuro: testo chiaro -> lo rendo scuro
+  var r = Math.max(8, Math.round(Math.min(w, h) / 6)), W1 = w + 1, I = new Float64Array(W1 * (h + 1)), out = new Float32Array(n), yy, xx;
+  for (yy = 0; yy < h; yy++) { var row = 0; for (xx = 0; xx < w; xx++) { row += g[yy * w + xx]; I[(yy + 1) * W1 + xx + 1] = I[yy * W1 + xx + 1] + row; } }
+  for (yy = 0; yy < h; yy++) {
+    var y0 = Math.max(0, yy - r), y1 = Math.min(h, yy + r + 1);
+    for (xx = 0; xx < w; xx++) {
+      var x0 = Math.max(0, xx - r), x1 = Math.min(w, xx + r + 1);
+      var bg = (I[y1 * W1 + x1] - I[y0 * W1 + x1] - I[y1 * W1 + x0] + I[y0 * W1 + x0]) / ((y1 - y0) * (x1 - x0));
+      out[yy * w + xx] = Math.min(255, g[yy * w + xx] / Math.max(1, bg) * 212);
+    }
+  }
+  var hs = new Uint32Array(256), lo = 0, hi = 255;
+  for (i = 0; i < n; i++) hs[out[i] | 0]++;
+  for (i = 0, acc = 0; i < 256; i++) { acc += hs[i]; if (acc >= n * 0.01) { lo = i; break; } }
+  for (i = 255, acc = 0; i >= 0; i--) { acc += hs[i]; if (acc >= n * 0.01) { hi = i; break; } }
+  var span = Math.max(1, hi - lo);
+  for (i = 0, j = 0; i < n; i++, j += 4) { var v = (out[i] - lo) * 255 / span; v = v < 0 ? 0 : v > 255 ? 255 : v; d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255; }
+  x.putImageData(id, 0, 0);
+  return c;
+}
+function scaledBy(src, k) { var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(src.width * k)); c.height = Math.max(1, Math.round(src.height * k)); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c; }
+function rotated(src, dir) { var c = document.createElement('canvas'); c.width = src.height; c.height = src.width; var x = c.getContext('2d'); x.translate(dir > 0 ? c.width : 0, dir > 0 ? 0 : c.height); x.rotate(dir * Math.PI / 2); x.drawImage(src, 0, 0); return c; }
+/* Legge il prezzo: 1) immagine ripulita e originale, 2) le stesse girate (prezzi stampati in verticale accanto al codice a barre).
+   Restituisce { v, sure } (sure: c'era il simbolo €) oppure null. rounds: quanti giri al massimo. */
+async function readPrice(base, rounds) {
+  var workers = await getPriceOcr();
+  var k = Math.min(2.5, Math.max(1, 900 / base.width));
+  if (base.width * k > 1400) k = 1400 / base.width;
+  if (base.height * k > 1400) k = Math.min(k, 1400 / base.height);
+  var pre = prepPrice(base, k), raw = scaledBy(base, k);
+  var plan = [[pre, raw], [rotated(pre, -1), rotated(pre, 1)], [rotated(raw, -1), rotated(raw, 1)]].slice(0, rounds || 3), weak = null;
+  for (var r = 0; r < plan.length; r++) {
+    var got = await new Promise(function (done) {
+      var list = plan[r], res = [], left = list.length, fin = false;
+      list.forEach(function (cv, i) {
+        ocrText(workers[i % workers.length], PRICE_CHARS, cv)
+          .then(function (text) { return L.findPrice(text); }, function () { return null; })
+          .then(function (g) { res[i] = g; left--; if (!fin && ((g && g.sure) || left === 0)) { fin = true; done(res.slice()); } });
+      });
+    });
+    for (var q = 0; q < got.length; q++) if (got[q] && got[q].sure) return got[q];
+    for (q = 0; q < got.length; q++) if (got[q] && !weak) weak = got[q];
+  }
+  return weak;
+}
+async function readPriceFromCanvas(canvas, rounds) { var r = await readPrice(canvas, rounds); return r ? r.v : null; }
+async function processPhoto(id, file) {
+  var b = get(id);
+  if (!b) return;
+  var s = S[id];
+  function stop() { return !get(id) || !S[id] || S[id].manual; }    // eliminato, o scritto a mano nel frattempo
+  if (s.manual) return;
+  s.st = 'reading'; s.msg = 'Leggo la foto…'; s.pct = 5;
+  refreshRow(id);
+  try {
+    var canvas = await loadCanvas(file, 2000);
+    s.pct = 15;
+    if (stop()) return;
+    s.thumb = thumbOf(canvas);
+    try { s.big = scaled(canvas, 1200).toDataURL('image/jpeg', 0.85); } catch (e) { s.big = ''; }
+    s.file = null;
+    syncThumbs(); refreshRow(id);
+    s.msg = 'Cerco il codice a barre…'; setStatusText(id, s.msg);
+    var code = await decodeCanvasBarcode(canvas);
+    if (stop()) return;
+    if (code && !(s.keep && code === L.toIsbn13(b.i))) { s.pct = 100; await fromIsbn(id, code); return; }   // per un libro che ha gia' il suo codice si legge il testo
+    s.pct = 25;
+    s.msg = ocrP ? 'Leggo il testo della copertina…' : 'Preparo la lettura del testo (solo la prima volta)…'; setStatusText(id, s.msg);
+    ocrMsg = function (m) {
+      var p = typeof m.progress === 'number' ? m.progress : 0;
+      if (m.status === 'recognizing text') { s.pct = 40 + Math.round(40 * p); s.msg = 'Leggo il testo della copertina… ' + Math.round(p * 100) + '%'; setStatusText(id, s.msg); }
+      else s.pct = Math.max(s.pct, 25 + Math.round(15 * p));                 // caricamento del lettore (solo la prima volta)
+    };
+    var worker, res;
+    try { worker = await getOcr(); s.pct = Math.max(s.pct, 40); res = await worker.recognize(canvas); } finally { ocrMsg = null; }
+    var data = res.data || {};
+    if (stop()) return;
+    s.pct = 82;
+    var lines = L.ocrLines(data);
+    var price = L.extractPrice(data.text || '');
+    var written = L.extractIsbns(data.text || '');
+    if (!written.length) written = L.ocrIsbns(data.text || '', true);
+    if (s.keep) written = written.filter(function (x) { return x !== L.toIsbn13(b.i); });
+    if (written.length) { await fromIsbn(id, written[0], price); return; }
+    var qs = L.buildQueries(lines);
+    s.lines = lines; s.price = price;
+    s.msg = 'Cerco il libro nelle banche dati…'; s.pct = 88;
+    if (!qs.length) { s.st = 'error'; s.err = 'Non riesco a leggere il testo della copertina.'; s.retry = null; if (flow.id === id) { failSound(); vibrate([90, 70, 90]); } refreshRow(id); autoManual(id); return; }
+    s.st = 'search'; refreshRow(id);
+    var out = await Promise.allSettled(qs.map(function (qq) { return L.searchText(qq, lookupOpts()); }));
+    if (stop()) return;
+    var all = [], seen = {};
+    out.forEach(function (r) {
+      if (r.status === 'fulfilled') r.value.forEach(function (c) { if (!seen[c.id]) { seen[c.id] = 1; all.push(c); } });
+    });
+    if (out.every(function (r) { return r.status === 'rejected'; })) {
+      s.st = 'error'; s.err = 'Ho letto il testo, ma le banche dati non rispondono. Controlla la connessione.'; s.retry = 'text';
+      refreshRow(id); return;
+    }
+    var ranked = L.rankCandidates(all, lines);
+    if (!ranked.length) { s.st = 'nf'; if (flow.id === id) { failSound(); vibrate([90, 70, 90]); } refreshRow(id); updateSummary(); autoManual(id); return; }   // nessun libro trovato: suona e subito titolo e autore a mano
+    if (L.strongMatch(ranked)) { applyCandidate(id, ranked[0]); return; }
+    s.st = 'choose'; s.cands = ranked.slice(0, 6);
+    refreshRow(id); updateSummary();
+  } catch (e) {
+    if (stop()) return;
+    s.st = 'error';
+    s.err = (e && e.code === 'ocr') ? 'Il riconoscimento del testo non è disponibile. Usa il codice a barre o scrivi i dati.' : 'Lettura non riuscita. Riprova con un\'altra foto.';
+    s.retry = null;
+    refreshRow(id);
+  }
+}
+function addPhotos(files, ask) {
+  var list = Array.prototype.slice.call(files || []).filter(function (f) { return !f.type || f.type.indexOf('image/') === 0; }).slice(0, 60);
+  if (!list.length) return;
+  q = ''; flt = ''; $('#q').value = ''; setView('list');
+  var last = null;
+  list.forEach(function (f) {
+    var id = newId();
+    state.books.push(blankBook({ id: id }));
+    S[id] = { st: 'queued', file: f };
+    photoPool(function () { return processPhoto(id, f); });
+    last = id;
+  });
+  renderList(); updateSummary();
+  if (ask && list.length === 1) startFlow(last);
+}
+/* ---- Foto di un libro: una sola finestra con l'avanzamento, poi da sola il passo giusto:
+   trovato -> prezzo; piu' edizioni -> scelta (poi prezzo); non trovato o illeggibile -> titolo, autore e prezzo a mano ---- */
+var flow = { id: null, t: 0 };
+function startFlow(id) {
+  flow.id = id;
+  $('#recImg').style.backgroundImage = ''; $('#recImg').hidden = true;
+  $('#recSheet').hidden = false;
+  clearInterval(flow.t); flow.t = setInterval(flowTick, 200);
+  flowTick();
+}
+function hideFlow() { clearInterval(flow.t); flow.t = 0; $('#recSheet').hidden = true; }
+function flowPaint(s) {
+  var pct = Math.max(0, Math.min(100, Math.round(s.pct || 0)));
+  var msg = s.st === 'queued' ? 'Preparo la foto…' : s.st === 'search' ? 'Cerco il libro nelle banche dati…' : (s.msg || 'Leggo la foto…');
+  msg = msg.replace(/ \d+%$/, '');
+  if ($('#recMsg').textContent !== msg) $('#recMsg').textContent = msg;
+  $('#recFill').style.width = pct + '%'; $('#recPct').textContent = pct + '%'; $('#recBar').setAttribute('aria-valuenow', pct);
+  if (s.thumb && $('#recImg').hidden) { $('#recImg').style.backgroundImage = 'url("' + s.thumb + '")'; $('#recImg').hidden = false; }
+}
+function flowTick() {
+  var id = flow.id, b = id && get(id), s = id && S[id];
+  if (!id || $('#recSheet').hidden) { hideFlow(); return; }
+  if (!b) { hideFlow(); flow.id = null; return; }                 // eliminato, o era gia' in elenco (lo dice il messaggio)
+  var st = s && s.st;
+  if (st === 'queued' || st === 'reading' || st === 'search') { flowPaint(s); return; }
+  hideFlow();
+  if (st === 'choose') { openPick(id); return; }                   // flow.id resta: dopo la scelta chiede il prezzo
+  flow.id = null;
+  if (st === 'nf' || st === 'error' || st === 'wait') { openManual(id, true); return; }
+  if (settings.price && b.c == null) askPrice(id);                 // trovato (o codice a barre letto): il prezzo, facoltativo
+  else if (b.t) toast('Aggiunto: ' + b.t + '.');
+}
+function flowAfterPick(id) { if (flow.id !== id) return; flow.id = null; if (settings.price && get(id) && get(id).c == null) askPrice(id); }
+function flowLater() { var id = flow.id; flow.id = null; hideFlow(); if (id && S[id]) S[id].later = true; }
+$('#recMan').addEventListener('click', function () { var id = flow.id; flow.id = null; hideFlow(); if (id) openManual(id, true); });
+$('#recBg').addEventListener('click', flowLater);
+$('#recSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) flowLater(); });
+/* Seconda foto, facoltativa: il prezzo. La chiedo subito, senza aspettare che il libro sia riconosciuto. */
+var askId = null;
+var askTick = null;
+function askBookTxt() {
+  var b = askId && bookFor(askId), s = askId && S[askId];
+  var busy = s && (s.st === 'queued' || s.st === 'reading' || s.st === 'lookup' || s.st === 'search');
+  $('#priceAskT').textContent = b && b.t ? b.t : busy || !b ? 'Cerco titolo e autore…' : (b.i ? 'ISBN ' + b.i : 'Titolo da completare');
+  $('#priceAskA').textContent = b && b.t ? (b.a || '') : '';
+}
+function askPrice(id) {
+  if (!settings.price || scanning) return;
+  askId = id;
+  $('#priceAskIn').value = ''; $('#priceAskErr').hidden = true;
+  askBookTxt();
+  $('#priceAsk').hidden = false;
+  clearInterval(askTick); askTick = setInterval(function () { if ($('#priceAsk').hidden) { clearInterval(askTick); return; } askBookTxt(); }, 600);
+  setTimeout(function () { try { $('#priceAskIn').focus(); } catch (e) {} }, 60);
+}
+function closePriceAsk() {
+  var id = askId;
+  $('#priceAsk').hidden = true; askId = null; clearInterval(askTick); try { $('#priceAskIn').blur(); } catch (e) {}
+  // la foto non ha trovato il libro mentre si scriveva il prezzo: subito titolo e autore a mano
+  setTimeout(function () { var t = id && S[id] && S[id].st; if (t === 'nf' || t === 'error') autoManual(id); }, 80);
+}
+$('#priceAskForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!$('#priceAskIn').value.trim()) { closePriceAsk(); return; }       // vuoto: come «Salta»
+  var v = L.parseNum($('#priceAskIn').value);
+  if (!(v > 0 && v < 1000)) { $('#priceAskErr').hidden = false; $('#priceAskIn').focus(); return; }
+  var id = askId, b = bookFor(id);
+  closePriceAsk();
+  v = Math.round(v * 100) / 100;
+  if (b) { b.c = v; touch(); refreshRow(b.id); updateSummary(); }
+  else if (S[id]) S[id].price = v;
+  chime();
+  toast('Prezzo: ' + eur(v) + '.');
+});
+function bookFor(id) { return get(id) || (sameAs[id] && get(sameAs[id])) || null; }
+
+/* ---------- scansione dal vivo ---------- */
+var stream = null, scanTimer = null, scanCtx = { count: 0, added: 0, last: '', lastAt: 0 }, torchOn = false, liveCanvas = null, pushed = false;
+var scanMode = 'add';                         // 'add': aggiunge; 'check': «Ce l'ho già?», controlla soltanto
+var priceTarget = null, scanPaused = false;   // libro appena scansionato a cui dare il prezzo
+var spTick = null;
+function priceBookTxt() {
+  var b = priceTarget && get(priceTarget), s = priceTarget && S[priceTarget];
+  var busy = s && (s.st === 'queued' || s.st === 'reading' || s.st === 'lookup' || s.st === 'search');
+  $('#scanPriceT').textContent = b && b.t ? b.t : busy || !b ? 'Cerco titolo e autore…' : (b.i ? 'ISBN ' + b.i : 'Titolo da completare');
+  $('#scanPriceA').textContent = b && b.t ? (b.a || '') : '';
+}
+function priceBar(txt) {
+  if (typingPrice) closePriceType();
+  $('#scanPriceTxt').textContent = txt || '';
+  priceBookTxt();
+  $('#scanPrice').hidden = false;
+  clearInterval(spTick); spTick = setInterval(function () { if ($('#scanPrice').hidden || !scanning) { clearInterval(spTick); return; } priceBookTxt(); }, 600);
+}
+var PRICE_HINT = 'Prezzo facoltativo: scrivilo, oppure inquadra il prossimo codice.';
+/* Ritaglia dal video la zona del riquadro (un po' allargata), tenendo conto di come il video riempie lo schermo. */
+function guideCanvas(full) {
+  var v = $('#scanVideo'), vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) return null;
+  var x = 0, y = 0, w = vw, h = vh;
+  if (!full) {
+    try {
+      var r = v.getBoundingClientRect(), g = $('#scanGuide').getBoundingClientRect();
+      var sc = Math.max(r.width / vw, r.height / vh), ox = (r.width - vw * sc) / 2, oy = (r.height - vh * sc) / 2;
+      var gw = g.width / sc, gh = g.height / sc;
+      x = (g.left - r.left - ox) / sc - gw * 0.15; y = (g.top - r.top - oy) / sc - gh * 0.25; w = gw * 1.3; h = gh * 1.5;
+      x = Math.max(0, x); y = Math.max(0, y); w = Math.min(vw - x, w); h = Math.min(vh - y, h);
+      if (!(w > 40 && h > 20)) throw 0;
+    } catch (e) { x = vw * 0.08; y = vh * 0.3; w = vw * 0.84; h = vh * 0.4; }
+  }
+  var k = Math.min(2.5, Math.max(1, 900 / w));
+  if (w * k > 1280) k = 1280 / w;
+  if (h * k > 1280) k = Math.min(k, 1280 / h);
+  var c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext('2d').drawImage(v, x, y, w, h, 0, 0, c.width, c.height);
+  return c;
+}
+/* Prezzo scritto a mano: piu' veloce quando la fotocamera fatica. Intanto la scansione si ferma, cosi' il libro
+   successivo non arriva mentre scrivi. */
+var typingPrice = false, priceTxtBefore = '';
+function openPriceType() {
+  var b = priceTarget && get(priceTarget), inp = $('#scanPriceIn');
+  if (!b || !scanning) { inp.blur(); return; }
+  if (typingPrice) return;
+  typingPrice = true; scanPaused = true;
+  priceTxtBefore = $('#scanPriceTxt').textContent;
+  $('#scanPriceTxt').textContent = 'Scrivi il prezzo e tocca Salva. La scansione aspetta.';
+  $('#scanPrice').classList.add('typing');
+  inp.placeholder = 'es. 14,50'; inp.classList.remove('bad');
+  if (!inp.value && b.c != null) inp.value = String(b.c.toFixed(2)).replace('.', ',');
+  if (document.activeElement !== inp) { try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); } }
+}
+function closePriceType() {
+  if (!typingPrice) return;
+  typingPrice = false; scanPaused = false;
+  if (priceTxtBefore) $('#scanPriceTxt').textContent = priceTxtBefore;
+  $('#scanPrice').classList.remove('typing');
+  var inp = $('#scanPriceIn'); inp.value = ''; inp.placeholder = 'Prezzo (facoltativo)'; inp.classList.remove('bad');
+  try { inp.blur(); } catch (e) {}
+}
+function savePriceType(e) {
+  if (e) e.preventDefault();
+  var inp = $('#scanPriceIn'), v = L.parseNum(inp.value), b = priceTarget && get(priceTarget);
+  if (!inp.value.trim()) { closePriceType(); return; }
+  if (!(v > 0 && v < 1000)) { inp.classList.add('bad'); inp.focus(); return; }
+  closePriceType();
+  if (!b) return;
+  b.c = Math.round(v * 100) / 100; touch();
+  chime(); vibrate([30, 40, 30]);
+  priceBar('✓ Prezzo salvato: ' + eur(b.c) + '. Inquadra il prossimo codice.');
+}
+$('#scanPriceIn').addEventListener('focus', openPriceType);              // il tocco sul campo apre la tastiera e ferma la scansione
+$('#scanPriceForm').addEventListener('submit', savePriceType);
+$('#scanPriceCancel').addEventListener('click', closePriceType);
+$('#scanPriceIn').addEventListener('input', function (e) { e.target.classList.remove('bad'); });
+/* contatore in alto e pulsante di uscita in basso, che dice cosa succede uscendo */
+function setScanCount(t) {
+  $('#scanCount').textContent = t;
+  var n = scanCtx.count;
+  $('#scanDone').textContent = scanMode === 'check' ? 'Chiudi la fotocamera' : n ? 'Ho finito · vedi ' + (n === 1 ? 'il libro aggiunto' : 'i ' + n + ' libri aggiunti') : 'Chiudi la fotocamera';
+  $('#scanDone').classList.toggle('has', scanMode !== 'check' && n > 0);
+}
+function scanMsg(t) { $('#scanMsg').textContent = t; }
+
+/* Tre modi di inquadrare: codice a barre (sempre attivo), numero ISBN stampato (letto di continuo con l'OCR leggero),
+   copertina (si scatta; poi la riconosce come una Foto, mentre continui). In «Ce l'ho già?» niente copertina. */
+var scanKind = 'bar', textTimer = null, textBusy = false, textSince = 0, textHinted = false, shootBusy = false;
+function kindMsg() {
+  var check = scanMode === 'check', wish = tab === 'wish';
+  if (scanKind === 'text') return check ? 'Inquadra il numero ISBN stampato (sul retro o nella pagina del copyright) dentro la striscia: ti dico se ce l\'hai.'
+    : 'Inquadra il numero ISBN stampato dentro la striscia: di solito è sul retro o nella pagina del copyright, dopo la parola «ISBN». Lo leggo da solo.';
+  if (scanKind === 'cover') return 'Inquadra tutta la copertina nel riquadro e tocca il pulsante bianco. La riconosco mentre passi alla prossima' + (wish ? ' (va nei Desideri).' : '.');
+  if (check) return 'Inquadra il codice a barre: ti dico se il libro è già in libreria. Non aggiungo niente da solo.';
+  return wish ? 'Inquadra il codice a barre: ogni libro finisce nella lista dei Desideri.' : 'Inquadra il codice a barre, di solito sul retro. Ogni libro viene aggiunto da solo.';
+}
+function setScanKind(k) {
+  if (k !== 'text' && k !== 'cover') k = 'bar';
+  if (scanMode === 'check' && k === 'cover') k = 'bar';
+  scanKind = k;
+  var sc = $('#scan');
+  sc.classList.toggle('k-text', k === 'text'); sc.classList.toggle('k-cover', k === 'cover');
+  Array.prototype.forEach.call($('#scanKinds').querySelectorAll('[data-k]'), function (b) { b.setAttribute('aria-checked', b.dataset.k === k ? 'true' : 'false'); });
+  $('#scanShootBox').hidden = k !== 'cover';
+  paintScanLight();
+  clearTimeout(textTimer);
+  $('#scanGuide').classList.remove('reading');
+  scanMsg(kindMsg());
+  if (k === 'text') {
+    textSince = Date.now(); textHinted = false;
+    var ready = false;
+    getPriceOcr().then(function () { ready = true; }, function () { if (scanning && scanKind === 'text') scanMsg('La lettura del testo non è disponibile: usa il codice a barre o Digita.'); });
+    setTimeout(function () { if (!ready && scanning && scanKind === 'text') scanMsg('Preparo la lettura del testo (solo la prima volta)…'); }, 400);
+    textTimer = setTimeout(textTick, 300);
+  }
+}
+async function readLiveIsbn() {
+  var c = guideCanvas(false);
+  if (!c) return '';
+  var ws = await getPriceOcr();
+  return L.ocrIsbns(await ocrText(ws[0], '', c), true)[0] || '';
+}
+function textTick() {
+  clearTimeout(textTimer);
+  if (!scanning || scanKind !== 'text') return;
+  if (textBusy || scanPaused || !$('#scanVideo').videoWidth) { textTimer = setTimeout(textTick, 250); return; }
+  textBusy = true;
+  $('#scanGuide').classList.add('reading');
+  readLiveIsbn().catch(function () { return ''; }).then(function (code) {
+    textBusy = false;
+    $('#scanGuide').classList.remove('reading');
+    if (!scanning || scanKind !== 'text') return;
+    if (code) { textSince = Date.now(); textHinted = false; onScanned(code); }
+    else if (!textHinted && Date.now() - textSince > 12000) {
+      textHinted = true;
+      scanMsg('Non leggo ancora un ISBN valido: avvicinati finché il numero riempie la striscia, tieni fermo il telefono' + ($('#scanTorch').hidden ? '' : ' e, se c\'è poca luce, accendi la torcia') + '.');
+    }
+    textTimer = setTimeout(textTick, 350);
+  });
+}
+/* Ritaglio della copertina: il riquadro con un piccolo margine, lato lungo fino a 2000 punti. */
+function coverCanvas() {
+  var v = $('#scanVideo'), vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) return null;
+  var x = 0, y = 0, w = vw, h = vh;
+  try {
+    var r = v.getBoundingClientRect(), g = $('#scanGuide').getBoundingClientRect();
+    var sc = Math.max(r.width / vw, r.height / vh), ox = (r.width - vw * sc) / 2, oy = (r.height - vh * sc) / 2;
+    var gw = g.width / sc, gh = g.height / sc;
+    x = (g.left - r.left - ox) / sc - gw * 0.06; y = (g.top - r.top - oy) / sc - gh * 0.06; w = gw * 1.12; h = gh * 1.12;
+    x = Math.max(0, x); y = Math.max(0, y); w = Math.min(vw - x, w); h = Math.min(vh - y, h);
+    if (!(w > 80 && h > 80)) throw 0;
+  } catch (e) { x = 0; y = 0; w = vw; h = vh; }
+  var k = Math.min(1, 2000 / Math.max(w, h));
+  var c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext('2d').drawImage(v, x, y, w, h, 0, 0, c.width, c.height);
+  return c;
+}
+async function shootCover() {
+  if (!scanning || shootBusy || scanMode === 'check') return;
+  var flashed = false;
+  if (scanLight.flash && !torchOn) {                // flash: luce accesa, attesa che l'immagine si schiarisca, scatto, luce spenta
+    shootBusy = true; $('#scanShoot').disabled = true;
+    flashed = await setTorch(true);
+    if (flashed) await new Promise(function (r) { setTimeout(r, 650); });
+    else noLight();
+    shootBusy = false; $('#scanShoot').disabled = false;
+  }
+  var c = coverCanvas();
+  if (flashed) setTorch(false);
+  if (!c) return;
+  shootBusy = true; $('#scanShoot').disabled = true;
+  var sc = $('#scan');
+  sc.classList.add('flash'); setTimeout(function () { sc.classList.remove('flash'); }, 140);
+  beep(true); vibrate(40);
+  var blob = null;
+  try { blob = await new Promise(function (res) { c.toBlob(res, 'image/jpeg', 0.9); }); } catch (e) {}
+  shootBusy = false; $('#scanShoot').disabled = false;
+  if (!blob || !scanning) return;
+  var id = newId();
+  state.books.push(blankBook({ id: id }));
+  S[id] = { st: 'queued', file: blob };
+  photoPool(function () { return processPhoto(id, blob); });
+  touch();
+  scanCtx.count++; scanCtx.added++;
+  setScanCount(scanCtx.count + (scanCtx.count === 1 ? ' aggiunto' : ' aggiunti'));
+  $('#scanRes').hidden = true; resCode = '';
+  scanMsg('Copertina presa: la riconosco mentre continui. Se ci sono più libri possibili, alla fine scegli tu dall\'elenco.');
+  if (settings.price) { priceTarget = id; priceBar(PRICE_HINT); }
+  else { $('#scanPrice').hidden = true; priceTarget = null; }
+}
+$('#scanKinds').addEventListener('click', function (e) { var b = e.target.closest('[data-k]'); if (b && scanning) setScanKind(b.dataset.k); });
+$('#scanShoot').addEventListener('click', shootCover);
+async function startScan(mode) {
+  scanMode = mode === 'check' ? 'check' : 'add';
+  try { beep.ctx = beep.ctx || new (window.AudioContext || window.webkitAudioContext)(); if (beep.ctx.resume) beep.ctx.resume(); } catch (e) {}
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    notice('La fotocamera non è disponibile in questo browser. Usa Foto o Digita.');
+    return;
+  }
+  try {
+    try { stream = await rearStream({ width: { ideal: 1920 }, height: { ideal: 1080 } }); }      // la posteriore vera: e' quella che ha la luce
+    catch (x) { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+  } catch (e) {
+    notice('Non posso usare la fotocamera. Consenti l\'accesso nelle impostazioni del sito, oppure usa Foto o Digita.');
+    return;
+  }
+  var v = $('#scanVideo');
+  v.srcObject = stream;
+  try { await v.play(); } catch (e) {}
+  var track = stream.getVideoTracks()[0];
+  try {
+    var caps = track.getCapabilities ? track.getCapabilities() : {};
+    if (caps.focusMode && caps.focusMode.indexOf('continuous') >= 0) track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
+  } catch (e) {}
+  scanLight.can = false; torchOn = false; paintScanLight();
+  scanLightCaps(track); setTimeout(function () { if (scanning && stream) scanLightCaps(stream.getVideoTracks()[0]); }, 700);   // su alcuni telefoni la luce risulta solo dopo un attimo
+  scanCtx = { count: 0, added: 0, last: '', lastAt: 0 };
+  setScanCount(scanMode === 'check' ? 'Ce l\'ho già?' : '0 aggiunti');
+  $('#scanRes').hidden = true; $('#scanRes').innerHTML = ''; resCode = ''; resKind = '';
+  $('#scanPrice').hidden = true; priceTarget = null; scanPaused = false;
+  $('#scan').classList.toggle('checking', scanMode === 'check');
+  $('#scan').hidden = false;
+  scanning = true;
+  setScanKind(scanKind);
+  try { history.pushState({ scan: 1 }, ''); pushed = true; } catch (e) {}
+  scanTick();
+}
+function stopScan(fromPop) {
+  if (!scanning) return;
+  closePriceType();
+  scanning = false;
+  clearTimeout(scanTimer); clearTimeout(textTimer);
+  if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+  $('#scanVideo').srcObject = null;
+  $('#scan').hidden = true;
+  torchOn = false;
+  if (pushed && !fromPop) { try { history.back(); } catch (e) {} }
+  pushed = false;
+  renderList(); updateSummary();
+  if (scanCtx.added) toast(scanCtx.added === 1 ? 'Aggiunto 1 libro.' : 'Aggiunti ' + scanCtx.added + ' libri.');
+  else if (scanMode === 'check' && scanCtx.count) toast('Controllati ' + scanCtx.count + (scanCtx.count === 1 ? ' libro.' : ' libri.'));
+}
+async function scanTick() {
+  if (!scanning) return;
+  if (scanPaused) { scanTimer = setTimeout(scanTick, 200); return; }
+  var v = $('#scanVideo');
+  try {
+    if (v.videoWidth) {
+      var code = '';
+      if (detector) {
+        var r = await detector.detect(v);
+        for (var i = 0; i < r.length; i++) { code = L.toIsbn13(r[i].rawValue); if (code) break; }
+      }
+      if (!code) {
+        liveCanvas = liveCanvas || document.createElement('canvas');
+        var k = Math.min(1, 1280 / v.videoWidth);
+        liveCanvas.width = Math.round(v.videoWidth * k); liveCanvas.height = Math.round(v.videoHeight * k);
+        liveCanvas.getContext('2d', { willReadFrequently: true }).drawImage(v, 0, 0, liveCanvas.width, liveCanvas.height);
+        code = zxDecode(liveCanvas);
+      }
+      if (code && scanning) onScanned(code);
+    }
+  } catch (e) {}
+  if (scanning) scanTimer = setTimeout(scanTick, 130);
+}
+function onScanned(code) {
+  /* Mentre si legge il prezzo il codice a barre (o l'ISBN scritto) dello stesso libro e' spesso li' accanto:
+     lo ignoro in silenzio, niente «Già in elenco». Un codice diverso invece e' il libro successivo. */
+  if (scanMode === 'add' && priceTarget) {
+    var pt = get(priceTarget);
+    if (pt && L.toIsbn13(pt.i) === code) {
+      if (pt.c == null && !scanPaused) scanMsg('È lo stesso libro: se vuoi scrivi il prezzo, altrimenti inquadra il prossimo codice.');
+      return;
+    }
+  }
+  var now = Date.now();
+  if (code === scanCtx.last && now - scanCtx.lastAt < 5000) { scanCtx.lastAt = now; return; }
+  scanCtx.last = code; scanCtx.lastAt = now;
+  var g = $('#scanGuide');
+  g.classList.add('hit'); setTimeout(function () { g.classList.remove('hit'); }, 350);
+  if (scanMode === 'check') { onCheck(code); return; }
+  var res = addIsbn(code);
+  if (!res.dup) { $('#scanRes').hidden = true; resCode = ''; }
+  if (res.moved) {
+    if (settings.price && res.moved.c == null) { priceTarget = res.moved.id; priceBar(PRICE_HINT); }
+    beep(true); vibrate(50);
+    scanCtx.count++; scanCtx.added++;
+    setScanCount(scanCtx.count + (scanCtx.count === 1 ? ' aggiunto' : ' aggiunti'));
+    scanMsg('Era nei Desideri: spostato in Libreria. ' + (res.moved.t || code));
+    return;
+  }
+  if (res.dup) {
+    if (res.dup.id !== priceTarget) { $('#scanPrice').hidden = true; priceTarget = null; }
+    beep(false); vibrate(120);
+    scanMsg((res.dup.w ? 'Già nei Desideri: ' : (tab === 'wish' ? 'Ce l\'hai già in Libreria: ' : 'Già in elenco: ')) + (res.dup.t || code) + (res.dup.xs ? ' (' + goneText(res.dup).toLowerCase() + ')' : ''));
+    if (!res.dup.w && tab === 'lib' && res.dup.xs && !state.books.some(function (x) { return !x.w && !x.xs && L.toIsbn13(x.i) === code; })) {
+      resCode = code; resKind = 'gone';
+      $('#scanRes').innerHTML = '<p class="res-h no">' + esc(goneText(res.dup)) + '</p><p class="res-t">' + esc(res.dup.t || code) + '</p>' +
+        '<div class="res-b"><button class="btn primary" data-act="back">È tornato in libreria</button><button class="btn" data-act="addcopy">Aggiungi un\'altra copia</button></div>';
+      $('#scanRes').hidden = false;
+    } else if (!res.dup.w && tab === 'lib') {
+      var nc = state.books.filter(function (x) { return !x.w && !x.xs && L.toIsbn13(x.i) === code; }).length;
+      resCode = code; resKind = 'dupadd';
+      $('#scanRes').innerHTML = '<p class="res-h ok">Già in elenco' + (nc > 1 ? ' (' + nc + ' copie)' : '') + '</p><p class="res-t">' + esc(res.dup.t || code) + '</p>' +
+        '<div class="res-b"><button class="btn" data-act="addcopy">Aggiungi un\'altra copia</button></div>';
+      $('#scanRes').hidden = false;
+    }
+    return;
+  }
+  beep(true); vibrate(50);
+  if (res.book) (S[res.book.id] || (S[res.book.id] = {})).heard = true;   // se poi non si trova, suona «non trovato»
+  scanCtx.count++; scanCtx.added++;
+  setScanCount(scanCtx.count + (scanCtx.count === 1 ? ' aggiunto' : ' aggiunti'));
+  scanMsg('Aggiunto ' + code + '. Cerco il titolo…');
+  var book = res.book;
+  if (settings.price) { priceTarget = book.id; priceBar(PRICE_HINT); }
+  res.done.then(function () {
+    if (!scanning) return;
+    scanMsg(book.t ? '✓ ' + book.t : (book.nf ? 'Non trovato nelle banche dati: lo completi dopo.' : 'Titolo da completare più tardi.'));
+  });
+}
+/* ---------- «Ce l'ho già?»: controlla senza aggiungere ---------- */
+var checkCache = {}, resCode = '', resKind = '';
+function readLabel(b) {
+  if (b.rs === 'ok') return 'Letto' + (b.rt ? ' · ' + L.rateWord(b.rt) : '');
+  if (b.rs === 'in') { var q = ppInfo(b); return 'In lettura' + (q.pct != null ? ' · ' + q.pct + '%' : q.p ? ' · pagina ' + q.p : ''); }
+  return b.rs === 'da' ? 'Da leggere' : '';
+}
+/* segnalibro: la pagina a cui sei arrivato (b.pp, con la data in b.ppd) e l'avanzamento sulle pagine del libro (Piero, 16/11/2026) */
+function ppInfo(b) {
+  var p = parseInt(b && b.pp, 10) || 0, tot = parseInt(b && b.pg, 10) || 0;
+  return { p: p, tot: tot, pct: p && tot ? Math.min(100, Math.round(p * 100 / tot)) : null };
+}
+function shelfLine(b) {
+  return [b.a, b.sh ? 'Scaffale: ' + b.sh : '', readLabel(b)].filter(Boolean).join(' · ');
+}
+function showRes(code, kind, book, info) {
+  resCode = code; resKind = kind;
+  var o = '';
+  if (kind === 'have') {
+    var ncp = state.books.filter(function (x) { return !x.w && !x.xs && L.toIsbn13(x.i) === code; }).length;
+    o = '<p class="res-h ok">✓ Ce l\'hai già' + (ncp > 1 ? ' (' + ncp + ' copie)' : '') + '</p><p class="res-t">' + esc(book.t || code) + '</p>' +
+      (shelfLine(book) ? '<p class="res-s">' + esc(shelfLine(book)) + '</p>' : '') +
+      (book.p ? '<p class="res-s loan">' + esc(prestatoA(book.p)) + (book.pd ? ' dal ' + esc(L.itDate(book.pd)) : '') + '</p>' : '');
+  } else if (kind === 'gone') {
+    o = '<p class="res-h no">✗ Non ce l\'hai più</p><p class="res-t">' + esc(book.t || code) + '</p><p class="res-s">' + esc(goneText(book)) + '</p>' +
+      '<div class="res-b"><button class="btn" data-act="back">È tornato in libreria</button></div>';
+  } else if (kind === 'wish') {
+    o = '<p class="res-h wish">★ È nella tua lista dei Desideri</p><p class="res-t">' + esc(book.t || code) + '</p>' +
+      '<div class="res-b"><button class="btn primary" data-act="bought">L\'ho comprato: spostalo in Libreria</button></div>';
+  } else if (kind === 'no') {
+    var t = info === undefined ? 'Cerco il titolo…' : info ? info.t : (info === null ? 'Titolo sconosciuto alle banche dati' : 'Titolo non disponibile (connessione)');
+    o = '<p class="res-h no">✗ Non ce l\'hai</p><p class="res-t">' + esc(t) + '</p>' +
+      (info && info.a ? '<p class="res-s">' + esc(info.a) + '</p>' : '') + '<p class="res-s">ISBN ' + esc(code) + '</p>' +
+      '<div class="res-b"><button class="btn primary" data-act="addlib">Aggiungi alla Libreria</button><button class="btn" data-act="addwish">Aggiungi ai Desideri</button></div>';
+  } else {
+    o = '<p class="res-h ok">✓ ' + esc(info) + '</p><p class="res-t">' + esc((book && book.t) || code) + '</p>';
+  }
+  $('#scanRes').innerHTML = o;
+  $('#scanRes').hidden = false;
+}
+function onCheck(code) {
+  scanCtx.count++;
+  var ex = findByIsbn(code);
+  var mine = state.books.filter(function (x) { return !x.w && L.toIsbn13(x.i) === code; }), here = mine.filter(function (x) { return !x.xs; });
+  if (mine.length && !here.length) { beep(false); vibrate(160); showRes(code, 'gone', mine[0]); return; }
+  if (here.length) ex = here[0];
+  if (ex && !ex.w) { beep(true); setTimeout(function () { beep(true); }, 150); vibrate([60, 60, 60]); showRes(code, 'have', ex); }
+  else if (ex) { beep(true); vibrate(60); showRes(code, 'wish', ex); }
+  else {
+    beep(false); vibrate(160);
+    if (checkCache.hasOwnProperty(code)) { showRes(code, 'no', null, checkCache[code]); return; }
+    showRes(code, 'no', null, undefined);
+    if (navigator.onLine === false) { showRes(code, 'no', null, false); return; }
+    L.lookupIsbn(code, lookupOpts()).then(function (r) {
+      checkCache[code] = r || null;
+      if (scanning && resCode === code && resKind === 'no') showRes(code, 'no', null, r || null);
+    }, function () { if (scanning && resCode === code && resKind === 'no') showRes(code, 'no', null, false); });
+  }
+}
+$('#scanRes').addEventListener('click', function (e) {
+  var btn = e.target.closest('[data-act]');
+  if (!btn || !resCode) return;
+  var code = resCode, act = btn.dataset.act, pre = checkCache[code] || undefined;
+  if (act === 'addlib' || act === 'addwish') {
+    var res = addIsbn(code, { wish: act === 'addwish', pre: pre });
+    var b = res.book || res.moved || res.dup;
+    if (res.book) scanCtx.added++;
+    showRes(code, 'done', b, act === 'addwish' ? 'Aggiunto ai Desideri' : 'Aggiunto alla Libreria');
+    if (res.done) res.done.then(function () { if (scanning && resCode === code && resKind === 'done') showRes(code, 'done', b, act === 'addwish' ? 'Aggiunto ai Desideri' : 'Aggiunto alla Libreria'); });
+  } else if (act === 'addcopy') {
+    var src = state.books.find(function (x) { return !x.w && L.toIsbn13(x.i) === code; });
+    var cpy = src && addCopy(src.id, true);
+    if (cpy) { scanCtx.count++; scanCtx.added++; setScanCount(scanCtx.count + (scanCtx.count === 1 ? ' aggiunto' : ' aggiunti')); showRes(code, 'done', cpy, 'Aggiunta un\'altra copia'); }
+  } else if (act === 'back') {
+    var gb = state.books.find(function (x) { return !x.w && x.xs && L.toIsbn13(x.i) === code; });
+    if (gb) { gb.xs = ''; gb.xd = ''; gb.xa = ''; touch(); showRes(code, 'done', gb, 'Di nuovo in libreria'); }
+  } else if (act === 'bought') {
+    var wb = findByIsbn(code);
+    if (wb) { moveToLib(wb.id, true); scanCtx.added++; showRes(code, 'done', wb, 'Spostato in Libreria'); }
+  }
+});
+/* luce nella fotocamera della scansione: «Torcia» resta accesa; «Flash» (solo per la foto della copertina) si accende
+   un attimo quando scatti, come «Luce» nella fotocamera delle foto. */
+var scanLight = { can: false, flash: false };
+async function scanLightCaps(track) {
+  var can = false;
+  try { var c = track && track.getCapabilities ? track.getCapabilities() : {}; can = !!c.torch && settings.torchCam !== 'none'; } catch (e) {}
+  if (can) scanLight.can = true;                    // solo se l'obiettivo dichiara la torcia: altrimenti niente pulsanti della luce
+  paintScanLight();
+}
+function paintScanLight() {
+  var t = $('#scanTorch'), f = $('#scanFlash');
+  t.hidden = !scanLight.can; f.hidden = !scanLight.can || scanKind !== 'cover';
+  t.setAttribute('aria-pressed', torchOn ? 'true' : 'false'); t.setAttribute('aria-label', torchOn ? 'Torcia: accesa' : 'Torcia: spenta');
+  f.setAttribute('aria-pressed', scanLight.flash ? 'true' : 'false'); f.setAttribute('aria-label', scanLight.flash ? 'Flash per la foto della copertina: acceso' : 'Flash per la foto della copertina: spento');
+}
+async function setTorch(on) {
+  var tr = stream && stream.getVideoTracks()[0];
+  if (!tr) return false;
+  if (!(await torchOnTrack(tr, on))) return false;
+  if (on) { try { var se = tr.getSettings ? tr.getSettings() : {}; if (se.torch === false) return false; } catch (e) {} }   // accettato ma rimasto spento
+  return true;
+}
+function noLight() {                                 // la luce non si accende: tolgo i pulsanti e me lo ricordo
+  scanLight.can = false; scanLight.flash = false; torchOn = false;
+  if (!settings.torchCam || settings.torchCam !== 'none') { settings.torchCam = 'none'; saveSettings(); }
+  paintScanLight();
+}
+async function toggleTorch() {
+  var want = !torchOn, ok = await setTorch(want);
+  torchOn = ok ? want : false;
+  paintScanLight();
+  if (!ok && want) { noLight(); scanMsg('Da qui la luce non si accende su questo telefono: per il flash usa «Usa la fotocamera del telefono», qui sotto.'); }
+}
+function toggleScanFlash() {
+  scanLight.flash = !scanLight.flash; paintScanLight();
+  scanMsg(scanLight.flash ? 'Flash acceso: la luce si accende un attimo quando scatti la copertina.' : 'Flash spento.');
+}
+
+/* ---------- vista ---------- */
+function visible() {
+  var a = tabBooks();
+  var nq = L.norm(q);
+  if (nq) a = a.filter(function (b) { return L.norm([b.t, b.a, b.e, b.i, b.sh, b.gen, b.n, b.p, b.xa, b.ds, b.se].concat((b.qs || []).map(function (c) { return c.x; })).join(' ')).indexOf(nq) >= 0; });
+  if (flt === 'guess') a = a.filter(function (b) { return b.g.length; });
+  if (flt === 'gone') a = a.filter(function (b) { return b.xs; });
+  if (flt === 'notmine' && guest) a = a.filter(function (b) { return !isMine(b); });
+  if (flt === 'fav') a = a.filter(function (b) { return b.fav; });
+  if (flt === 'qs') a = a.filter(function (b) { return b.qs && b.qs.length; });
+  if (frFlt) a = a.filter(function (b) { return b.fr === frFlt; });
+  if (flt === 'dup') { var dm = L.analyzeDups(dupPool()); a = a.filter(function (b) { return dm[b.id]; }); }
+  if (shFlt) a = a.filter(function (b) { return facetKey(b.sh) === shFlt; });
+  if (genFlt) a = a.filter(function (b) { return facetKey(b.gen) === genFlt; });
+  if (autFlt) a = a.filter(function (b) { return authorsOf(b).some(function (n) { return L.norm(n) === autFlt; }); });
+  if (edFlt) a = a.filter(function (b) { return facetKey(b.e) === edFlt; });
+  if (readFlt && tab === 'lib') a = a.filter(function (b) { return readFlt === 'no' ? !b.rs : b.rs === readFlt; });
+  if (flt === 'loan') {
+    return a.filter(function (b) { return b.p; }).sort(function (x, y) { return (x.pd || '9') < (y.pd || '9') ? -1 : (x.pd || '9') > (y.pd || '9') ? 1 : cmpFor('titolo')(x, y); });
+  }
+  return a.sort(cmpFor(sortBy));
+}
+function cmpFor(k) {
+  var byTitle = function (x, y) { return coll.compare(L.sortKeyTitle(x.t) || '~', L.sortKeyTitle(y.t) || '~'); };
+  var byAuthor = function (x, y) { return coll.compare(L.sortKeyAuthor(x.a) || '~', L.sortKeyAuthor(y.a) || '~'); };
+  if (k === 'titolo') return byTitle;
+  if (k === 'autore') return function (x, y) { return byAuthor(x, y) || byTitle(x, y); };
+  if (k === 'editore') return function (x, y) { return coll.compare(x.e || '~', y.e || '~') || byAuthor(x, y) || byTitle(x, y); };
+  if (k === 'anno') return function (x, y) { return (Number(x.y) || 99999) - (Number(y.y) || 99999) || byTitle(x, y); };
+  if (k === 'voto') return function (x, y) { return (y.rt || 0) - (x.rt || 0) || byTitle(x, y); };
+  if (k === 'letti') return function (x, y) { return (y.rd || '') < (x.rd || '') ? -1 : (y.rd || '') > (x.rd || '') ? 1 : byTitle(x, y); };
+  if (k === 'scaffale') return function (x, y) { return coll.compare(x.sh || '~', y.sh || '~') || byAuthor(x, y) || byTitle(x, y); };
+  return function (x, y) { return y.ts - x.ts; };
+}
+function dupPool() { return state.books.filter(function (b) { return !b.p && !b.sx && !b.sk; }); }   // prestati o in prestito: mai uniti come doppioni (Piero, 16/11/2026)
+function computeDups() { return L.analyzeDups(dupPool()); }
+function kdpHint(b, busy) {
+  if (busy || b.t || !b.nf || !isKdp(b)) return '';
+  return '<div class="kdp-hint"><p><b>Libro pubblicato in proprio tramite Amazon.</b> Le banche dati di solito non lo conoscono: fotografa la copertina per riconoscerlo, oppure cercalo sul web.</p>' +
+    '<div class="kdp-acts"><button type="button" class="btn primary" data-act="kdpphoto">' + icon('cam') + 'Fotografa la copertina</button><button type="button" class="btn" data-act="websearch">' + icon('search') + 'Cerca sul web</button></div></div>';
+}
+function photoForBook(id) {                      // foto della copertina per riconoscere un libro che ha gia' il suo ISBN
+  snapPhoto('Foto della copertina', '#fileCover').then(function (f) {
+    var b = get(id); if (!f || !b) return;
+    var s = S[id] || (S[id] = {});
+    s.keep = true; s.st = 'queued'; s.file = f; delete s.manual;
+    refreshRow(id);
+    photoPool(function () { return processPhoto(id, f); });
+    startFlow(id);
+  });
+}
+function flagsHTML(b, dups) {
+  var s = S[b.id] || {}, o = '';
+  if (b.p) o += '<span class="tag loan tap" data-act="loan" role="button" tabindex="0" title="In prestito' + (b.pd ? ' dal ' + esc(L.itDate(b.pd)) : '') + '. Toccalo per segnarlo come restituito.">' + esc(loanText(b)) + '</span>' +
+    '<button type="button" class="btn sm ret-btn" data-act="returned">È tornato: segna restituito</button>';
+  o += goneTag(b);
+  o += recvTag(b);
+  if (b.sk === 'p' && !b.xs) o += '<button type="button" class="btn sm ret-btn" data-act="recv">L\'ho restituito</button>';
+  o += fromTag(b);
+  if (b.g.length) o += '<span class="tag warn tap" data-act="verify" role="button" tabindex="0" title="Dati dedotti (dalla copertina o dal codice ISBN): controllali, potrebbero non coincidere con il tuo libro. Toccalo quando hai controllato.">Da verificare ✓</span>';
+  o += dupTag(dups && dups[b.id]);
+  if (b.i && !L.toIsbn13(b.i)) o += '<span class="tag bad" title="La cifra di controllo non torna: ricontrolla le cifre">ISBN non valido</span>';
+  else if (!b.t && b.i && !s.st) o += b.nf ? '<span class="tag warn" title="Nessuna banca dati conosce questo codice: scrivi i dati a mano">Non trovato</span>' : '<span class="tag" title="Titolo ancora da cercare">Da completare</span>';
+  return o;
+}
+/* Scheda chiusa (solo titolo e autore) o aperta (tutti i campi). Di regola chiusa; aperta da sola se manca il titolo
+   e il libro non e' in lavorazione (va compilato a mano). Una volta aperta resta aperta finche' non la chiudi. */
+function isOpen(b) {
+  if (settings.openAll) return true;
+  if (openState[b.id] != null) return openState[b.id];
+  var st = (S[b.id] || {}).st, busy = st === 'queued' || st === 'reading' || st === 'lookup' || st === 'search';
+  /* senza titolo («Non trovato»): si apre da sola una volta sola, appena aggiunta in questa sessione; mai tutte insieme
+     quando l'elenco si ridisegna (filtro tolto, cambio vista, riapertura dell'app). Piero, 16/11/2026 */
+  if (!guest && !b.t && !busy && S[b.id] && !autoOpened[b.id]) { autoOpened[b.id] = 1; openState[b.id] = true; return true; }
+  return false;
+}
+/* libro arrivato da una condivisione: da chi, e da quale lista */
+function fromTag(b) {
+  if (!b.fr) return '';
+  return '<span class="tag from" title="' + esc('Ricevuto da ' + b.fr + (b.fl ? ', dalla lista «' + b.fl + '»' : '')) + '">Da ' + esc(b.fr) + '</span>';
+}
+var GONE_VERB = { v: 'Venduto', r: 'Regalato', s: 'Smarrito', b: 'Restituito' };
+function aChi(p) { return (/^[aA]/.test(p) ? 'ad ' : 'a ') + p; }
+function goneText(b) {
+  if (!b.xs) return '';
+  var d = b.xd ? L.itDate(b.xd) : '';
+  if (b.xs === 's') return 'Smarrito' + (d ? ' dal ' + d : '');
+  return GONE_VERB[b.xs] + (b.xa ? ' ' + aChi(b.xa) : '') + (d ? ' il ' + d : '');
+}
+function goneTag(b) {
+  if (b.xs === 'b') return '<span class="tag gone">' + esc(goneText(b)) + '</span>';   // prestito ricevuto, restituito: solo storico
+  return b.xs ? '<span class="tag gone tap" data-act="loan" role="button" tabindex="0" title="Non è più in libreria. Tocca per cambiare o se è tornato.">' + esc(goneText(b)) + '</span>' : '';
+}
+/* ricevuto da un amico dell'app: «Prestato da Anna» (toccandolo: restituito) o «Regalato da Anna» */
+function recvTag(b) {
+  if (!b.sk || !b.sda || b.xs) return '';
+  if (b.sk === 'p') return '<span class="tag loan tap recv" data-act="recv" role="button" tabindex="0" title="Te l\'ha prestato ' + esc(b.sda) + '. Toccalo quando l\'hai restituito.">Prestato da ' + esc(b.sda) + '</span>';
+  if (b.sk === 'q') return '<span class="tag loan wait" title="Hai detto di averlo restituito: ' + esc(b.sda) + ' deve confermare">Restituito ' + esc(aChi(b.sda)) + ' · da confermare</span>';
+  return '<span class="tag from">Regalato da ' + esc(b.sda) + '</span>';
+}
+function prestatoA(p) { return 'Prestato ' + (/^[aA]/.test(p) ? 'ad ' : 'a ') + p; }   // «ad Anna», «a Marco»
+function loanText(b) {
+  if (!b.pd) return prestatoA(b.p);
+  var ago = L.agoText(Date.parse(b.pd));
+  return prestatoA(b.p) + ' · ' + (ago === 'oggi' ? 'da oggi' : ago === 'ieri' ? 'da ieri' : 'da ' + ago.replace(/ fa$/, ''));
+}
+function summaryHTML(b, dups, status) {
+  var s = S[b.id] || {}, tags = '';
+  if (b.p) tags += '<span class="tag loan tap" data-act="loan" role="button" tabindex="0" title="Tocca per segnarlo come restituito">' + esc(loanText(b)) + '</span>';
+  tags += goneTag(b);
+  tags += recvTag(b);
+  if (b.fav && !b.w) tags += '<span class="tag fav">Preferito</span>';
+  tags += fromTag(b);
+  if (b.g.length) tags += '<span class="tag warn">Da verificare</span>';
+  if (!b.w && (b.rs === 'in' || b.rs === 'ok')) { var qq = b.rs === 'in' ? ppInfo(b) : {}; tags += '<span class="tag read' + (b.rs === 'in' ? ' now' : '') + (qq.pct != null ? ' has-pp" style="--pp:' + qq.pct + '%' : '') + '">' + esc(readLabel(b)) + '</span>'; }
+  tags += dupTag(dups && dups[b.id]);
+  if (b.i && !L.toIsbn13(b.i)) tags += '<span class="tag bad">ISBN non valido</span>';
+  else if (!b.t && b.i && !s.st && b.nf) tags += '<span class="tag warn">Non trovato</span>';
+  var title = b.t || (b.i ? 'ISBN ' + b.i : 'Senza titolo');
+  var vol = b.t && String(b.sn || '').trim() ? ', ' + String(b.sn).trim() : '';   // numero del volume nella serie, accanto al titolo
+  var img = smallImg(b);
+  var cover = img ? '<span class="sum-img zoom" data-act="zoom" title="Ingrandisci la copertina"><img src="' + esc(img) + '" alt="Copertina: tocca per ingrandire" loading="lazy" referrerpolicy="no-referrer"></span>'
+    : '<span class="sum-img ph" style="--h:' + hue(b.t + b.a + b.i) + '" aria-hidden="true">' + esc((b.t || '?').replace(/^(il|lo|la|i|gli|le|un|uno|una|l')\s*/i, '').charAt(0).toUpperCase() || '?') + '</span>';
+  return '<article class="row closed' + (status.indexOf('status err') >= 0 ? ' bad' : '') + (b.xs ? ' gone' : '') + '" data-id="' + b.id + '">' +
+    '<div class="sum" data-act="toggle" role="button" tabindex="0" aria-expanded="false" aria-label="' + esc(title + (vol ? ', volume ' + vol.slice(2) : '') + (b.a ? ', ' + b.a : '') + '. Apri la scheda') + '">' + cover +
+    '<span class="sum-txt"><span class="sum-t' + (b.t ? '' : ' none') + '">' + esc(title) + (vol ? '<span class="sum-vol">' + esc(vol) + '</span>' : '') + '</span>' +
+    (b.a ? '<span class="sum-a">' + esc(b.a) + '</span>' : '') +
+    (tags ? '<span class="sum-tags">' + tags + '</span>' : '') + '</span>' +
+    '<span class="chev" aria-hidden="true">' + icon('chev') + '</span></div>' + status + '</article>';
+}
+var cardPushed = null;                         // scheda aperta con il tocco: Indietro (o la freccetta) la chiude e torna all'elenco
+function toggleRow(id, fromPop) {
+  var b = get(id);
+  if (!b) return;
+  var open = !isOpen(b);
+  if (open && !settings.openAll) {
+    Object.keys(openState).forEach(function (k) { var x = get(k); if (k !== id && openState[k] && x && x.t) { openState[k] = false; refreshRow(k); } });   // una scheda alla volta
+    try { if (cardPushed) history.replaceState({ card: id }, ''); else history.pushState({ card: id }, ''); cardPushed = id; } catch (e) {}
+  } else if (!open && cardPushed && !fromPop) { cardPushed = null; try { history.back(); } catch (e) {} }
+  openState[id] = open;
+  if (!open && gridRet && (gridRet.id === id || !anyOpen()) && backToGrid()) { updateStick(); return; }   // aperta dalle copertine: si torna li'
+  refreshRow(id);
+  updateStick();
+  var el = rowEl(id);
+  if (el) { el.scrollIntoView({ block: 'nearest' }); var f = el.querySelector(open ? '.chev-btn' : '.sum'); if (f) f.focus({ preventScroll: true }); }
+}
+window.addEventListener('popstate', function (e) {
+  if (!cardPushed || (e.state && (e.state.card || e.state.opt || e.state.log || e.state.drawer))) return;   // si torna a una finestra con la sua cronologia
+  if (document.querySelector('.sheet:not([hidden])')) {          // prima la finestra in primo piano, la scheda resta aperta
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    try { history.pushState({ card: cardPushed }, ''); } catch (x) {}
+    return;
+  }
+  var id = cardPushed; cardPushed = null;
+  var b = get(id);
+  if (b && isOpen(b) && !settings.openAll) toggleRow(id, true);
+});
+/* ---- uscire dall'app: serve premere Indietro due volte ---- */
+var exitArmed = 0;
+try { history.scrollRestoration = 'manual'; } catch (e) {}   // le schede usano la cronologia: il browser non deve riportare la pagina dove era (filtro da un'etichetta finiva a meta' elenco, 16/11/2026)
+(function () {
+  var push = history.pushState.bind(history);
+  history.pushState = function (st, t, u) { if (history.state && history.state.root) push({ guard: 1 }, ''); return push(st, t, u); };   // sotto ogni finestra c'e' sempre la «guardia»
+  try { history.replaceState({ root: 1 }, ''); push({ guard: 1 }, ''); } catch (e) {}
+  window.addEventListener('popstate', function (e) {
+    if (!(e.state && e.state.root)) return;
+    if (document.querySelector('.sheet:not([hidden]), .lightbox:not([hidden])')) {        // finestre senza cronologia: Indietro le chiude
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      try { push({ guard: 1 }, ''); } catch (x) {}
+      return;
+    }
+    var openIds = settings.openAll ? [] : Object.keys(openState).filter(function (k) { var x = get(k); return openState[k] && x && x.t; });
+    if (openIds.length) {                                                                    // schede aperte senza cronologia: Indietro le chiude
+      openIds.forEach(function (k) { openState[k] = false; refreshRow(k); });
+      if (gridRet) backToGrid();
+      try { push({ guard: 1 }, ''); } catch (x) {}
+      return;
+    }
+    if (guest) { guestExit(); try { push({ guard: 1 }, ''); } catch (x) {} return; }   // dalla libreria di un amico si torna alla tua
+    exitArmed = Date.now();
+    toast('Premi di nuovo Indietro per uscire', null, 2500);
+    setTimeout(function () { if (history.state && history.state.root) { try { push({ guard: 1 }, ''); } catch (x) {} } }, 2500);
+  });
+})();
+/* ---- selezione di più libri: tieni premuto un libro, poi tocca gli altri ---- */
+var selSeq = 0, selOn = false, sel = {}, selPushed = false, lp = { t: 0, x: 0, y: 0, fired: false };
+function selIds() { return Object.keys(sel).filter(function (id) { var b = get(id); return b && inTab(b); }); }
+function selBooks() { return selIds().map(get); }
+function paintSel() {
+  document.body.classList.toggle('selecting', selOn);
+  $('#selBar').hidden = !selOn;
+  if (!selOn) return;
+  Array.prototype.forEach.call($('#list').querySelectorAll('.row[data-id], .cover[data-id]'), function (el) {
+    var on = !!sel[el.dataset.id];
+    el.classList.toggle('sel', on); el.setAttribute('aria-selected', on ? 'true' : 'false');
+    if (on) el.dataset.ord = selRank(el.dataset.id); else delete el.dataset.ord;          // ordine in cui l'hai toccato
+  });
+  var n = selIds().length;
+  $('#selN').innerHTML = '<b>' + n + '</b><small>' + (n === 1 ? 'selezionato' : 'selezionati') + '</small>';
+  $('#selDel').disabled = $('#selEdit').disabled = !n;
+  var all = visible().length;
+  $('#selAll').textContent = n && n >= all ? 'Nessuno' : 'Tutti';
+}
+function startSel(id) {
+  if (guest) return;
+  if (scanning) return;
+  if (!selOn) {
+    selOn = true; sel = {};
+    collapseCards(); openState = {};
+    try { history.pushState({ sel: 1 }, ''); selPushed = true; } catch (e) {}
+    renderList();
+    if (!settings.selTip) { settings.selTip = 1; saveSettings(); toast('Tocca altri libri per aggiungerli. Poi Elimina o Modifica qui sotto.', null, 4500); }
+  }
+  if (id) { sel[id] = ++selSeq; paintSel(); }
+  try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {}
+}
+function toggleSel(id) { if (sel[id]) delete sel[id]; else sel[id] = ++selSeq; paintSel(); }
+function selOrdered() { return selIds().sort(function (a, b) { return sel[a] - sel[b]; }).map(get); }
+function selRank(id) { var ids = selIds().sort(function (a, b) { return sel[a] - sel[b]; }); return ids.indexOf(id) + 1; }
+function endSel(fromPop) {
+  if (!selOn) return;
+  selOn = false; sel = {};
+  Array.prototype.forEach.call($('#list').querySelectorAll('.sel'), function (el) { el.classList.remove('sel'); el.removeAttribute('aria-selected'); });
+  paintSel();
+  ['#bulkSheet', '#confirmSheet'].forEach(function (k) { $(k).hidden = true; });
+  if (selPushed && !fromPop) { selPushed = false; try { history.back(); } catch (e) {} }
+}
+window.addEventListener('popstate', function (e) { if (selOn && !(e.state && e.state.sel)) { selPushed = false; endSel(true); } });
+/* pressione lunga sulla riga chiusa o sulla copertina */
+(function () {
+  var listEl = $('#list');
+  function target(e) { var el = e.target.closest('.row:not(.open), .cover'); return el && el.dataset.id && !el.closest('[data-ex]') && el.dataset.ex == null ? el : null; }
+  listEl.addEventListener('pointerdown', function (e) {
+    lp.fired = false;
+    if (e.button > 0) return;
+    var el = target(e); if (!el || e.target.closest('input, textarea, select')) return;
+    lp.x = e.clientX; lp.y = e.clientY; clearTimeout(lp.t);
+    lp.t = setTimeout(function () { lp.fired = true; if (selOn) toggleSel(el.dataset.id); else startSel(el.dataset.id); }, 480);
+  });
+  function cancel() { clearTimeout(lp.t); }
+  listEl.addEventListener('pointermove', function (e) { if (Math.abs(e.clientX - lp.x) > 10 || Math.abs(e.clientY - lp.y) > 10) cancel(); });
+  listEl.addEventListener('pointerup', function () { cancel(); if (lp.fired) setTimeout(function () { lp.fired = false; }, 400); }); listEl.addEventListener('pointercancel', cancel);
+  window.addEventListener('scroll', cancel, { passive: true });
+  listEl.addEventListener('contextmenu', function (e) { if (target(e)) e.preventDefault(); });
+  /* durante la selezione un tocco aggiunge o toglie; dopo la pressione lunga il tocco che segue non apre la scheda */
+  listEl.addEventListener('click', function (e) {
+    if (lp.fired) { lp.fired = false; e.preventDefault(); e.stopPropagation(); return; }
+    if (!selOn) return;
+    var el = e.target.closest('.row[data-id], .cover[data-id]');
+    if (!el) return;
+    e.preventDefault(); e.stopPropagation();
+    toggleSel(el.dataset.id);
+  }, true);
+})();
+$('#selExit').addEventListener('click', function () { endSel(false); });
+$('#selAll').addEventListener('click', function () {
+  var vis = visible(), n = selIds().length;
+  sel = {};
+  if (!(n && n >= vis.length)) vis.forEach(function (b) { sel[b.id] = ++selSeq; });
+  paintSel();
+});
+/* numerazione dei volumi: ordine scelto, primo numero, anteprima */
+var bkFromTouched = false;
+function numFrom() { return Math.max(1, Math.min(999, parseInt($('#bkFrom').value, 10) || 1)); }
+var bkCust = null;                                   // ordine personalizzato: { ids: [...], nums: { id: numero } }
+function numHow() { return ($('#bulkSheet').querySelector('input[name="bkOrd"]:checked') || {}).value || 'sel'; }
+function numOrder(how) {
+  how = how || numHow();
+  if (how === 'custom' && bkCust) return bkCust.ids.map(get).filter(function (b) { return b && sel[b.id]; });
+  if (how === 'custom') how = 'sel';
+  if (how === 'list') return visible().filter(function (b) { return sel[b.id]; });
+  var books = selOrdered();
+  if (how === 'year') books = books.slice().sort(function (x, y) { return (parseInt(x.y, 10) || 9999) - (parseInt(y.y, 10) || 9999) || sel[x.id] - sel[y.id]; });
+  return books;
+}
+function numPreview() {
+  var on = $('#bkSeNum').checked;
+  $('#bkNumBox').hidden = !on;
+  if (!on) return;
+  var val = $('#bkSe').value.replace(/\s+/g, ' ').trim();
+  if (!bkFromTouched) {                                                    // serie che hai gia': riparto dal numero dopo l'ultimo
+    var max = 0;
+    if (val) state.books.forEach(function (b) { if (!sel[b.id] && L.serKey(b.se) === L.serKey(val)) max = Math.max(max, parseInt(b.sn, 10) || 0); });
+    $('#bkFrom').value = String(max + 1);
+  }
+  var from = numFrom(), how = numHow();
+  $('#bkCustHint').hidden = how !== 'custom';
+  $('#bkPrev').classList.toggle('cust', how === 'custom');
+  if (how === 'custom') {
+    var ids = numOrder().map(function (b) { return b.id; });
+    $('#bkPrev').innerHTML = ids.map(function (id, i) {
+      var b = get(id), n = bkCust.nums[id];
+      return '<li data-id="' + id + '"><button type="button" class="bk-drag" aria-label="Trascina per spostare">≡</button>' +
+        '<input class="bk-n" type="text" inputmode="numeric" maxlength="3" value="' + (n || '') + '" aria-label="Numero del volume">' +
+        '<span>' + esc(b.t || b.i || 'Senza titolo') + (b.y ? ' <small>' + esc(b.y) + '</small>' : '') + '</span>' +
+        '<button type="button" class="bk-mv" data-mv="-1" aria-label="Sposta su"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button type="button" class="bk-mv" data-mv="1" aria-label="Sposta giù"' + (i === ids.length - 1 ? ' disabled' : '') + '>↓</button></li>';
+    }).join('');
+    return;
+  }
+  $('#bkPrev').innerHTML = numOrder().map(function (b, i) {
+    return '<li><b>' + (from + i) + '</b><span>' + esc(b.t || b.i || 'Senza titolo') + (b.y ? ' <small>' + esc(b.y) + '</small>' : '') + '</span></li>';
+  }).join('');
+}
+function custRenumber() { var from = numFrom(); bkCust.ids.forEach(function (id, i) { bkCust.nums[id] = from + i; }); }
+/* numeri da assegnare: [{ b, n }] oppure null (con l'avviso) se i numeri scritti a mano non vanno */
+function numPlan() {
+  var from = numFrom();
+  if (numHow() !== 'custom') return numOrder().map(function (b, i) { return { b: b, n: from + i }; });
+  var plan = numOrder().map(function (b) { return { b: b, n: parseInt(bkCust.nums[b.id], 10) || 0 }; }), seen = {};
+  for (var i = 0; i < plan.length; i++) {
+    if (!(plan[i].n >= 1 && plan[i].n <= 999)) { toast('Manca il numero di «' + (plan[i].b.t || plan[i].b.i) + '».'); return null; }
+    if (seen[plan[i].n]) { toast('Il numero ' + plan[i].n + ' è usato due volte: correggi l\'anteprima.'); return null; }
+    seen[plan[i].n] = 1;
+  }
+  return plan;
+}
+$('#bkSeNum').addEventListener('change', numPreview);
+$('#bkSe').addEventListener('input', numPreview);
+$('#bkFrom').addEventListener('input', function () { bkFromTouched = true; if (bkCust && numHow() === 'custom') custRenumber(); numPreview(); });
+$('#bulkSheet').addEventListener('change', function (e) {
+  if (e.target.name !== 'bkOrd') return;
+  if (e.target.value === 'custom' && !bkCust) {                // si parte dall'ordine che vedevi
+    var prevHow = ($('#bulkSheet').dataset.lastHow) || 'sel';
+    bkCust = { ids: numOrder(prevHow).map(function (b) { return b.id; }), nums: {} }; custRenumber();
+  }
+  if (e.target.value !== 'custom') $('#bulkSheet').dataset.lastHow = e.target.value;
+  numPreview();
+});
+/* personalizzato: frecce, numeri scritti a mano, trascinamento con la maniglia */
+$('#bkPrev').addEventListener('click', function (e) {
+  var mv = e.target.closest('[data-mv]'); if (!mv || !bkCust) return;
+  var id = mv.closest('li').dataset.id, ids = bkCust.ids, i = ids.indexOf(id), j = i + (+mv.dataset.mv);
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  ids.splice(i, 1); ids.splice(j, 0, id); custRenumber(); numPreview();
+  var again = $('#bkPrev').querySelector('li[data-id="' + id + '"] [data-mv="' + mv.dataset.mv + '"]'); if (again && !again.disabled) again.focus(); else { var any = $('#bkPrev').querySelector('li[data-id="' + id + '"] .bk-drag'); if (any) any.focus(); }
+});
+$('#bkPrev').addEventListener('input', function (e) {
+  if (!e.target.classList.contains('bk-n') || !bkCust) return;
+  var v = e.target.value.replace(/\D/g, '').slice(0, 3); if (v !== e.target.value) e.target.value = v;
+  bkCust.nums[e.target.closest('li').dataset.id] = v ? parseInt(v, 10) : '';
+});
+(function () {
+  var drag = null;
+  $('#bkPrev').addEventListener('pointerdown', function (e) {
+    var hnd = e.target.closest('.bk-drag'); if (!hnd || !bkCust) return;
+    e.preventDefault(); var li = hnd.closest('li');
+    try { hnd.setPointerCapture(e.pointerId); } catch (x) {}
+    drag = { li: li, id: li.dataset.id }; li.classList.add('dragging');
+  });
+  $('#bkPrev').addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var rows = Array.prototype.slice.call($('#bkPrev').children).filter(function (x) { return x !== drag.li; });
+    var before = rows.find(function (x) { var r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+    if (before) { if (drag.li.nextSibling !== before) $('#bkPrev').insertBefore(drag.li, before); }
+    else if ($('#bkPrev').lastElementChild !== drag.li) $('#bkPrev').appendChild(drag.li);
+  });
+  function end() {
+    if (!drag) return;
+    drag.li.classList.remove('dragging');
+    bkCust.ids = Array.prototype.map.call($('#bkPrev').children, function (x) { return x.dataset.id; }).concat(bkCust.ids.filter(function (id) { return !$('#bkPrev').querySelector('li[data-id="' + id + '"]'); }));
+    drag = null; custRenumber(); numPreview();
+  }
+  $('#bkPrev').addEventListener('pointerup', end); $('#bkPrev').addEventListener('pointercancel', end);
+})();
+/* annulla per le modifiche di gruppo: copia dei libri com'erano */
+function bulkSnap(books) { return books.map(function (b) { return JSON.parse(JSON.stringify(b)); }); }
+function bulkUndo(snap) {
+  return { label: 'Annulla', fn: function () {
+    snap.forEach(function (o) { var i = state.books.findIndex(function (x) { return x.id === o.id; }); if (i >= 0) state.books[i] = o; else state.books.push(o); });
+    touch(); renderList(); updateSummary();
+  } };
+}
+function plural(n, one, many) { return n === 1 ? '1 ' + one : n + ' ' + many; }
+var confirmFn = null;
+function askConfirm(title, msg, okLabel, fn) {
+  $('#confirmH').textContent = title; $('#confirmMsg').textContent = msg; $('#confirmOk').textContent = okLabel;
+  confirmFn = fn; $('#confirmSheet').hidden = false;
+  setTimeout(function () { try { $('#confirmNo').focus(); } catch (e) {} }, 50);
+}
+$('#confirmOk').addEventListener('click', function () { var f = confirmFn; confirmFn = null; $('#confirmSheet').hidden = true; if (f) f(); });
+$('#confirmNo').addEventListener('click', function () { confirmFn = null; $('#confirmSheet').hidden = true; });
+$('#confirmSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) { confirmFn = null; $('#confirmSheet').hidden = true; } });
+$('#selDel').addEventListener('click', function () {
+  var books = selBooks(), n = books.length;
+  if (!n) return;
+  var names = books.slice(0, 3).map(function (b) { return '«' + (b.t || b.i || 'Senza titolo') + '»'; }).join(', ') + (n > 3 ? ' e altri ' + (n - 3) : '');
+  askConfirm(n === 1 ? 'Eliminare il libro?' : 'Eliminare ' + n + ' libri?', names + '. Subito dopo puoi ancora annullare.', n === 1 ? 'Elimina' : 'Elimina ' + n + ' libri', function () {
+    var snap = bulkSnap(books), ids = {};
+    books.forEach(function (b) { ids[b.id] = 1; delete S[b.id]; });
+    state.books = state.books.filter(function (b) { return !ids[b.id]; });
+    endSel(false); touch(); renderList(); updateSummary();
+    toast(plural(n, 'libro eliminato', 'libri eliminati'), bulkUndo(snap));
+  });
+});
+function openBulk() {
+  var n = selIds().length;
+  if (!n) return;
+  fillDatalists();
+  $('#bulkMsg').textContent = 'Le modifiche valgono per ' + plural(n, 'libro selezionato', 'libri selezionati') + '. Dopo ognuna c\'è «Annulla».';
+  ['#bkSe', '#bkSh', '#bkGen'].forEach(function (k) { $(k).value = ''; });
+  $('#bkSeNum').checked = false; $('#bkNumBox').hidden = true; $('#bkFrom').value = '1'; bkFromTouched = false; bkCust = null; $('#bulkSheet').dataset.lastHow = 'sel';
+  var r0 = $('#bulkSheet').querySelector('input[name="bkOrd"][value="sel"]'); if (r0) r0.checked = true;
+  Array.prototype.forEach.call($('#bulkSheet').querySelectorAll('.bk-lib'), function (el) { el.hidden = tab === 'wish'; });
+  $('#bulkSheet').querySelector('[data-bk="move"]').textContent = tab === 'wish' ? 'Sposta in Libreria' : 'Sposta nei Desideri';
+  $('#bulkSheet').hidden = false;
+}
+$('#selEdit').addEventListener('click', openBulk);
+$('#bulkClose').addEventListener('click', function () { $('#bulkSheet').hidden = true; });
+$('#bulkSheet').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) { $('#bulkSheet').hidden = true; return; }
+  var x = e.target.closest('[data-bk]'); if (!x) return;
+  var k = x.dataset.bk, v = x.dataset.v, books = selBooks(), n = books.length;
+  if (!n) return;
+  if (k === 'share') { $('#bulkSheet').hidden = true; openShare(books, { kind: 'list', title: '' }); return; }
+  var snap = bulkSnap(books), msg = '';
+  if (k === 'se' || k === 'sh' || k === 'gen') {
+    var val = $({ se: '#bkSe', sh: '#bkSh', gen: '#bkGen' }[k]).value.replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (k === 'se' && $('#bkSeNum').checked) {
+      if (!val) { toast('Scrivi il nome della serie per numerare i volumi.'); return; }
+      var plan = numPlan();
+      if (!plan) return;
+      plan.forEach(function (p) { p.b.se = val; p.b.sn = String(p.n); });
+      var tot = L.seriesInfo(state.books)[L.serKey(val)], ns = plan.map(function (p) { return p.n; }).sort(function (a, b) { return a - b; });
+      var seq = ns.every(function (x, i) { return !i || x === ns[i - 1] + 1; });
+      msg = plural(n, 'libro', 'libri') + ' nella serie «' + val + '», ' + (seq ? 'numerati da ' + ns[0] + ' a ' + ns[ns.length - 1] : 'con i numeri ' + ns.join(', ')) + '.';
+      if (tot && tot.total) books.forEach(function (b) { if (!b.sq) b.sq = String(tot.total); });
+    } else {
+      books.forEach(function (b) { b[k] = val; if (k === 'se' && !val) { b.sn = ''; b.sq = ''; } });
+      var what = { se: 'Serie', sh: 'Scaffale', gen: 'Genere' }[k];
+      msg = val ? what + ' «' + val + '» per ' + plural(n, 'libro', 'libri') + '.' : what + ' tolto da ' + plural(n, 'libro', 'libri') + '.';
+    }
+  } else if (k === 'rs') {
+    books.forEach(function (b) { if (b.w) return; b.rs = v; if (v === 'ok' && !b.rd) b.rd = today(); });
+    msg = plural(n, 'libro segnato', 'libri segnati') + ' «' + L.READ_LABEL[v] + '».';
+  } else if (k === 'fav') {
+    books.forEach(function (b) { if (!b.w) b.fav = v === '1'; });
+    msg = v === '1' ? plural(n, 'libro aggiunto', 'libri aggiunti') + ' ai preferiti.' : plural(n, 'libro tolto', 'libri tolti') + ' dai preferiti.';
+  } else if (k === 'verify') {
+    books.forEach(function (b) { b.g = []; });
+    msg = plural(n, 'libro segnato', 'libri segnati') + ' come verificati.';
+  } else if (k === 'move') {
+    var toWish = tab !== 'wish';
+    books.forEach(function (b) {
+      b.w = toWish; b.ts = Date.now();
+      if (toWish) { b.p = ''; b.pd = ''; b.xs = ''; b.xd = ''; b.xa = ''; b.rs = ''; b.rt = 0; b.rd = ''; b.cp = false; b.fav = false; }
+      else if (!b.rs) b.rs = 'da';
+    });
+    msg = plural(n, 'libro spostato', 'libri spostati') + (toWish ? ' nei Desideri.' : ' in Libreria.');
+    $('#bulkSheet').hidden = true; endSel(false);
+  } else return;
+  touch(); renderList(); updateSummary();
+  toast(msg, bulkUndo(snap));
+});
+/* ---- fotocamera dentro l'app: sempre quella posteriore (l'app Fotocamera del telefono a volte riparte da quella frontale) ---- */
+var snap = { stream: null, done: null, pushed: false, track: null, torch: false };
+/* ---- Obiettivo con la luce: i telefoni hanno piu' obiettivi posteriori e il flash e' collegato a uno solo.
+   La prima volta li provo uno per uno, scelgo quello che dichiara la luce e me lo ricordo (settings.torchCam:
+   deviceId, oppure 'none' se nessuno ce l'ha: allora i pulsanti della luce non compaiono). ---- */
+async function torchOnTrack(tr, on) {
+  var ok = false;
+  try { await tr.applyConstraints({ advanced: [{ torch: !!on }] }); ok = true; } catch (e) {}
+  try { await tr.applyConstraints({ torch: !!on }); ok = true; } catch (e) {}
+  return ok;
+}
+function trackTorch(st) { try { var t = st && st.getVideoTracks()[0], c = t && t.getCapabilities ? t.getCapabilities() : {}; return !!c.torch; } catch (e) { return false; } }
+function lensMsg(t) { if (!$('#snap').hidden) $('#snapMsg').textContent = t; else if (scanning) scanMsg(t); else if (optOpen) $('#lensMsg').textContent = t; else toast(t); }
+/* Impostazioni › Aggiunta dei libri › «Fotocamera e luce»: prova gli obiettivi e mostra quali hanno la luce (per capire perche' non si accende) */
+function lensRows(list, pick) {
+  return list.map(function (r) {
+    return '<li><b>' + esc(r.label) + '</b><span>' + (r.ok ? (r.back === false ? 'anteriore' : r.back ? 'posteriore' : 'lato non indicato') + ' · ' + (r.torch ? '<em class="yes">luce sì</em>' : 'luce no') : 'non si apre') +
+      (pick && pick.id === r.id ? ' · <em class="yes">in uso</em>' : '') + '</span></li>';
+  }).join('');
+}
+function paintLensState() {
+  var t = settings.torchCam;
+  $('#lensState').textContent = !t ? 'Non ancora controllato: si controlla da solo la prima volta che apri la fotocamera, oppure qui.' :
+    t === 'none' ? 'Nessun obiettivo dichiara la luce a Chrome: i pulsanti della luce non compaiono. Per il flash usa la fotocamera del telefono.' :
+    'Trovato un obiettivo con la luce: l\'app usa quello.' + (settings.lightOk ? ' La luce si accende.' : ' Se toccando 🔦 la luce non si accende, usa «Prova la luce».');
+}
+/* alcuni telefoni (es. Galaxy A32) dichiarano la luce e dicono di averla accesa, ma resta spenta: l'app non puo' saperlo.
+   Qui la accendo per qualche secondo e chiedo: se non si e' vista, niente pulsanti della luce (settings.torchCam = 'none'). */
+var lightTest = null;
+async function runLightTest() {
+  var b = $('#lightRun'); b.disabled = true; $('#lightAsk').hidden = true;
+  $('#lensMsg').textContent = 'Accendo la luce per qualche secondo: guarda il retro del telefono…';
+  try {
+    if (settings.torchCam === 'none') settings.torchCam = '';          // riprova da capo
+    var st = await rearStream({ width: { ideal: 1920 }, height: { ideal: 1080 } }), tr = st.getVideoTracks()[0];
+    lightTest = st;
+    var v = document.createElement('video'); v.muted = true; v.playsInline = true; v.srcObject = st; try { await v.play(); } catch (e) {}   // su alcuni telefoni la luce va solo con l'immagine attiva
+    if (!trackTorch(st)) { stopLightTest(); $('#lensMsg').textContent = 'Nessun obiettivo dichiara la luce a Chrome: i pulsanti della luce non compaiono. Per il flash usa la fotocamera del telefono.'; settings.torchCam = 'none'; saveSettings(); paintLensState(); b.disabled = false; return; }
+    await torchOnTrack(tr, true);
+    await new Promise(function (r) { setTimeout(r, 2500); });
+    await torchOnTrack(tr, false);
+    stopLightTest();
+    $('#lensMsg').textContent = 'Hai visto accendersi la luce sul retro del telefono?';
+    $('#lightAsk').hidden = false;
+  } catch (e) { stopLightTest(); $('#lensMsg').textContent = 'Non riesco ad aprire la fotocamera: controlla il permesso del sito.'; }
+  b.disabled = false;
+}
+function stopLightTest() { if (lightTest) { lightTest.getTracks().forEach(function (t) { t.stop(); }); lightTest = null; } }
+function lightAnswer(seen) {
+  $('#lightAsk').hidden = true;
+  if (seen) { settings.lightOk = true; $('#lensMsg').textContent = 'Bene: nella fotocamera dell\'app trovi la luce 🔦 (e il flash ⚡ per le copertine).'; }
+  else { settings.torchCam = 'none'; settings.lightOk = false; $('#lensMsg').textContent = 'Ok: tolgo i pulsanti della luce. Per il flash usa «Usa la fotocamera del telefono», nella fotocamera dell\'app.'; }
+  saveSettings(); paintLensState();
+}
+async function runLensCheck() {
+  var b = $('#lensRun'); b.disabled = true; $('#lensList').innerHTML = ''; $('#lensMsg').textContent = 'Provo gli obiettivi uno per uno…';
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('no');
+    var st = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); st.getTracks().forEach(function (t) { t.stop(); });   // permesso e nomi degli obiettivi
+    var res = await chooseLightLens(function (r, i, n) { $('#lensMsg').textContent = 'Provo gli obiettivi: ' + (i + 1) + ' di ' + n + '…'; });
+    $('#lensList').innerHTML = lensRows(res.list, res.pick);
+    $('#lensMsg').textContent = res.pick ? 'Fatto: d\'ora in poi la fotocamera dell\'app usa l\'obiettivo con la luce.' : 'Fatto: nessun obiettivo ha la luce disponibile da Chrome.';
+  } catch (e) { $('#lensMsg').textContent = 'Non riesco ad aprire la fotocamera: controlla il permesso del sito.'; }
+  b.disabled = false; paintLensState();
+}
+async function probeLenses(onStep) {
+  var md = navigator.mediaDevices, out = [];
+  var devs = (await md.enumerateDevices()).filter(function (d) { return d.kind === 'videoinput'; });
+  for (var i = 0; i < devs.length; i++) {
+    var d = devs[i], r = { id: d.deviceId, label: d.label || ('Obiettivo ' + (i + 1)), back: null, torch: false, ok: false };
+    try {
+      var st = await md.getUserMedia({ video: { deviceId: { exact: d.deviceId } }, audio: false });
+      var t = st.getVideoTracks()[0], c = t.getCapabilities ? t.getCapabilities() : {}, se = t.getSettings ? t.getSettings() : {};
+      var fm = se.facingMode || (c.facingMode && c.facingMode[0]) || '';
+      r.ok = true; r.torch = !!c.torch;
+      r.back = fm ? fm === 'environment' : /back|rear|posterior|environment/i.test(r.label) ? true : /front|user|anterior|frontale/i.test(r.label) ? false : null;
+      st.getTracks().forEach(function (x) { x.stop(); });
+      await new Promise(function (ok) { setTimeout(ok, 150); });   // alcuni telefoni non riaprono subito un'altra fotocamera
+    } catch (e) {}
+    out.push(r);
+    if (onStep) onStep(r, i, devs.length);
+  }
+  return out;
+}
+async function chooseLightLens(onStep) {
+  var list = await probeLenses(onStep);
+  var pick = list.find(function (r) { return r.torch && r.back !== false; }) || null;
+  settings.torchCam = pick ? pick.id : 'none'; saveSettings();
+  return { pick: pick, list: list };
+}
+async function rearStream(res) {
+  var md = navigator.mediaDevices, hi = res || { width: { ideal: 3264 }, height: { ideal: 2448 } };
+  if (settings.torchCam && settings.torchCam !== 'none') {        // l'obiettivo con la luce, gia' trovato
+    try { return await md.getUserMedia({ video: Object.assign({ deviceId: { exact: settings.torchCam } }, hi), audio: false }); }
+    catch (e) { settings.torchCam = ''; saveSettings(); }          // non c'e' piu' (o ha cambiato nome): lo ricerco
+  }
+  var st = await rearStreamBase(hi);
+  if (settings.torchCam) return st;                                // 'none': gia' provati tutti, nessuno ha la luce
+  if (trackTorch(st)) { try { settings.torchCam = st.getVideoTracks()[0].getSettings().deviceId || ''; saveSettings(); } catch (e) {} return st; }
+  try {                                                            // prima volta e senza luce: provo gli altri obiettivi
+    st.getTracks().forEach(function (t) { t.stop(); });
+    lensMsg('Cerco l\'obiettivo con il flash (solo la prima volta)…');
+    var found = await chooseLightLens();
+    if (found.pick) { try { return await md.getUserMedia({ video: Object.assign({ deviceId: { exact: found.pick.id } }, hi), audio: false }); } catch (e) {} }
+  } catch (e) {}
+  return await rearStreamBase(hi);
+}
+async function rearStreamBase(hi) {
+  var md = navigator.mediaDevices;
+  try { return await md.getUserMedia({ video: Object.assign({ facingMode: { exact: 'environment' } }, hi), audio: false }); }
+  catch (e) {
+    var st = await md.getUserMedia({ video: Object.assign({ facingMode: { ideal: 'environment' } }, hi), audio: false });
+    var tr = st.getVideoTracks()[0], set = tr && tr.getSettings ? tr.getSettings() : {};
+    if (set.facingMode === 'user' || /front|anterior|frontale/i.test(tr && tr.label || '')) {     // ha dato quella frontale: cerco la posteriore per nome
+      try {
+        var cams = (await md.enumerateDevices()).filter(function (d) { return d.kind === 'videoinput'; });
+        var back = cams.find(function (d) { return /back|rear|posterior|environment/i.test(d.label); });
+        if (back) { st.getTracks().forEach(function (t) { t.stop(); }); return await md.getUserMedia({ video: Object.assign({ deviceId: { exact: back.deviceId } }, hi), audio: false }); }
+      } catch (x) {}
+    }
+    return st;
+  }
+}
+/* resolve(File) con la foto scattata o scelta dalla galleria, oppure null; senza fotocamera usa il selettore del telefono */
+/* la fotocamera del telefono: scatta con il suo flash e restituisce la foto (un input a parte, che non aggiunge libri da solo) */
+function nativePhoto(resolve) {
+  var inp = $('#fileNative'), done = false;
+  function on() { inp.removeEventListener('change', on); done = true; var f = inp.files && inp.files[0]; inp.value = ''; resolve(f || null); }
+  inp.addEventListener('change', on); inp.click();
+  window.addEventListener('focus', function back() { window.removeEventListener('focus', back); setTimeout(function () { if (!done) { inp.removeEventListener('change', on); resolve(null); } }, 1500); });
+}
+function snapPhoto(title, fallbackInput) {
+  return new Promise(async function (resolve) {
+    if (settings.camNative && !scanning) { nativePhoto(resolve); return; }      // scelta nelle Opzioni: sempre quella del telefono
+    function viaInput(sel) {
+      var inp = $(sel), done = false;
+      function on() { inp.removeEventListener('change', on); done = true; var f = inp.files && inp.files[0]; inp.value = ''; resolve(f || null); }
+      inp.addEventListener('change', on); inp.click();
+      window.addEventListener('focus', function back() { window.removeEventListener('focus', back); setTimeout(function () { if (!done) { inp.removeEventListener('change', on); resolve(null); } }, 1200); });
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || scanning) { viaInput(fallbackInput); return; }
+    snap.done = resolve;
+    $('#snapH').textContent = title || 'Foto'; $('#snapMsg').textContent = 'Apro la fotocamera…';
+    $('#snap').hidden = false; document.body.classList.add('snapping');
+    try {
+      snap.stream = await rearStream();
+      if ($('#snap').hidden) { stopSnapStream(); return; }
+      try { history.pushState({ snap: 1 }, ''); snap.pushed = true; } catch (e) {}       // solo a fotocamera aperta: Indietro la chiude
+      var v = $('#snapVideo'); v.srcObject = snap.stream; try { await v.play(); } catch (e) {}
+      snap.track = snap.stream.getVideoTracks()[0];
+      var caps = {};
+      try {
+        caps = snap.track.getCapabilities ? snap.track.getCapabilities() : {};
+        $('#snapTorch').hidden = !caps.torch || settings.torchCam === 'none';     // 'none': nessuna luce, o non si accende davvero
+        if (caps.focusMode && caps.focusMode.indexOf('continuous') >= 0) snap.track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {});
+      } catch (e) {}
+      snap.caps = caps || {};
+      $('#snapMsg').textContent = 'Tocca il libro sullo schermo per mettere a fuoco.';
+      clearInterval(snap.lt); snap.lt = setInterval(snapLight, 700);
+    } catch (e) {                                  // fotocamera non disponibile o negata: uso quella del telefono
+      snap.done = null; stopSnapStream();
+      $('#snap').hidden = true; document.body.classList.remove('snapping');
+      viaInput(fallbackInput);
+    }
+  });
+}
+function stopSnapStream() {
+  if (snap.stream) snap.stream.getTracks().forEach(function (t) { t.stop(); });
+  snap.stream = null; snap.track = null; snap.torch = false; snap.dark = false;
+  clearInterval(snap.lt); clearTimeout(snap.ft);
+  $('#snapTorch').setAttribute('aria-pressed', 'false'); $('#snapTorch').classList.remove('hint'); $('#snapMsg').classList.remove('dark'); $('#snapFocus').hidden = true;
+}
+/* poca luce: la messa a fuoco fatica e la foto viene mossa. Misuro la luminosita' dell'inquadratura e lo dico,
+   suggerendo «Luce» se il telefono ce l'ha (con isteresi, per non far lampeggiare l'avviso) */
+function snapLight() {
+  var v = $('#snapVideo');
+  if (!snap.track || !v.videoWidth) return;
+  try {
+    var c = snap.lc || (snap.lc = document.createElement('canvas')); c.width = 32; c.height = 24;
+    var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(v, 0, 0, 32, 24);
+    var d = x.getImageData(0, 0, 32, 24).data, sum = 0;
+    for (var i = 0; i < d.length; i += 4) sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    var lum = sum / (d.length / 4);
+    snap.lum = Math.round(lum);
+    var dark = snap.torch ? false : snap.dark ? lum < 72 : lum < 55;
+    if (dark === snap.dark) return;
+    snap.dark = dark;
+    var m = $('#snapMsg'), torch = !!(snap.caps && snap.caps.torch);
+    m.classList.toggle('dark', dark);
+    m.textContent = dark ? (torch ? 'Poca luce: accendi «Luce», la foto viene più nitida.' : 'Poca luce: avvicinati a una lampada, la foto verrebbe sfocata.') : 'Tocca il libro sullo schermo per mettere a fuoco.';
+    $('#snapTorch').classList.toggle('hint', dark && torch);
+  } catch (e) {}
+}
+/* tocco sull'inquadratura: mette a fuoco li' (dove il telefono lo permette), poi torna alla messa a fuoco continua */
+function snapFocusAt(e) {
+  var v = $('#snapVideo');
+  if (!snap.track || !v.videoWidth) return;
+  var r = v.getBoundingClientRect(), sc = Math.max(r.width / v.videoWidth, r.height / v.videoHeight);   // inquadratura a tutto schermo (object-fit: cover)
+  var w = v.videoWidth * sc, h = v.videoHeight * sc, ox = r.left + (r.width - w) / 2, oy = r.top + (r.height - h) / 2;
+  var px = (e.clientX - ox) / w, py = (e.clientY - oy) / h;
+  if (px < 0 || px > 1 || py < 0 || py > 1) return;
+  var f = $('#snapFocus'); f.hidden = false; f.style.left = e.clientX + 'px'; f.style.top = e.clientY + 'px';
+  f.style.animation = 'none'; void f.offsetWidth; f.style.animation = '';
+  var caps = snap.caps || {}, fm = caps.focusMode || [], adv = {};
+  if (caps.pointsOfInterest) adv.pointsOfInterest = [{ x: px, y: py }];
+  if (fm.indexOf('single-shot') >= 0) adv.focusMode = 'single-shot';
+  else if (fm.indexOf('continuous') >= 0) adv.focusMode = 'continuous';
+  snap.taps = (snap.taps || 0) + 1;
+  if (!Object.keys(adv).length) return;
+  var tr = snap.track;
+  tr.applyConstraints({ advanced: [adv] }).catch(function () {});
+  clearTimeout(snap.ft);
+  snap.ft = setTimeout(function () { if (snap.track === tr && fm.indexOf('continuous') >= 0) tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {}); }, 3500);
+}
+$('#snapVideo').addEventListener('click', snapFocusAt);
+function closeSnap(result, fromPop) {
+  if ($('#snap').hidden) return;
+  stopSnapStream();
+  $('#snap').hidden = true; document.body.classList.remove('snapping'); $('#snapVideo').srcObject = null;
+  var done = snap.done; snap.done = null;
+  if (snap.pushed && !fromPop) { snap.pushed = false; try { history.back(); } catch (e) {} }
+  if (done) done(result || null);
+}
+async function snapShoot() {
+  var v = $('#snapVideo'), btn = $('#snapShoot');
+  if (!snap.track || !v.videoWidth) return;
+  btn.disabled = true;
+  var blob = null;
+  try {
+    if (window.ImageCapture) { var ic = new ImageCapture(snap.track); blob = await ic.takePhoto(snap.torch ? { fillLightMode: 'flash' } : {}); }   // piena risoluzione del sensore
+  } catch (e) { blob = null; }
+  if (!blob) {
+    var c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    blob = await new Promise(function (r) { c.toBlob(r, 'image/jpeg', 0.92); });
+  }
+  btn.disabled = false;
+  if (!blob) { $('#snapMsg').textContent = 'Scatto non riuscito: riprova.'; return; }
+  try { vibrate(30); } catch (e) {}
+  closeSnap(new File([blob], 'foto.jpg', { type: blob.type || 'image/jpeg' }));
+}
+$('#snapShoot').addEventListener('click', snapShoot);
+$('#snapClose').addEventListener('click', function () { closeSnap(null); });
+$('#snapGal').addEventListener('click', function () { $('#fileSnapGal').click(); });
+$('#snapNative').addEventListener('click', function () {      // dalla fotocamera dell'app a quella del telefono, per la stessa foto
+  var done = snap.done; snap.done = null;
+  closeSnap(null);
+  if (done) nativePhoto(done);
+});
+$('#scanNative').addEventListener('click', function () {      // scansione: foto con la fotocamera del telefono; codice, ISBN o copertina li legge l'app dalla foto
+  stopScan();
+  $('#fileCam').click();
+});
+$('#fileSnapGal').addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) closeSnap(f); });
+$('#snapTorch').addEventListener('click', async function () {
+  if (!snap.track) return;
+  var tr = snap.track, want = !snap.torch, ok = true;
+  ok = await torchOnTrack(tr, want);
+  if (ok && want) { try { var se = tr.getSettings ? tr.getSettings() : {}; if (se.torch === false) ok = false; } catch (e) {} }
+  if (!ok && want) {                                 // la luce non si accende da qui: tolgo il pulsante e lo ricordo
+    snap.torch = false; snap.caps = Object.assign({}, snap.caps, { torch: false }); $('#snapTorch').hidden = true;
+    settings.torchCam = 'none'; saveSettings();
+    $('#snapMsg').textContent = 'Da qui la luce non si accende su questo telefono: per il flash usa «Usa la fotocamera del telefono».';
+    return;
+  }
+  snap.torch = want;
+  $('#snapTorch').setAttribute('aria-pressed', snap.torch ? 'true' : 'false');
+  snap.dark = null; snapLight();                    // ridisegna subito l'avviso
+});
+window.addEventListener('popstate', function () { if (!$('#snap').hidden) { snap.pushed = false; closeSnap(null, true); } });
+/* ---- editor della foto: evidenziatore, penna, gomma, emoticon e adesivi; tutto in coordinate dell'immagine.
+   Un dito disegna (o mette/sposta un adesivo); due dita ingrandiscono e spostano.
+   Composizione: foto, poi i segni (con la gomma che li cancella) in «moltiplica», poi gli adesivi sopra. ---- */
+var ped = { sel: null, img: null, items: [], cur: null, tool: 'hl', color: '#FFE14D', stk: { s: '⭐' }, stkScale: 1, done: null, pushed: false, k: 1,
+  view: { z: 1, x: 0, y: 0 }, fit: { w: 0, h: 0, l: 0, t: 0 }, ptr: {}, pinch: null, drawId: null, drag: null, raf: 0, mk: null, last: null };
+function pedMax() { return ped.img ? Math.max(ped.img.width, ped.img.height) : 1000; }
+function pedWidth(tool) { var w = pedMax(); return tool === 'hl' ? Math.max(16, w * 0.032) : tool === 'er' ? Math.max(20, w * 0.04) : Math.max(3, w * 0.005); }
+function pedStrokePath(ctx, st, k) {
+  ctx.lineCap = st.k === 'hl' ? 'butt' : 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = st.w * k;
+  ctx.beginPath(); ctx.moveTo(st.pts[0][0] * k, st.pts[0][1] * k);
+  if (st.pts.length === 1) ctx.lineTo(st.pts[0][0] * k + 0.1, st.pts[0][1] * k);
+  for (var i = 1; i < st.pts.length; i++) ctx.lineTo(st.pts[i][0] * k, st.pts[i][1] * k);
+}
+/* adesivi vivi: tolti con la gomma o spostati (le mosse restano nell'elenco, cosi' «↶» le annulla una alla volta) */
+function pedStickers() {
+  var out = [];
+  ped.items.forEach(function (it) {
+    if (it.k === 'stk') out.push({ it: it, x: it.x, y: it.y, size: it.size, r: it.r != null ? it.r : (it.l ? -0.05 : 0) });
+    else if (it.k === 'tf') out.forEach(function (o) { if (o.it === it.t) { o.x = it.x; o.y = it.y; o.size = it.size; o.r = it.r; } });   // spostato, ridimensionato o ruotato
+    else if (it.k === 'rm') out = out.filter(function (o) { return o.it !== it.t; });
+    else if (it.k === 'mv') out.forEach(function (o) { if (o.it === it.t) { o.x = it.x; o.y = it.y; } });
+    else if (it.k === 'sz') out.forEach(function (o) { if (o.it === it.t) o.size = it.size; });
+  });
+  return out;
+}
+function pedStkFont(o) { return o.it.l ? '700 ' + Math.round(o.size * 0.36) + 'px "IBM Plex Sans",system-ui,sans-serif' : Math.round(o.size) + 'px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif'; }
+function pedStkBox(ctx, o) {                                   // riquadro dell'adesivo, in coordinate dell'immagine
+  if (!o.it.l) return { w: o.size * 1.1, h: o.size * 1.1 };
+  ctx.save(); ctx.font = pedStkFont(o); var tw = ctx.measureText(o.it.l).width; ctx.restore();
+  return { w: tw + o.size * 0.5, h: o.size * 0.62 };
+}
+function pedDrawSticker(ctx, o, k) {
+  ctx.save();
+  ctx.translate(o.x * k, o.y * k); ctx.scale(k, k);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = pedStkFont(o);
+  if (o.it.l) {
+    var b = pedStkBox(ctx, o), r = b.h * 0.28;
+    ctx.rotate(o.r || 0);
+    ctx.shadowColor = 'rgba(0,0,0,.28)'; ctx.shadowBlur = o.size * 0.08; ctx.shadowOffsetY = o.size * 0.03;
+    ctx.fillStyle = o.it.c;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-b.w / 2, -b.h / 2, b.w, b.h, r); else ctx.rect(-b.w / 2, -b.h / 2, b.w, b.h);
+    ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.fillStyle = '#fff'; ctx.fillText(o.it.l, 0, o.size * 0.02);
+  } else {
+    ctx.rotate(o.r || 0);
+    ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = o.size * 0.06; ctx.shadowOffsetY = o.size * 0.02;
+    ctx.fillText(o.it.s, 0, o.size * 0.05);
+  }
+  ctx.restore();
+}
+/* disegna tutto su ctx (w x h pixel, k = pixel per pixel dell'immagine); cur = tratto in corso da includere (gomma) */
+function pedCompose(ctx, w, h, k, cur) {
+  ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, w, h); ctx.drawImage(ped.img, 0, 0, w, h);
+  var strokes = ped.items.filter(function (it) { return it.k === 'hl' || it.k === 'pen' || it.k === 'er'; });
+  if (cur && cur.k === 'er') strokes = strokes.concat([cur]);
+  if (strokes.length) {
+    if (!ped.mk || ped.mk.width !== w || ped.mk.height !== h) { ped.mk = document.createElement('canvas'); ped.mk.width = w; ped.mk.height = h; }
+    var m = ped.mk.getContext('2d');
+    m.globalCompositeOperation = 'source-over'; m.globalAlpha = 1; m.clearRect(0, 0, w, h);
+    strokes.forEach(function (st) {
+      m.save();
+      if (st.k === 'er') { m.globalCompositeOperation = 'destination-out'; m.strokeStyle = '#000'; }
+      else { m.globalCompositeOperation = 'source-over'; m.globalAlpha = st.k === 'hl' ? 0.6 : 1; m.strokeStyle = st.color; }
+      pedStrokePath(m, st, k); m.stroke(); m.restore();
+    });
+    ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(ped.mk, 0, 0); ctx.globalCompositeOperation = 'source-over';
+  }
+  pedStickers().forEach(function (o) { pedDrawSticker(ctx, o, k); });
+  ctx.restore();
+}
+function pedRenderBase(cur) {
+  var c = $('#pedCanvas');
+  pedCompose(c.getContext('2d'), c.width, c.height, ped.k, cur);
+  $('#pedUndo').disabled = $('#pedClear').disabled = !ped.items.length;
+}
+function pedSelO() { return ped.sel && ped.tool === 'stk' ? pedStickers().find(function (o) { return o.it === ped.sel; }) || null : null; }
+function pedUnit() { var r = $('#pedCanvas').getBoundingClientRect(); return ped.img && r.width ? ped.img.width / r.width : 1; }   // pixel dell'immagine per pixel di schermo
+function pedRot(o, x, y) { var c = Math.cos(o.r || 0), s = Math.sin(o.r || 0); return [o.x + x * c - y * s, o.y + x * s + y * c]; }
+function pedHandles(o) {
+  var b = pedStkBox($('#pedCanvas').getContext('2d'), o), u = pedUnit(), pad = 8 * u;
+  var hw = b.w / 2 + pad, hh = b.h / 2 + pad;
+  return { hw: hw, hh: hh, rad: 15 * u, del: pedRot(o, -hw, -hh), size: pedRot(o, hw, hh), rot: pedRot(o, 0, -hh - 30 * u), top: pedRot(o, 0, -hh) };
+}
+function pedHandleAt(o, pt) {
+  var h = pedHandles(o), hit = h.rad * 1.5;
+  if (Math.hypot(pt[0] - h.size[0], pt[1] - h.size[1]) <= hit) return 'size';
+  if (Math.hypot(pt[0] - h.rot[0], pt[1] - h.rot[1]) <= hit) return 'rot';
+  if (Math.hypot(pt[0] - h.del[0], pt[1] - h.del[1]) <= hit) return 'del';
+  return null;
+}
+function pedDrawHandles(ctx, o) {
+  var h = pedHandles(o), k = ped.k, u = pedUnit();
+  ctx.save();
+  ctx.lineWidth = 2 * u * k; ctx.strokeStyle = '#ffffff'; ctx.setLineDash([7 * u * k, 5 * u * k]);
+  ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 3 * u * k;
+  ctx.beginPath();
+  [pedRot(o, -h.hw, -h.hh), pedRot(o, h.hw, -h.hh), pedRot(o, h.hw, h.hh), pedRot(o, -h.hw, h.hh)].forEach(function (p, i) { if (i) ctx.lineTo(p[0] * k, p[1] * k); else ctx.moveTo(p[0] * k, p[1] * k); });
+  ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(h.top[0] * k, h.top[1] * k); ctx.lineTo(h.rot[0] * k, h.rot[1] * k); ctx.stroke();
+  function dot(p, fill, draw) {
+    ctx.beginPath(); ctx.arc(p[0] * k, p[1] * k, h.rad * k, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 2.5 * u * k; ctx.strokeStyle = '#fff'; ctx.stroke();
+    ctx.save(); ctx.translate(p[0] * k, p[1] * k); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.2 * u * k; ctx.lineCap = 'round'; ctx.shadowColor = 'transparent'; draw(h.rad * k * 0.45); ctx.restore();
+  }
+  dot(h.del, '#D7263D', function (q) { ctx.beginPath(); ctx.moveTo(-q, -q); ctx.lineTo(q, q); ctx.moveTo(q, -q); ctx.lineTo(-q, q); ctx.stroke(); });
+  dot(h.size, '#1B6A4F', function (q) { ctx.rotate(o.r || 0); ctx.beginPath(); ctx.moveTo(-q, -q); ctx.lineTo(q, q); ctx.moveTo(q * 0.1, q); ctx.lineTo(q, q); ctx.lineTo(q, q * 0.1); ctx.moveTo(-q * 0.1, -q); ctx.lineTo(-q, -q); ctx.lineTo(-q, -q * 0.1); ctx.stroke(); });
+  dot(h.rot, '#2457D6', function (q) { ctx.beginPath(); ctx.arc(0, 0, q, -Math.PI * 0.9, Math.PI * 0.55); ctx.stroke(); ctx.beginPath(); ctx.moveTo(q * Math.cos(Math.PI * 0.55) - q * 0.5, q * Math.sin(Math.PI * 0.55)); ctx.lineTo(q * Math.cos(Math.PI * 0.55), q * Math.sin(Math.PI * 0.55)); ctx.lineTo(q * Math.cos(Math.PI * 0.55), q * Math.sin(Math.PI * 0.55) - q * 0.5); ctx.stroke(); });
+  ctx.restore();
+}
+function pedRenderLive() {
+  var c = $('#pedLive'), ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  if (!ped.cur || ped.cur.k === 'er') {
+    var so = !ped.cur && pedSelO();
+    c.classList.remove('hl');
+    if (so) pedDrawHandles(ctx, so);
+    return;
+  }
+  c.classList.toggle('hl', ped.cur.k === 'hl');
+  ctx.save(); ctx.strokeStyle = ped.cur.color; pedStrokePath(ctx, ped.cur, ped.k); ctx.stroke(); ctx.restore();
+}
+function pedLater() { if (ped.raf) return; ped.raf = requestAnimationFrame(function () { ped.raf = 0; pedRenderBase(ped.cur); if (!ped.cur) pedRenderLive(); }); }
+function pedRender() { pedRenderBase(); pedRenderLive(); }
+function pedApplyView() {
+  var v = ped.view;
+  $('#pedStage').style.transform = 'translate(' + v.x + 'px,' + v.y + 'px) scale(' + v.z + ')';
+  $('#pedFit').hidden = v.z <= 1.01;
+}
+function pedClampView() {
+  var v = ped.view, f = ped.fit, a = $('#pedArea');
+  v.z = Math.max(1, Math.min(6, v.z));
+  if (v.z <= 1.001) { v.z = 1; v.x = 0; v.y = 0; return; }
+  var w = f.w * v.z, hh = f.h * v.z, aw = a.clientWidth, ah = a.clientHeight;
+  var minX = Math.min(0, aw - f.l - w), maxX = Math.max(0, -f.l), minY = Math.min(0, ah - f.t - hh), maxY = Math.max(0, -f.t);
+  if (w <= aw) { minX = maxX = (aw - w) / 2 - f.l; }
+  if (hh <= ah) { minY = maxY = (ah - hh) / 2 - f.t; }
+  v.x = Math.max(minX, Math.min(maxX, v.x)); v.y = Math.max(minY, Math.min(maxY, v.y));
+}
+function pedFit() {
+  if (!ped.img) return;
+  var area = $('#pedArea'), aw = area.clientWidth - 12, ah = area.clientHeight - 12;
+  var k = Math.min(aw / ped.img.width, ah / ped.img.height);
+  var w = Math.round(ped.img.width * k), hh = Math.round(ped.img.height * k);
+  ped.fit = { w: w, h: hh, l: Math.round((area.clientWidth - w) / 2), t: Math.round((area.clientHeight - hh) / 2) };
+  var st = $('#pedStage'); st.style.width = w + 'px'; st.style.height = hh + 'px'; st.style.left = ped.fit.l + 'px'; st.style.top = ped.fit.t + 'px';
+  var res = Math.min(1, 2400 / pedMax());
+  ['#pedCanvas', '#pedLive'].forEach(function (sel) { var c = $(sel); c.width = Math.round(ped.img.width * res); c.height = Math.round(ped.img.height * res); });
+  ped.k = res;
+  ped.view = { z: 1, x: 0, y: 0 }; pedApplyView();
+  pedRender();
+}
+function pedPoint(e) { var r = $('#pedCanvas').getBoundingClientRect(), k = ped.img.width / r.width; return [Math.max(0, Math.min(ped.img.width, (e.clientX - r.left) * k)), Math.max(0, Math.min(ped.img.height, (e.clientY - r.top) * k))]; }
+function pedStickerAt(pt) {
+  var ctx = $('#pedCanvas').getContext('2d'), list = pedStickers();
+  for (var i = list.length - 1; i >= 0; i--) {
+    var o = list[i], b = pedStkBox(ctx, o), pad = pedMax() * 0.01;
+    var c = Math.cos(-(o.r || 0)), sn = Math.sin(-(o.r || 0)), dx = pt[0] - o.x, dy = pt[1] - o.y, lx = dx * c - dy * sn, ly = dx * sn + dy * c;
+    if (Math.abs(lx) <= b.w / 2 + pad && Math.abs(ly) <= b.h / 2 + pad) return o;
+  }
+  return null;
+}
+function pedStkSize(lab) { return pedMax() * (lab ? 0.085 : 0.09) * ped.stkScale; }
+/* apre l'editor sull'immagine (Blob o URL); resolve(Blob con i segni) oppure null se lasci com'e' */
+function editPhoto(src) {
+  return new Promise(async function (resolve) {
+    try {
+      var bl = src instanceof Blob ? src : await (await fetch(src)).blob();
+      var bmp = await createImageBitmap(bl);
+      var c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height; c.getContext('2d').drawImage(bmp, 0, 0); if (bmp.close) bmp.close();
+      ped.img = c;
+    } catch (e) { resolve(null); return; }
+    ped.items = []; ped.cur = null; ped.done = resolve; ped.ptr = {}; ped.pinch = null; ped.drawId = null; ped.drag = null; ped.sel = null;
+    $('#ped').hidden = false; document.body.classList.add('snapping');
+    try { history.pushState({ ped: 1 }, ''); ped.pushed = true; } catch (e) {}
+    requestAnimationFrame(pedFit);
+  });
+}
+function closePed(result, fromPop) {
+  if ($('#ped').hidden) return;
+  $('#ped').hidden = true; if ($('#snap').hidden) document.body.classList.remove('snapping');
+  var done = ped.done; ped.done = null; ped.img = null; ped.items = []; ped.cur = null; ped.ptr = {}; ped.pinch = null; ped.drag = null; ped.mk = null;
+  if (ped.pushed && !fromPop) { ped.pushed = false; try { history.back(); } catch (e) {} }
+  if (done) done(result || null);
+}
+async function pedFinish() {
+  if (!ped.items.length) { closePed(null); return; }
+  var c = document.createElement('canvas'); c.width = ped.img.width; c.height = ped.img.height;
+  ped.mk = null; pedCompose(c.getContext('2d'), c.width, c.height, 1, null);
+  var blob = await new Promise(function (r) { c.toBlob(r, 'image/jpeg', 0.85); });
+  closePed(blob);
+}
+(function () {
+  var area = $('#pedArea');
+  function two() { var ids = Object.keys(ped.ptr); return ids.length >= 2 ? [ped.ptr[ids[0]], ped.ptr[ids[1]]] : null; }
+  function pinchStart() {
+    var p = two(); if (!p) return;
+    var r = area.getBoundingClientRect();
+    ped.pinch = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, mx: (p[0].x + p[1].x) / 2 - r.left, my: (p[0].y + p[1].y) / 2 - r.top, v: Object.assign({}, ped.view) };
+  }
+  area.addEventListener('pointerdown', function (e) {
+    if (!ped.img) return;
+    e.preventDefault(); try { area.setPointerCapture(e.pointerId); } catch (x) {}
+    ped.ptr[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (Object.keys(ped.ptr).length >= 2) {                     // secondo dito: niente segno, si ingrandisce
+      if (ped.cur) { ped.cur = null; pedRender(); }
+      if (ped.drag) { var dd = ped.drag; dd.o.it.x = dd.o.it.x; ped.drag = null; pedRender(); }
+      ped.drawId = null; pinchStart(); return;
+    }
+    if (!e.target.closest('#pedStage')) return;
+    var pt = pedPoint(e);
+    ped.drawId = e.pointerId;
+    if (ped.tool === 'stk' || ped.tool === 'er') {
+      var so = pedSelO(), hd = so && pedHandleAt(so, pt);
+      if (hd === 'del') { ped.items.push({ k: 'rm', t: so.it }); ped.sel = null; ped.drawId = null; pedRender(); return; }
+      if (hd) { ped.drag = { o: so, mode: hd, x0: so.x, y0: so.y, s0: so.size, r0: so.r || 0, a0: Math.atan2(pt[1] - so.y, pt[0] - so.x), d0: Math.hypot(pt[0] - so.x, pt[1] - so.y) || 1 }; return; }
+      var hit = pedStickerAt(pt);
+      if (hit && ped.tool === 'er') { ped.items.push({ k: 'rm', t: hit.it }); ped.drawId = null; pedRender(); return; }     // la gomma toglie l'adesivo
+      if (hit) { ped.sel = hit.it; ped.drag = { o: hit, mode: 'move', dx: pt[0] - hit.x, dy: pt[1] - hit.y, x0: hit.x, y0: hit.y, s0: hit.size, r0: hit.r || 0 }; pedRenderLive(); return; }
+      if (ped.tool === 'stk') {
+        if (ped.sel) { ped.sel = null; ped.drawId = null; pedRenderLive(); return; }       // tocco fuori: deseleziono
+        var lab = !!ped.stk.l, it = { k: 'stk', s: ped.stk.s || '', l: ped.stk.l || '', c: ped.stk.c || '', x: pt[0], y: pt[1], size: pedStkSize(lab), r: lab ? -0.05 : 0 };
+        ped.items.push(it); ped.sel = it; ped.drawId = null; pedRender(); return;
+      }
+    }
+    ped.cur = { k: ped.tool, color: ped.color, w: pedWidth(ped.tool), pts: [pt] };
+    if (ped.tool === 'er') pedLater(); else pedRenderLive();
+  });
+  area.addEventListener('pointermove', function (e) {
+    if (!ped.ptr[e.pointerId]) return;
+    ped.ptr[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (ped.pinch) {
+      var p = two(); if (!p) return;
+      var r = area.getBoundingClientRect(), q = ped.pinch, v0 = q.v;
+      var z = Math.max(1, Math.min(6, v0.z * (Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) / q.d)));
+      var mx = (p[0].x + p[1].x) / 2 - r.left, my = (p[0].y + p[1].y) / 2 - r.top, f = ped.fit;
+      var cx = (q.mx - f.l - v0.x) / v0.z, cy = (q.my - f.t - v0.y) / v0.z;
+      ped.view = { z: z, x: mx - f.l - cx * z, y: my - f.t - cy * z };
+      pedClampView(); pedApplyView(); return;
+    }
+    if (e.pointerId !== ped.drawId) return;
+    var pt = pedPoint(e);
+    if (ped.drag) {                                               // sposto, ridimensiono o ruoto l'adesivo: una sola voce per gesto (annullabile)
+      var d = ped.drag, nx = d.x0, ny = d.y0, ns = d.s0, nr = d.r0;
+      if (d.mode === 'move') { nx = pt[0] - d.dx; ny = pt[1] - d.dy; }
+      else if (d.mode === 'size') ns = Math.max(pedMax() * 0.03, Math.min(pedMax() * 0.6, d.s0 * Math.hypot(pt[0] - d.x0, pt[1] - d.y0) / d.d0));
+      else if (d.mode === 'rot') {
+        nr = d.r0 + Math.atan2(pt[1] - d.y0, pt[0] - d.x0) - d.a0;
+        var snap = Math.round(nr / (Math.PI / 2)) * (Math.PI / 2); if (Math.abs(nr - snap) < 0.06) nr = snap;     // dritto se ci sei vicino
+      }
+      if (!d.tmp) { d.tmp = { k: 'tf', t: d.o.it, x: nx, y: ny, size: ns, r: nr }; ped.items.push(d.tmp); } else { d.tmp.x = nx; d.tmp.y = ny; d.tmp.size = ns; d.tmp.r = nr; }
+      pedLater(); return;
+    }
+    if (!ped.cur) return;
+    var c0 = ped.cur.pts[0];
+    if (ped.cur.k === 'hl' && ped.cur.pts.length > 1 && Math.abs(pt[0] - c0[0]) > Math.abs(pt[1] - c0[1]) * 2) pt[1] = c0[1] + (pt[1] - c0[1]) * 0.25;   // evidenziatore: righe dritte
+    ped.cur.pts.push(pt);
+    if (ped.cur.k === 'er') pedLater(); else pedRenderLive();
+  });
+  function up(e) {
+    if (!ped.ptr[e.pointerId]) return;
+    delete ped.ptr[e.pointerId];
+    if (ped.pinch) { if (Object.keys(ped.ptr).length < 2) ped.pinch = null; return; }
+    if (e.pointerId !== ped.drawId) return;
+    ped.drawId = null;
+    if (ped.drag) { ped.drag = null; pedRender(); return; }
+    if (ped.cur) { ped.items.push(ped.cur); ped.cur = null; pedRender(); }
+  }
+  area.addEventListener('pointerup', up); area.addEventListener('pointercancel', up);
+  area.addEventListener('wheel', function (e) {
+    if (!ped.img) return; e.preventDefault();
+    var r = area.getBoundingClientRect(), v0 = Object.assign({}, ped.view), f = ped.fit;
+    var z = Math.max(1, Math.min(6, v0.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+    var mx = e.clientX - r.left, my = e.clientY - r.top, cx = (mx - f.l - v0.x) / v0.z, cy = (my - f.t - v0.y) / v0.z;
+    ped.view = { z: z, x: mx - f.l - cx * z, y: my - f.t - cy * z }; pedClampView(); pedApplyView();
+  }, { passive: false });
+})();
+var PED_HINT = { hl: 'Evidenziatore: un dito passa sulle righe, due dita ingrandiscono', pen: 'Penna: un dito scrive, due dita ingrandiscono',
+  er: 'Gomma: passa sui segni per cancellarli; tocca un adesivo per toglierlo', stk: 'Tocca la foto per mettere l\'adesivo. Toccandolo lo selezioni: trascinalo, maniglia verde per la grandezza, blu per ruotarlo, rossa per toglierlo' };
+function pedSetTool(b) {
+  ped.tool = b.dataset.tool; if (b.dataset.color) ped.color = b.dataset.color;
+  Array.prototype.forEach.call($('#ped').querySelectorAll('.ped-tools [data-tool]'), function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
+  $('#pedStk').hidden = ped.tool !== 'stk';
+  $('#pedHint').textContent = PED_HINT[ped.tool];
+  $('#pedArea').classList.toggle('stk-mode', ped.tool === 'stk');
+  pedRenderLive();
+}
+$('#ped').querySelector('.ped-tools').addEventListener('click', function (e) { var b = e.target.closest('[data-tool]'); if (b) pedSetTool(b); });
+$('#pedStk').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-s], [data-l]'); if (!b) return;
+  ped.stk = b.dataset.l ? { l: b.dataset.l, c: b.dataset.c } : { s: b.dataset.s };
+  ped.sel = null; pedRenderLive();                              // scelto un adesivo: il prossimo tocco lo mette
+  Array.prototype.forEach.call($('#pedStk').querySelectorAll('[data-s], [data-l]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+});
+function pedResize(f) {
+  ped.stkScale = Math.max(0.5, Math.min(2.5, ped.stkScale * f));
+  var o = ped.sel && pedStickers().find(function (x) { return x.it === ped.sel; });
+  if (o) { ped.items.push({ k: 'tf', t: o.it, x: o.x, y: o.y, r: o.r, size: Math.max(pedMax() * 0.03, Math.min(pedMax() * 0.6, o.size * f)) }); pedRender(); }
+}
+$('#pedSmaller').addEventListener('click', function () { pedResize(1 / 1.25); });
+$('#pedBigger').addEventListener('click', function () { pedResize(1.25); });
+$('#pedFit').addEventListener('click', function () { ped.view = { z: 1, x: 0, y: 0 }; pedApplyView(); });
+$('#pedUndo').addEventListener('click', function () { var x = ped.items.pop(); if (x && x === ped.sel) ped.sel = null; pedRender(); });
+$('#pedClear').addEventListener('click', function () { ped.items = []; ped.sel = null; pedRender(); });
+$('#pedDone').addEventListener('click', pedFinish);
+$('#pedSkip').addEventListener('click', function () { closePed(null); });
+window.addEventListener('resize', function () { if (!$('#ped').hidden) pedFit(); });
+window.addEventListener('popstate', function () { if (!$('#ped').hidden) { ped.pushed = false; closePed(null, true); } });
+/* ---- autore: profilo da Wikipedia, ricerca sul web, modifica con la matita ---- */
+var auEditing = {}, auCache = {}, auNow = null;
+function editAuthor(id) {
+  auEditing[id] = true; refreshRow(id);
+  var ta = document.getElementById('a-' + id);
+  if (ta) { try { ta.focus({ preventScroll: true }); var n = ta.value.length; ta.setSelectionRange(n, n); } catch (e) { ta.focus(); } }
+}
+document.addEventListener('focusout', function (e) {               // finito di scrivere: torna il nome da toccare
+  var t = e.target;
+  if (!t || t.dataset.k !== 'a' || !t.closest('#list')) return;
+  var row = t.closest('.row'), id = row && row.dataset.id;
+  if (!id || !auEditing[id]) return;
+  setTimeout(function () { if (document.activeElement === t) return; delete auEditing[id]; var b = get(id); if (b && b.a.trim()) refreshRow(id); }, 120);
+});
+function auWikiUrl(t) { return 'https://it.wikipedia.org/wiki/' + encodeURIComponent(String(t).replace(/ /g, '_')); }
+/* chi ha scritto un libro puo' fare qualsiasi mestiere: fotografi, cuochi, musicisti… (Sebastiao Salgado non veniva trovato: «fotografo», 16/11/2026) */
+var AU_WRITE = /scritt|autor|romanz|poet|saggist|giornalist|drammaturg|filosof|storic|letterat|narrat|fumett|sceneggiat|critic|traduttor|accademic|docent|scienziat|teolog|biograf|novellier/i;
+var AU_WORDS = /scritt|autor|romanz|poet|saggist|giornalist|drammaturg|filosof|storic|letterat|narrat|fumett|sceneggiat|critic|traduttor|accademic|docent|scienziat|teolog|biograf|novellier|fotograf|illustrat|disegnat|pittor|artist|scultor|architett|design|music|compositor|cantaut|cantant|regist|attor|attric|cuoc|chef|gastronom|politic|economist|psicolog|psicoanal|psichiatr|medic|biolog|chimic|fisic|matematic|astronom|astrofisic|geolog|naturalist|etolog|sociolog|antropolog|archeolog|linguist|filolog|pedagog|educat|divulgat|alpinist|esplorat|viaggiat|sportiv|calciator|allenator|ciclist|imprenditor|avvocat|magistrat|giurist|militar|diplomat|religios|monac|sacerdot|vescov|papa|santo|attivist|conduttor|comic|umorist|blogger|youtuber|influencer|editor|curator|insegnant|professor|ricercat|ingegner|informatic|inventor|stilist|fumettist/i;
+async function auLookup(name) {
+  if (auCache[name]) return auCache[name];
+  async function summary(title) {
+    var j = await L.getJson(fetch, 'https://it.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title.replace(/ /g, '_')) + '?redirect=true', { waits: [], timeout: 8000 });
+    return j && j.type !== 'disambiguation' && j.extract ? { title: j.title, desc: L.str(j.description), text: L.str(j.extract), url: (j.content_urls && j.content_urls.mobile && j.content_urls.mobile.page) || auWikiUrl(j.title),
+      img: j.thumbnail && /^https:\/\/upload\.wikimedia\.org\//.test(j.thumbnail.source || '') ? j.thumbnail.source : '' } : null;   // foto dell'autore, se Wikipedia ce l'ha
+  }
+  var r = null;
+  try { r = await summary(name); } catch (e) { if (!(e && e.status === 404)) throw e; }
+  var direct = r && AU_WORDS.test(r.desc + ' ' + r.text.slice(0, 300)) ? r : null;   // la voce col suo nome, se e' una persona con un mestiere
+  if (!r || !AU_WRITE.test(r.desc + ' ' + r.text.slice(0, 300))) {          // non e' (solo) uno scrittore: cerco «nome scrittore», magari e' un omonimo
+    r = null;
+    var j = null;
+    try { j = await L.getJson(fetch, 'https://it.wikipedia.org/w/api.php?action=query&list=search&srlimit=3&format=json&origin=*&srsearch=' + encodeURIComponent(name + ' scrittore'), { waits: [], timeout: 8000 }); if (!(j && j.query && j.query.search && j.query.search.length)) j = await L.getJson(fetch, 'https://it.wikipedia.org/w/api.php?action=query&list=search&srlimit=3&format=json&origin=*&srsearch=' + encodeURIComponent(name), { waits: [], timeout: 8000 }); }
+    catch (e3) { if (!(e3 && e3.status)) throw e3; }              // risposta d'errore: come «nessun risultato»; senza rete: avviso
+    var hits = (j && j.query && j.query.search) || [], want = L.norm(name).split(/\s+/).filter(function (w) { return w.length > 2; });
+    var other = null;                                   // con nomi ambigui vince chi scrive; un fotografo o un cuoco solo se non c'e' uno scrittore
+    for (var i = 0; i < hits.length; i++) {
+      var tn = L.norm(hits[i].title);
+      if (!want.every(function (w) { return tn.indexOf(w) >= 0; })) continue;
+      try {
+        var r2 = await summary(hits[i].title), t2 = r2 ? r2.desc + ' ' + r2.text.slice(0, 300) : '';
+        if (r2 && AU_WRITE.test(t2)) { r = r2; break; }
+        if (r2 && !other && AU_WORDS.test(t2)) other = r2;
+      } catch (e2) {}
+    }
+    if (!r) r = direct || other;                        // nessuno scrittore: la voce col suo nome (fotografo, cuoco…) o il primo trovato
+  }
+  auCache[name] = r || { none: true };
+  return auCache[name];
+}
+async function openAuthor(id, name) {
+  auNow = { id: id, name: name };
+  var mine = state.books.filter(function (x) { return !x.w && authorsOf(x).some(function (n) { return L.norm(n) === L.norm(name); }); }).length;
+  $('#auH').textContent = name; $('#auDesc').textContent = ''; $('#auSrc').hidden = true; $('#auWiki').hidden = true; auPic('');
+  $('#auMine').textContent = mine > 1 ? 'I suoi libri nella tua libreria (' + mine + ')' : 'Il suo libro nella tua libreria';
+  $('#auMine').hidden = mine < 2;
+  $('#auTxt').innerHTML = '<p class="desc-wait"><span class="spin" aria-hidden="true"></span>Cerco chi è…</p>';
+  $('#auSheet').hidden = false;
+  if (navigator.onLine === false) { $('#auTxt').innerHTML = '<p class="desc-none">Senza connessione: le informazioni sull\'autore si cercano online.</p>'; return; }
+  try {
+    var r = await auLookup(name);
+    if (!auNow || auNow.name !== name) return;
+    if (r.none) { $('#auTxt').innerHTML = '<p class="desc-none">Non ho trovato una voce di Wikipedia su questo autore. Prova «Cerca sul web».</p>'; return; }
+    $('#auDesc').textContent = r.desc ? r.desc.charAt(0).toUpperCase() + r.desc.slice(1) : '';
+    auPic(r.img || '', name);
+    $('#auTxt').innerHTML = r.text.split(/\n+/).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('');
+    $('#auSrc').hidden = false;
+    var w = $('#auWiki'); w.href = r.url; w.hidden = false;
+  } catch (e) {
+    if (auNow && auNow.name === name) $('#auTxt').innerHTML = '<p class="desc-none">Connessione debole: non sono riuscito a cercare. Prova «Cerca sul web».</p>';
+  }
+}
+function auPic(src, name) {                        // foto dell'autore da Wikipedia (Commons); se non c'e' o non si carica, niente riquadro
+  var f = $('#auPic'), im = f.querySelector('img');
+  f.hidden = true; f.classList.remove('big'); im.removeAttribute('src');
+  if (!src) return;
+  im.onload = function () { if (auNow && auNow.name === name) f.hidden = false; };
+  im.onerror = function () { f.hidden = true; };
+  im.alt = 'Foto di ' + name; im.src = src;
+}
+function closeAuthor() { $('#auSheet').hidden = true; auNow = null; }
+$('#auClose').addEventListener('click', closeAuthor);
+$('#auPic').addEventListener('click', function () { var f = $('#auPic'), on = !f.classList.contains('big'); f.classList.toggle('big', on); f.setAttribute('aria-label', on ? 'Rimpicciolisci la foto' : 'Ingrandisci la foto'); });
+$('#auSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeAuthor(); });
+$('#auWeb').addEventListener('click', function () { if (auNow) window.open('https://www.google.com/search?q=' + encodeURIComponent(auNow.name + ' scrittore'), '_blank', 'noopener'); });
+$('#auMine').addEventListener('click', function () { if (!auNow) return; var n = auNow.name; closeAuthor(); applyFacet('a', L.norm(n), n); });
+$('#auEdit').addEventListener('click', function () { if (!auNow) return; var id = auNow.id; closeAuthor(); editAuthor(id); });
+/* ---- novità delle versioni: il registro (REGISTRO_MODIFICHE.md) mostrato nell'app, anche senza rete ---- */
+function logInline(t) {
+  return esc(t)
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|[\s(])(https:\/\/[^\s<)]+)/g, function (m, pre, u) { return pre + '<a href="' + u + '" target="_blank" rel="noopener">' + u.replace(/^https:\/\//, '').replace(/\/$/, '') + '</a>'; });
+}
+function logHTML(md) {
+  var out = [], list = false, started = false;
+  md.replace(/\r/g, '').split('\n').forEach(function (line) {
+    var m;
+    if (/^#\s/.test(line)) return;                                         // titolo del file: c'e' gia' quello della finestra
+    if (!started && !/^##\s/.test(line)) return;                           // l'introduzione del file serve solo a chi lo legge sul sito
+    if ((m = line.match(/^##\s+(.*)$/))) {
+      started = true;
+      if (list) { out.push('</ul>'); list = false; }
+      var vm = m[1].match(/^Versione\s+(\d+)\s*·?\s*(.*)$/), pm = m[1].match(/^Prova\s+([\d.]+)\s*·?\s*(.*)$/);
+      var cur = vm ? +vm[1] === APP_VERSION.v && !(PROVA && BUILD.n) : pm ? pm[1] === BUILD.n : false;
+      out.push('</section><section class="log-v' + (cur ? ' cur' : '') + '"><h3>' + (vm ? 'Versione ' + vm[1] + (vm[2] ? ' <small>' + esc(vm[2]) + '</small>' : '') : pm ? 'Prova ' + pm[1] + (pm[2] ? ' <small>' + esc(pm[2]) + '</small>' : '') : logInline(m[1])) + (cur ? ' <span class="log-now">questa</span>' : '') + '</h3>');
+      return;
+    }
+    if (/^>/.test(line)) return;                                              // «In breve» per la pagina delle novita': qui ci sono i dettagli
+    if ((m = line.match(/^\s*[-*]\s+(.*)$/))) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + logInline(m[1]) + '</li>'); return; }
+    if (!line.trim()) { if (list) { out.push('</ul>'); list = false; } return; }
+    if (list) { out.push('</ul>'); list = false; }
+    out.push('<p>' + logInline(line) + '</p>');
+  });
+  if (list) out.push('</ul>');
+  return ('<section class="log-intro">' + out.join('') + '</section>').replace(/<section class="log-intro"><\/section>/, '');
+}
+var logPushed = false;
+async function openLog() {
+  $('#logBody').innerHTML = '<p class="desc-wait"><span class="spin" aria-hidden="true"></span>Carico le novità…</p>';
+  $('#logSheet').hidden = false;
+  if (!logPushed) { try { history.pushState({ log: 1 }, ''); logPushed = true; } catch (e) {} }   // Indietro chiude il registro e lascia aperte le Opzioni
+  try {
+    // prima la versione aggiornata; senza rete (o se il sito risponde con un errore) la copia salvata sul telefono
+    var r = await fetch('REGISTRO_MODIFICHE.md', { cache: 'no-cache' }).catch(function () { return null; });
+    if (!r || !r.ok) r = await fetch('REGISTRO_MODIFICHE.md');
+    if (!r || !r.ok) throw new Error('registro');
+    var md = await r.text();
+    if (/^\s*</.test(md)) throw new Error('html');                       // non e' il registro (pagina d'errore)
+    var prova = '';
+    if (PROVA) {                                                          // la copia di prova ha anche il suo registro, che avanza a ogni pubblicazione
+      var rp = await fetch('REGISTRO_PROVA.md', { cache: 'no-cache' }).catch(function () { return null; });
+      var pm = rp && rp.ok ? await rp.text() : '';
+      if (pm && !/^\s*</.test(pm)) prova = '<h3 class="log-part">Copia di prova</h3>' + logHTML(pm) + '<h3 class="log-part">Versione vera</h3>';
+    }
+    $('#logBody').innerHTML = prova + logHTML(md);
+    var cur = $('#logBody').querySelector('.log-v.cur'); if (cur) cur.scrollIntoView({ block: 'start' }); $('#logBody').scrollTop = 0;
+  } catch (e) {
+    $('#logBody').innerHTML = '<p class="desc-none">Non riesco a caricare il registro delle novità' + (navigator.onLine === false ? ' senza connessione (la prima volta serve la rete)' : '') + '. Riprova più tardi.</p>';
+  }
+}
+function closeLog(fromPop) {
+  if ($('#logSheet').hidden) return;
+  $('#logSheet').hidden = true;
+  if (logPushed && !fromPop) { logPushed = false; try { history.back(); } catch (e) {} }
+  else logPushed = false;
+}
+/* ---- Dopo un aggiornamento: «Aggiornato in questa versione», con le novita' dalla piu' importante (quelle in grassetto) alle altre ---- */
+function provaNum(t) { var m = /^(\d+)\.(\d+)$/.exec(t || ''); return m ? +m[1] * 10000 + +m[2] : 0; }
+function newsSince(md, test) {                    // le righe puntate delle sezioni «## …» che passano il test
+  var on = false, out = [];
+  md.replace(/\r/g, '').split('\n').forEach(function (line) {
+    var m = line.match(/^##\s+(.*)$/);
+    if (m) { on = test(m[1]); return; }
+    if (on && (m = line.match(/^\s*[-*]\s+(.*)$/))) out.push(m[1].trim());
+  });
+  return out;
+}
+function newsBrief(md, test) {                     // per chi usa l'app: per ogni versione le righe «> …» (In breve) o, se mancano, i soli titoli in grassetto
+  var secs = [], cur = null;
+  md.replace(/\r/g, '').split('\n').forEach(function (line) {
+    var m = line.match(/^##\s+(.*)$/);
+    if (m) { cur = test(m[1]) ? { brief: [], items: [] } : null; if (cur) secs.push(cur); return; }
+    if (!cur) return;
+    if ((m = line.match(/^>\s?(.+)$/))) cur.brief.push(m[1].trim());
+    else if ((m = line.match(/^\s*[-*]\s+(.*)$/))) cur.items.push(m[1].trim());
+  });
+  return secs.reduce(function (out, x) { return out.concat(x.brief.length ? x.brief : briefOf(x.items)); }, []);
+}
+function briefOf(items) {                           // i titoli in grassetto, senza la spiegazione lunga
+  return items.filter(function (x) { return /^\*\*/.test(x); }).map(function (x) { var m = /^\*\*([^*]+?)[:.]?\*\*/.exec(x); return m ? '**' + m[1].replace(/[:.]\s*$/, '') + '**' : x; });
+}
+function rankNews(items) {                        // prima le novita' (cominciano in grassetto), poi le correzioni e i ritocchi
+  var big = items.filter(function (x) { return /^\*\*/.test(x); }), small = items.filter(function (x) { return !/^\*\*/.test(x); });
+  return big.concat(small);
+}
+async function checkWhatsNew() {
+  var curB = PROVA ? BUILD.n : '', used = state.books.length > 0 && oldApp;   // ha i suoi libri e impostazioni di una versione di prima
+  /* prima apertura vera (nessun libro): niente da raccontare. Ma chi aggiorna da una versione senza questa pagina ha gia' i suoi libri:
+     a lui le novita' si mostrano (nella 95 la pagina non era comparsa a chi aggiornava dalla 94, 16/11/2026) */
+  if (!settings.seenV && !used) { settings.seenV = APP_VERSION.v; settings.seenB = curB; settings.wn2 = 1; saveSettings(); return; }
+  var fromV = settings.seenV || APP_VERSION.v - 1, fromB = settings.seenB || '';
+  var missed = !settings.wn2 && used;                  // aggiornati alla 95 senza vedere la pagina: la vedono una volta
+  if (missed) fromV = Math.min(fromV, 94);
+  settings.wn2 = 1;
+  var newV = APP_VERSION.v > fromV, newB = PROVA && curB && provaNum(curB) > provaNum(fromB);
+  if (!newV && !newB) { saveSettings(); return; }
+  settings.seenV = APP_VERSION.v; settings.seenB = curB; saveSettings();
+  var items = [], title = '', brief = false;
+  try {
+    if (PROVA && curB && !missed) {
+      var rp = await fetch('REGISTRO_PROVA.md', { cache: 'no-cache' }).catch(function () { return null; });
+      var pm = rp && rp.ok ? await rp.text() : '';
+      var inB = function (h) { var m = /^Prova\s+([\d.]+)/.exec(h); return !!m && provaNum(m[1]) > provaNum(fromB) && provaNum(m[1]) <= provaNum(curB); };
+      items = newsBrief(pm, inB); brief = items.length > 0;      // anche nella prova, lo stesso stile semplice
+      if (!items.length) items = newsSince(pm, inB);
+      title = 'Prova ' + curB;
+    }
+    if (!items.length) {
+      var r = await fetch('REGISTRO_MODIFICHE.md', { cache: 'no-cache' }).catch(function () { return null; });
+      if (!r || !r.ok) r = await fetch('REGISTRO_MODIFICHE.md').catch(function () { return null; });
+      var md = r && r.ok ? await r.text() : '';
+      var inV = function (h) { var m = /^Versione\s+(\d+)/.exec(h); return !!m && +m[1] > fromV && +m[1] <= APP_VERSION.v; };
+      items = newsBrief(md, inV);                     // per tutti: poche novita' in parole semplici (Piero, 16/11/2026)
+      brief = true;
+      title = 'Versione ' + APP_VERSION.v;
+    }
+  } catch (e) {}
+  if (!items.length) return;
+  $('#wnSub').textContent = brief ? title + ': ecco cosa cambia per te.' : title + ' · ' + (items.length === 1 ? '1 novità' : items.length + ' novità');
+  $('#wnList').classList.toggle('wn-brief', brief);
+  $('#wnList').innerHTML = (brief ? items : rankNews(items)).map(function (x) { return '<li>' + logInline(x) + '</li>'; }).join('');
+  $('#wnSheet').hidden = false;
+}
+function closeWhatsNew() { $('#wnSheet').hidden = true; }
+$('#wnClose').addEventListener('click', closeWhatsNew);
+$('#wnAll').addEventListener('click', function () { closeWhatsNew(); openLog(); });
+$('#wnSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeWhatsNew(); });
+$('#verLog').addEventListener('click', openLog);
+$('#logClose').addEventListener('click', function () { closeLog(); });
+$('#logSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeLog(); });
+window.addEventListener('popstate', function (e) { if (!$('#logSheet').hidden && !(e.state && e.state.log)) { logPushed = false; closeLog(true); } });
+/* ---- Donazioni: l'app e' gratis. Riga in cima all'elenco (la X la nasconde per 10 giorni), promemoria ogni 50 libri,
+   finestra «Sostieni» che apre PayPal. Al ritorno: se si e' rimasti su PayPal almeno 20 secondi le richieste tacciono 3 mesi,
+   altrimenti 10 giorni (l'app non puo' sapere se il pagamento c'e' stato: senza server non c'e' una conferma vera). ---- */
+var DON_URL = 'https://www.paypal.me/PieroRagusa907';
+var DON_DAY = 864e5, DON_SNOOZE = 10 * DON_DAY, DON_THANKS = 90 * DON_DAY, DON_MIN_MS = 20000, DON_STEP = 50;
+var DON_OPENS = 5, DON_AWAY = 30 * 60000, donHiddenAt = 0;   // la riga compare dopo 5 accessi; tornare dopo 30 minuti conta come un accesso
+var donAmt = '3', donPushed = false;
+function donCount() { return state.books.filter(function (b) { return !b.w && hasData(b); }).length; }
+function donPaint() {
+  var row = $('#donRow'), ask = $('#donAsk');
+  if (!row || !ask) return;
+  var n = donCount(), ms = Math.floor(n / DON_STEP) * DON_STEP;
+  if (settings.donMs == null) { settings.donMs = ms; saveSettings(); }      // chi ha gia' dei libri non lo vede subito: al prossimo multiplo di 50
+  var on = tab !== 'wish' && Date.now() >= settings.donUntil;
+  ask.hidden = !(on && !settings.donNever && ms >= DON_STEP && ms > settings.donMs);
+  if (!ask.hidden) $('#donAskT').textContent = ms + ' libri catalogati';
+  row.hidden = !(on && n > 0 && ask.hidden && settings.donOpens > DON_OPENS);
+}
+function donSnooze(ms) { settings.donUntil = Math.max(settings.donUntil, Date.now() + ms); saveSettings(); donPaint(); }
+function paintDonAmt() {
+  Array.prototype.forEach.call(document.querySelectorAll('.don-amt'), function (x) { x.setAttribute('aria-checked', x.dataset.amt === donAmt ? 'true' : 'false'); });
+  $('#donGo').textContent = donAmt ? 'Dona ' + donAmt + ' € con PayPal' : 'Dona con PayPal';
+}
+function openDon(reuse) {
+  paintDonAmt();
+  $('#donSheet').hidden = false;
+  if (reuse) { try { history.replaceState({ don: 1 }, ''); donPushed = true; } catch (e) {} }
+  else if (!donPushed) { try { history.pushState({ don: 1 }, ''); donPushed = true; } catch (e) {} }
+}
+function closeDon(fromPop) {
+  if ($('#donSheet').hidden) return;
+  $('#donSheet').hidden = true;
+  if (donPushed && !fromPop) { donPushed = false; try { history.back(); } catch (e) {} }
+  else donPushed = false;
+}
+function donGo() {
+  var url = DON_URL + (donAmt ? '/' + donAmt + 'EUR' : '');
+  settings.donGo = Date.now(); settings.donHid = false; saveSettings();
+  closeDon();
+  var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function donBack() {
+  if (!settings.donGo) return;
+  var spent = Date.now() - settings.donGo;
+  settings.donGo = 0; settings.donHid = false;
+  if (spent >= DON_MIN_MS) { settings.donUntil = Math.max(settings.donUntil, Date.now() + DON_THANKS); settings.donMs = Math.max(settings.donMs || 0, Math.floor(donCount() / DON_STEP) * DON_STEP); }
+  else settings.donUntil = Math.max(settings.donUntil, Date.now() + DON_SNOOZE);
+  saveSettings(); donPaint();
+  toast('Grazie se hai donato! ♥', null, 3500);
+}
+function donAccess() { settings.donOpens = Math.min(9999, (settings.donOpens || 0) + 1); saveSettings(); donPaint(); }
+document.addEventListener('visibilitychange', function () {      // l'app installata spesso resta in memoria: un ritorno dopo una lunga pausa e' un nuovo accesso
+  if (document.visibilityState === 'hidden') donHiddenAt = Date.now();
+  else if (donHiddenAt && Date.now() - donHiddenAt >= DON_AWAY) { donHiddenAt = 0; donAccess(); }
+});
+document.addEventListener('visibilitychange', function () {
+  if (!settings.donGo) return;
+  if (document.visibilityState === 'hidden') { if (!settings.donHid) { settings.donHid = true; saveSettings(); } }
+  else if (settings.donHid) donBack();
+});
+$('#donRowOpen').addEventListener('click', function () { openDon(); });
+$('#donRowX').addEventListener('click', function () { donSnooze(DON_SNOOZE); });
+$('#donAskGo').addEventListener('click', function () { openDon(); });
+$('#donAskLater').addEventListener('click', function () { donSnooze(DON_SNOOZE); });
+$('#donAskNever').addEventListener('click', function () {
+  settings.donNever = true; settings.donMs = Math.floor(donCount() / DON_STEP) * DON_STEP; saveSettings(); donPaint();
+  toast('Non te lo chiederò più a ogni traguardo. Resta «Sostieni Next Libris» nel menu.');
+});
+$('#donMenu').addEventListener('click', function () { var had = drawerPushed; drawerPushed = false; closeDrawer(true); openDon(had); });
+$('#donOpt').addEventListener('click', function () { openDon(); });
+$('#donSheet').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) { closeDon(); return; }
+  var x = e.target.closest('.don-amt'); if (x) { donAmt = x.dataset.amt; paintDonAmt(); }
+});
+$('#donGo').addEventListener('click', donGo);
+$('#donClose').addEventListener('click', function () { closeDon(); });
+window.addEventListener('popstate', function (e) { if (!$('#donSheet').hidden && !(e.state && e.state.don)) { donPushed = false; closeDon(true); } });
+/* ---- «Descrizione»: riquadro richiudibile nella scheda aperta; la prima apertura la cerca online, poi resta nel libro ---- */
+var descOpen = {}, descBusy = {}, descFull = {}, descErr = {};
+var DESC_SRC = { g: 'Google Libri', o: 'Open Library' };
+var DESC_CLIP = 420;
+function descHTML(b, off) {
+  if (off || !hasData(b) || !(b.t || L.toIsbn13(b.i))) return '';
+  return '<details class="desc" data-id="' + b.id + '"' + (descOpen[b.id] ? ' open' : '') + '><summary><span class="desc-h">Descrizione</span>' +
+    (b.ds ? '' : '<span class="desc-hint">tocca per cercarla</span>') + '</summary><div class="desc-b" aria-live="polite">' + descBody(b) + '</div></details>';
+}
+function descBody(b) {
+  if (descBusy[b.id]) return '<p class="desc-wait"><span class="spin" aria-hidden="true"></span>Cerco la descrizione…</p>';
+  if (b.ds) {
+    var long = b.ds.length > DESC_CLIP && !descFull[b.id];
+    var foreign = b.dsl && b.dsl !== 'it';
+    return '<div class="desc-t' + (long ? ' clip' : '') + '">' + b.ds.split(/\n+/).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') + '</div>' +
+      (long ? '<button type="button" class="link" data-act="descmore">Leggi tutto</button>' : '') +
+      '<p class="desc-src">Fonte: ' + esc(DESC_SRC[b.dsf] || 'web') + (foreign ? (b.dsl === 'en' ? ' · in inglese' : ' · in un\'altra lingua') : '') + '</p>' +
+      '<div class="desc-acts">' + (foreign ? '<a class="link" target="_blank" rel="noopener" href="https://translate.google.com/?sl=auto&tl=it&op=translate&text=' + encodeURIComponent(b.ds) + '">Traduci in italiano</a>' : '') +
+      '<button type="button" class="link quiet" data-act="descdel">Non è questo libro: rimuovila</button></div>';
+  }
+  if (descErr[b.id]) return '<p class="desc-none">' + esc(descErr[b.id]) + '</p><button type="button" class="link" data-act="descretry">Riprova</button>';
+  if (b.dsn) return '<p class="desc-none">Nessuna descrizione trovata nelle banche dati per questo libro.</p><button type="button" class="link" data-act="descretry">Cerca di nuovo</button>';
+  if (navigator.onLine === false) return '<p class="desc-none">Senza connessione: la cerco appena riapri il riquadro con la rete.</p>';
+  return '';
+}
+function paintDesc(id) {
+  var b = get(id);
+  Array.prototype.forEach.call(document.querySelectorAll('details.desc:not(.quotes)[data-id="' + id + '"]'), function (d) {
+    var body = d.querySelector('.desc-b'), hint = d.querySelector('.desc-hint');
+    if (b && body) body.innerHTML = descBody(b);
+    if (b && b.ds && hint) hint.remove();
+  });
+}
+async function findDesc(b) {
+  var isbn = L.toIsbn13(b.i), tries = 0, errs = 0, best = null, skipped = false;
+  var key = settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : '';
+  async function gq(q, n) {
+    if (!googleLeft(false)) { skipped = true; return null; }
+    tries++;
+    try {
+      return await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=' + n +
+        '&fields=items(volumeInfo(title,subtitle,authors,language,description))' + key, { waits: [900], timeout: 9000 });
+    } catch (e) { errs++; return null; }
+  }
+  async function ol(path) {
+    tries++;
+    try { return await L.getJson(fetch, 'https://openlibrary.org' + path, { waits: [], timeout: 9000 }); }
+    catch (e) { if (e && e.status !== 404) errs++; return null; }
+  }
+  function take(r, src) { if (r && (!best || (best.lang !== 'it' && r.lang === 'it'))) best = { text: r.text, lang: r.lang, src: src }; }
+  if (isbn) take(L.pickDesc(await gq('isbn:' + isbn, 3), ''), 'g');
+  if ((!best || best.lang !== 'it') && b.t) {
+    var a = L.str(b.a).split(/[,;]/)[0].trim();
+    take(L.pickDesc(await gq('intitle:"' + b.t.replace(/"/g, '') + '"' + (a ? ' inauthor:"' + a.replace(/"/g, '') + '"' : ''), 6), b.t, a), 'g');
+  }
+  if (!best && isbn) {
+    var ed = await ol('/isbn/' + isbn + '.json'), t = L.olDesc(ed);
+    var wk = ed && Array.isArray(ed.works) && ed.works[0] && ed.works[0].key;
+    if (!t && /^\/works\/OL\d+W$/.test(L.str(wk))) t = L.olDesc(await ol(wk + '.json'));
+    if (t) take({ text: t, lang: L.guessLang(t) }, 'o');
+  }
+  if (!best && errs) throw { net: true };
+  if (!best && skipped) throw { quota: true };
+  return best;
+}
+/* tutte le descrizioni che mancano, una alla volta, senza consumare le ricerche Google che servono ai libri nuovi */
+var descAll = { on: false, stop: false };
+async function allDescs() {
+  var btn = $('#btnDescAll');
+  if (descAll.on) { descAll.stop = true; btn.querySelector('b').textContent = 'Mi fermo…'; return; }
+  var todo = state.books.filter(function (b) { return hasData(b) && !b.ds && !b.dsn && (b.t || L.toIsbn13(b.i)); });
+  if (!todo.length) { toast('Le descrizioni ci sono già tutte: per gli altri libri ho già cercato e non esistono.'); return; }
+  if (navigator.onLine === false) { toast('Sei offline. Riprova quando c\'è connessione.'); return; }
+  if (!googleLeft(true)) { toast('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
+  descAll = { on: true, stop: false };
+  var label = btn.querySelector('b'), old = label.textContent, done = 0, found = 0, fails = 0, why = '';
+  for (var i = 0; i < todo.length; i++) {
+    if (descAll.stop) { why = 'stop'; break; }
+    if (!googleLeft(true)) { why = 'quota'; break; }
+    if (navigator.onLine === false) { why = 'net'; break; }
+    var b = get(todo[i].id);
+    if (!b || b.ds) continue;
+    label.textContent = 'Cerco… ' + (done + 1) + ' di ' + todo.length + ' · tocca per fermare';
+    try {
+      var r = await findDesc(b);
+      b = get(todo[i].id);
+      if (b) { if (r) { b.ds = r.text; b.dsf = r.src; b.dsl = r.lang || ''; b.dsn = 0; found++; } else b.dsn = Date.now(); b.dsq = 0; touch(); paintDesc(b.id); }
+      fails = 0;
+    } catch (e) { if (++fails >= 3) { why = 'net'; break; } }
+    done++;
+    await new Promise(function (ok) { setTimeout(ok, 250); });
+  }
+  descAll.on = false; label.textContent = old;
+  var left = todo.length - done;
+  toast((found === 1 ? 'Trovata 1 descrizione' : 'Trovate ' + found + ' descrizioni') + ' su ' + done + (done === 1 ? ' libro' : ' libri') + '.' +
+    (why === 'quota' ? ' Per oggi mi fermo qui per non finire le ricerche di Google: ne restano ' + left + ', riprendi domani.' :
+     why === 'net' ? ' La connessione non regge: ne restano ' + left + ', riprova più tardi.' :
+     why === 'stop' ? ' Fermato: ne restano ' + left + '.' : ''));
+}
+/* descrizione cercata da sola per i libri appena aggiunti; senza rete (o con Google al limite) resta in sospeso e riparte dopo */
+var descQ = { busy: false, t: 0, retry: 0 };
+function queueDesc(id) {
+  var b = get(id);
+  if (!b || b.ds || b.dsn || b.dsq || !(b.t || L.toIsbn13(b.i))) return;
+  b.dsq = 1; touch();
+  clearTimeout(descQ.t); descQ.t = setTimeout(runDescQueue, 1500);
+}
+async function runDescQueue() {
+  if (descQ.busy || navigator.onLine === false) return;
+  descQ.busy = true; clearTimeout(descQ.retry);
+  try {
+    for (;;) {
+      var b = state.books.find(function (x) { return x.dsq && !x.ds && !descBusy[x.id] && (x.t || L.toIsbn13(x.i)) && !isBusy(x); });
+      if (!b || navigator.onLine === false) break;
+      var id = b.id, stop = false;
+      descBusy[id] = true; paintDesc(id);
+      try {
+        var r = await findDesc(b), x = get(id);
+        if (x) { if (r) { x.ds = r.text; x.dsf = r.src; x.dsl = r.lang || ''; x.dsn = 0; } else x.dsn = Date.now(); x.dsq = 0; touch(); }
+      } catch (e) {
+        stop = true;
+        if (!(e && e.quota)) descQ.retry = setTimeout(runDescQueue, 5 * 60000);   // rete debole: riprovo tra qualche minuto
+      } finally { delete descBusy[id]; paintDesc(id); }
+      if (stop) break;
+      await new Promise(function (ok) { setTimeout(ok, 400); });
+    }
+  } finally { descQ.busy = false; }
+}
+window.addEventListener('online', function () { setTimeout(runDescQueue, 3000); });
+async function loadDesc(id, force) {
+  var b = get(id);
+  if (!b || descBusy[id] || b.ds || (b.dsn && !force)) return;
+  if (navigator.onLine === false) { paintDesc(id); return; }
+  delete descErr[id];
+  descBusy[id] = true; paintDesc(id);
+  var r = null, failed = false;
+  try { r = await findDesc(b); } catch (e) { failed = e && e.quota ? 'quota' : true; }
+  delete descBusy[id];
+  b = get(id);
+  if (!b) return;
+  if (failed) { b.dsq = 1; touch(); }                               // resta da cercare: riprovo da solo
+  if (r) { b.ds = r.text; b.dsf = r.src; b.dsl = r.lang || ''; b.dsn = 0; b.dsq = 0; touch(); }
+  else if (failed) descErr[id] = failed === 'quota' ? 'Ricerche di Google finite per oggi: la cerco da sola domani.' : navigator.onLine === false ? 'Senza connessione: non sono riuscito a cercarla.' : 'Connessione debole: non sono riuscito a cercarla.';
+  else if (!failed) { b.dsn = Date.now(); b.dsq = 0; touch(); }
+  paintDesc(id);
+}
+/* ---- serie e collane: quali volumi hai, quali mancano ---- */
+function serNums(a) { return a.join(', '); }
+function seriesBody(b) {
+  var s = L.seriesInfo(state.books)[L.serKey(b.se)];
+  if (!s) return '';
+  var out = '<p><b>' + esc(s.name) + '</b>: ' + (s.n === 1 ? 'hai 1 volume' : 'hai ' + s.n + ' volumi') +
+    (s.have.length ? ' (' + (s.have.length === 1 ? 'il ' : 'i numeri ') + serNums(s.have) + ')' : '') + (s.total ? ' su ' + s.total : '') + '.' +
+    (s.missing.length ? ' ' + (s.missing.length === 1 ? 'Manca il ' : 'Mancano: ') + serNums(s.missing.slice(0, 40)) + (s.missing.length > 40 ? '…' : '') + '.' : (s.total && s.have.length >= s.total ? ' Serie completa.' : '')) +
+    (s.wish.length ? ' Nei Desideri: ' + serNums(s.wish) + '.' : '') + '</p>';
+  if (!parseInt(b.sn, 10)) out += '<p class="ser-hint">Scrivi il numero di questo volume per sapere quali mancano.</p>';
+  else if (!s.total) out += '<p class="ser-hint">Se sai di quanti volumi è la serie, scrivilo in «di»: conto anche quelli dopo l\'ultimo che hai.</p>';
+  var btns = (s.n + s.nw > 1 ? '<button type="button" class="link" data-act="serall">Vedi la serie</button>' : '') +
+    (s.toAdd.length ? '<button type="button" class="link" data-act="sermiss">Metti ' + (s.toAdd.length === 1 ? 'il mancante' : 'i ' + Math.min(s.toAdd.length, 40) + ' mancanti') + ' nei Desideri</button>' : '');
+  return out + (btns ? '<div class="desc-acts">' + btns + '</div>' : '');
+}
+function seriesHTML(b, off) { return off || !hasData(b) ? '' : '<div class="serbox">' + seriesBody(b) + '</div>'; }
+function seriesChanged(b, row, k) {
+  if (k === 'se' && b.se && !b.sq) {            // serie gia' nota: il totale lo prendo dagli altri volumi
+    var s = L.seriesInfo(state.books)[L.serKey(b.se)];
+    if (s && s.total) { b.sq = String(s.total); var f = row.querySelector('[data-k="sq"]'); if (f) f.value = b.sq; touch(); }
+  }
+  if (k === 'sq' && b.se && b.sq) state.books.forEach(function (x) { if (x !== b && L.serKey(x.se) === L.serKey(b.se)) x.sq = b.sq; });
+  var box = row.querySelector('.serbox');
+  if (box) box.innerHTML = seriesBody(b);
+}
+function seriesAll(id) {
+  var b = get(id); if (!b || !b.se) return;
+  flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = '';
+  q = b.se.trim(); $('#q').value = q; collapseCards(); renderList(); updateSummary(); window.scrollTo({ top: 0 });
+  toast('Libri della serie «' + q + '». Svuota la ricerca per vederli tutti.');
+}
+function seriesMissing(id) {
+  var b = get(id); if (!b || !b.se) return;
+  var s = L.seriesInfo(state.books)[L.serKey(b.se)];
+  if (!s || !s.toAdd.length) return;
+  var ids = [];
+  s.toAdd.slice(0, 40).forEach(function (n, i) {
+    var w = blankBook({ t: s.name + ', vol. ' + n, a: s.author || b.a || '', se: s.name, sn: String(n), sq: s.total ? String(s.total) : '', w: true, rs: '', ts: Date.now() + i });
+    state.books.push(w); ids.push(w.id);
+  });
+  touch(); refreshRow(id); updateSummary();
+  toast((ids.length === 1 ? 'Aggiunto 1 volume' : 'Aggiunti ' + ids.length + ' volumi') + ' ai Desideri.', { label: 'Annulla', fn: function () {
+    state.books = state.books.filter(function (x) { return ids.indexOf(x.id) < 0; }); touch(); refreshRow(id); updateSummary(); } });
+}
+function seriesStatsHTML() {
+  var m = L.seriesInfo(state.books), keys = Object.keys(m).filter(function (k) { return m[k].n; }).sort(function (x, y) { return coll.compare(m[x].name, m[y].name); });
+  if (!keys.length) return '';
+  return '<section class="st-sec"><h3>Serie e collane</h3><ul class="loans">' + keys.map(function (k) {
+    var s = m[k];
+    return '<li><button type="button" class="link" data-q="' + esc(s.name) + '">' + esc(s.name) + '</button> · ' + s.n + (s.total ? ' su ' + s.total : '') +
+      (s.missing.length ? ' <small>' + (s.missing.length === 1 ? 'manca il ' : 'mancano: ') + serNums(s.missing.slice(0, 20)) + (s.missing.length > 20 ? '…' : '') + '</small>' : (s.total && s.have.length >= s.total ? ' <small>completa</small>' : '')) + '</li>';
+  }).join('') + '</ul></section>';
+}
+
+/* ---- foto delle citazioni: salvate sul telefono (come le tue copertine), chiave «q:…» ---- */
+var qphURL = {};
+function qPhs(c) { return (c && c.phs) || []; }
+function quotePhKeys() { var out = []; state.books.forEach(function (b) { (b.qs || []).forEach(function (c) { qPhs(c).forEach(function (k) { out.push(k); }); }); }); return out; }
+function qThumb(c) { var k = qPhs(c)[0], n = qPhs(c).length; return k ? '<span class="qimg-w">' + (qphURL[k] ? '<img class="qimg" src="' + qphURL[k] + '" alt="">' : '<span class="qimg none" aria-hidden="true"></span>') + (n > 1 ? '<span class="qimg-n" aria-label="' + n + ' foto">' + n + '</span>' : '') + '</span>' : ''; }
+async function saveQuotePh(key, blob) {
+  await idbDo('readwrite', function (st) { st.put(blob, key); });
+  if (qphURL[key]) URL.revokeObjectURL(qphURL[key]);
+  qphURL[key] = URL.createObjectURL(blob);
+  askPersist();
+}
+function paintQuotesAll() {
+  Array.prototype.forEach.call(document.querySelectorAll('details.quotes'), function (d) { paintQuotes(d.dataset.id); });
+  if (!$('#allqSheet').hidden) renderAllQuotes();
+}
+var phPushed = false;
+var phList = [], phAt = 0;
+function phShow() {
+  $('#phImg').src = phList[phAt]; $('#phView').classList.remove('zoom');
+  $('#phNav').hidden = phList.length < 2; $('#phPos').textContent = (phAt + 1) + ' di ' + phList.length;
+  $('#phPrev').disabled = phAt === 0; $('#phNext').disabled = phAt === phList.length - 1;
+}
+function openPhs(list, at, cap) { if (!list || !list.length) return; phList = list; phAt = Math.max(0, Math.min(list.length - 1, at || 0)); openPh(list[phAt], cap, true); }
+$('#phPrev').addEventListener('click', function (e) { e.stopPropagation(); if (phAt > 0) { phAt--; phShow(); } });
+$('#phNext').addEventListener('click', function (e) { e.stopPropagation(); if (phAt < phList.length - 1) { phAt++; phShow(); } });
+function openPh(src, cap, many) {
+  if (!src) return;
+  if (!many) phList = [src], phAt = 0;
+  phShow(); $('#phCap').textContent = cap || '';
+  $('#phView').classList.remove('zoom'); $('#phView').hidden = false;
+  if (!phPushed) { try { history.pushState({ ph: 1 }, ''); phPushed = true; } catch (e) {} }
+}
+function closePh(fromPop) {
+  if ($('#phView').hidden) return;
+  $('#phView').hidden = true; $('#phImg').removeAttribute('src');
+  if (phPushed && !fromPop) { phPushed = false; try { history.back(); } catch (e) {} }
+}
+$('#phClose').addEventListener('click', function () { closePh(false); });
+$('#phView').addEventListener('click', function (e) {
+  if (e.target.id === 'phImg') { $('#phView').classList.toggle('zoom'); return; }      // tocco sulla foto: ingrandisce per leggere
+  if (e.target === e.currentTarget || e.target.id === 'phCap') closePh(false);
+});
+window.addEventListener('popstate', function () { if (!$('#phView').hidden) { phPushed = false; closePh(true); } });
+/* ---- citazioni e appunti: riquadro nella scheda aperta, testo scritto o letto da una foto della pagina ---- */
+var quoteOpen = {}, quoteEdit = null;
+function quotesBody(b) {
+  var qs = b.qs || [];
+  return (qs.length ? '<ul class="qlist">' + qs.map(function (c, i) {
+    return '<li class="qcard"><button type="button" class="qitem' + (qPhs(c).length ? ' has-ph' + (c.x ? '' : ' only-ph') : '') + '" data-act="quoteedit" data-i="' + i + '" title="Tocca per modificare">' + qThumb(c) +
+      (c.x ? '<span class="qt">' + esc(c.x) + '</span>' : '<span class="qt q-only">Foto della pagina</span>') + (c.pg ? '<span class="qp">p. ' + esc(c.pg) + '</span>' : '') + '</button>' +
+      '<span class="qbtns"><button type="button" class="qshare" data-act="quoteshare" data-i="' + i + '" aria-label="Condividi questa citazione">' + icon('share') + 'Condividi</button>' +
+      '<button type="button" class="qdel" data-act="quotedel" data-i="' + i + '" aria-label="Elimina questa citazione" title="Elimina">' + icon('x') + '</button></span></li>';
+  }).join('') + '</ul>' : '<p class="desc-none">Passaggi da ricordare, frasi sottolineate, appunti di lettura.</p>') +
+    '<div class="desc-acts"><button type="button" class="link" data-act="quoteadd">+ Aggiungi una citazione o un appunto</button>' +
+    (qs.length ? '<button type="button" class="link" data-act="quoteshareall">' + (qs.length === 1 ? 'Condividi' : 'Condividi tutte (' + qs.length + ')') + '</button>' : '') + '</div>';
+}
+function quotesHTML(b, off) {
+  if (off || !hasData(b)) return '';
+  var n = (b.qs || []).length;
+  return '<details class="desc quotes" data-id="' + b.id + '"' + (quoteOpen[b.id] ? ' open' : '') + '><summary><span class="desc-h">Citazioni e appunti</span><span class="desc-hint qn">' + (n || '') + '</span></summary><div class="desc-b">' + quotesBody(b) + '</div></details>';
+}
+function paintQuotes(id) {
+  var b = get(id), d = b && document.querySelector('details.quotes[data-id="' + id + '"]');
+  if (!d) return;
+  d.querySelector('.desc-b').innerHTML = quotesBody(b);
+  d.querySelector('.qn').textContent = (b.qs || []).length || '';
+}
+var QPH_MAX = 10;
+function openQuote(id, i) {
+  var b = get(id); if (!b) return;
+  var c = i == null ? null : (b.qs || [])[i];
+  quoteEdit = { id: id, i: c ? i : null, phs: qPhs(c).map(function (k) { return { key: k, blob: null, url: qphURL[k] || '', canvas: null, read: false }; }) };
+  $('#quoteH').textContent = c ? 'Modifica' : 'Citazione o appunto';
+  $('#quoteBook').textContent = [b.t || 'Senza titolo', b.a].filter(Boolean).join(' — ');
+  $('#quoteText').value = c ? c.x : ''; $('#quotePage').value = c ? c.pg : '';
+  $('#quoteMsg').textContent = ''; $('#quoteDel').hidden = !c;
+  ocrIdle();
+  paintQuotePh();
+  $('#quoteSheet').hidden = false;
+  if (!c) setTimeout(function () { try { $('#quoteText').focus(); } catch (e) {} }, 60);
+}
+function closeQuote() { if (quoteEdit) quoteEdit.phs.forEach(function (p) { if (p.blob && p.url) URL.revokeObjectURL(p.url); }); $('#quoteSheet').hidden = true; quoteEdit = null; }
+function paintQuotePh() {
+  var phs = quoteEdit ? quoteEdit.phs : [], n = phs.length;
+  $('#quotePh').hidden = !n;
+  $('#quoteThumbs').innerHTML = phs.map(function (p, k) {
+    return '<li><button type="button" class="q-th" data-k="' + k + '" aria-label="Ingrandisci la foto ' + (k + 1) + '">' + (p.url ? '<img src="' + p.url + '" alt="">' : '') + (n > 1 ? '<span class="q-th-n">' + (k + 1) + '</span>' : '') + '</button>' +
+      '<button type="button" class="q-th-x" data-del="' + k + '" aria-label="Togli la foto ' + (k + 1) + '">' + icon('x') + '</button>' +
+      '<button type="button" class="q-th-ed" data-ed="' + k + '" aria-label="Evidenzia o scrivi sulla foto ' + (k + 1) + '">' + icon('pen') + '</button></li>';
+  }).join('');
+  if (!$('#quoteOcr').classList.contains('busy')) $('#quoteOcr').textContent = n > 1 ? 'Leggi il testo dalle foto' : 'Leggi il testo dalla foto';
+  $('#quotePhoto').textContent = n ? 'Aggiungi un\'altra foto' : 'Aggiungi una foto della pagina';
+  $('#quotePhoto').hidden = n >= QPH_MAX;
+}
+async function saveQuote() {
+  if (!quoteEdit) return;
+  var b = get(quoteEdit.id), x = $('#quoteText').value.replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim().slice(0, 1500);
+  if (!b) { closeQuote(); return; }
+  if (!x && !quoteEdit.phs.length) { $('#quoteMsg').textContent = 'Scrivi il testo oppure aggiungi una foto della pagina.'; $('#quoteText').focus(); return; }
+  var keys = [], lost = 0;
+  for (var k = 0; k < quoteEdit.phs.length; k++) {
+    var p = quoteEdit.phs[k];
+    if (p.key && !p.blob) { keys.push(p.key); continue; }
+    var key = 'q:' + newId();
+    try { await saveQuotePh(key, p.blob); keys.push(key); } catch (e) { lost++; }
+  }
+  if (lost && !x && !keys.length) { $('#quoteMsg').textContent = 'Non riesco a salvare le foto su questo telefono.'; return; }
+  var c = { x: x, pg: $('#quotePage').value.replace(/\D/g, '').slice(0, 5), d: Date.now(), phs: keys };
+  if (!Array.isArray(b.qs)) b.qs = [];
+  if (quoteEdit.i != null) { c.d = b.qs[quoteEdit.i].d || c.d; b.qs[quoteEdit.i] = c; }
+  else if (b.qs.length >= 200) { $('#quoteMsg').textContent = 'Per questo libro ci sono già 200 citazioni.'; return; }
+  else b.qs.push(c);
+  var id = b.id; quoteOpen[id] = true;
+  touch(); closeQuote(); paintQuotes(id); toast(lost ? 'Salvata, ma ' + lost + ' foto non si sono potute salvare.' : 'Salvata.');
+}
+function delQuote() {
+  if (!quoteEdit || quoteEdit.i == null) return;
+  var id = quoteEdit.id, i = quoteEdit.i, b = get(id);
+  if (!b) { closeQuote(); return; }
+  var old = b.qs.splice(i, 1)[0];
+  touch(); closeQuote(); paintQuotes(id);
+  toast('Citazione eliminata.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.qs.splice(Math.min(i, x.qs.length), 0, old); touch(); paintQuotes(id); } } });
+}
+/* foto aggiunta: la tengo (JPEG di al massimo 1600 px); il testo si legge solo su richiesta, o subito se l'opzione e' accesa */
+async function quotePickPhoto(file, edit) {
+  if (!quoteEdit) return;
+  var msg = $('#quoteMsg');
+  if (quoteEdit.phs.length >= QPH_MAX) { msg.textContent = 'Al massimo ' + QPH_MAX + ' foto per citazione.'; return; }
+  var ph;
+  try {
+    var canvas = await loadCanvas(file, 2200), small = scaled(canvas, 1600);
+    var blob = await new Promise(function (res) { small.toBlob(res, 'image/jpeg', 0.8); });
+    if (!blob || !quoteEdit) throw new Error('jpeg');
+    ph = { key: '', blob: blob, url: URL.createObjectURL(blob), canvas: canvas, read: false };
+    var ed0 = quoteEdit;
+    if (edit) {                                                   // subito l'editor: evidenzia o scrivi (la lettura del testo usa la foto senza segni)
+      var marked = await editPhoto(blob);
+      if (quoteEdit !== ed0) return;
+      if (marked) { URL.revokeObjectURL(ph.url); ph.blob = marked; ph.url = URL.createObjectURL(marked); }
+    }
+    quoteEdit.phs.push(ph);
+    paintQuotePh();
+  } catch (e) { msg.textContent = 'Non riesco ad aprire questa foto: riprova.'; return; }
+  if (settings.quoteOcrAuto) quoteOcr([ph]);
+  else msg.textContent = (quoteEdit.phs.length > 1 ? 'Foto aggiunta (' + quoteEdit.phs.length + ').' : 'Foto aggiunta.') + ' Se vuoi il testo scritto, tocca «Leggi il testo».';
+}
+function ocrIdle() { var ob = $('#quoteOcr'); ob.disabled = false; ob.classList.remove('busy'); $('#quotePh').classList.remove('reading'); }
+/* legge le foto indicate (o quelle non ancora lette, o tutte) e aggiunge il testo in fondo */
+async function quoteOcr(list) {
+  if (!quoteEdit || $('#quoteOcr').classList.contains('busy')) return;
+  var ed = quoteEdit, msg = $('#quoteMsg'), btn = $('#quoteOcr');
+  var todo = list || ed.phs.filter(function (p) { return !p.read; });
+  if (!todo.length) todo = ed.phs.slice();
+  if (!todo.length) return;
+  btn.disabled = true; btn.classList.add('busy'); $('#quotePh').classList.add('reading');
+  btn.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (todo.length > 1 ? 'Leggo la foto 1 di ' + todo.length + '…' : 'Leggo il testo…');
+  var found = 0;
+  try {
+    msg.textContent = 'Preparo il riconoscimento del testo (la prima volta ci vuole un po\')…';
+    var w = await getOcr();
+    for (var k = 0; k < todo.length; k++) {
+      if (quoteEdit !== ed) return;
+      var p = todo[k];
+      btn.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (todo.length > 1 ? 'Leggo la foto ' + (k + 1) + ' di ' + todo.length + '…' : 'Leggo il testo…');
+      msg.textContent = 'Leggo la pagina…';
+      var canvas = p.canvas;
+      if (!canvas) { var bl = p.blob || await (await fetch(p.url)).blob(); canvas = await loadCanvas(bl, 2200); }
+      var res;
+      await w.setParameters({ tessedit_pageseg_mode: String(window.Tesseract.PSM.AUTO) });
+      try { res = await w.recognize(canvas); }
+      finally { await w.setParameters({ tessedit_pageseg_mode: String(window.Tesseract.PSM.SPARSE_TEXT) }); }
+      var text = L.ocrParagraph((res.data || {}).text || '');
+      p.read = true;
+      if (quoteEdit !== ed) return;
+      if (!text) continue;
+      found++;
+      var ta = $('#quoteText');
+      ta.value = ((ta.value.trim() ? ta.value.trim() + '\n' : '') + text).slice(0, 1500);
+    }
+    if (quoteEdit !== ed) return;
+    msg.textContent = found ? 'Ho letto ' + (todo.length > 1 ? 'le pagine' : 'la pagina') + ': tieni solo il passaggio che ti interessa e correggi gli errori. Le foto restano salvate con il testo.'
+      : 'Non ho trovato del testo da leggere: puoi salvare solo le foto, oppure scrivere tu il passaggio.';
+    if (found) $('#quoteText').focus();
+  } catch (e) {
+    if (quoteEdit === ed) msg.textContent = 'Lettura non riuscita' + (navigator.onLine === false ? ' (la prima volta serve la connessione)' : '') + ': le foto restano, e puoi scrivere tu il testo.';
+  } finally { ocrIdle(); if (quoteEdit === ed) paintQuotePh(); }
+}
+$('#quoteForm').addEventListener('submit', function (e) { e.preventDefault(); saveQuote(); });
+$('#quoteCancel').addEventListener('click', closeQuote);
+$('#quoteDel').addEventListener('click', delQuote);
+$('#quotePhoto').addEventListener('click', function () { snapPhoto('Foto della pagina', '#fileQuote').then(function (f) { if (f) quotePickPhoto(f, true); }); });
+$('#fileQuote').addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) quotePickPhoto(f); });
+$('#quoteOcr').addEventListener('click', function () { quoteOcr(null); });
+$('#quoteShare').addEventListener('click', shareQuoteForm);
+$('#quoteThumbs').addEventListener('click', function (e) {
+  if (!quoteEdit) return;
+  var del = e.target.closest('[data-del]');
+  if (del) {
+    var k = +del.dataset.del, p = quoteEdit.phs[k];
+    if (!p || $('#quoteOcr').classList.contains('busy')) return;
+    quoteEdit.phs.splice(k, 1); if (p.blob && p.url) URL.revokeObjectURL(p.url);
+    paintQuotePh(); $('#quoteMsg').textContent = 'Foto tolta (salva per confermare).'; return;
+  }
+  var ed = e.target.closest('[data-ed]');
+  if (ed) {
+    var q = quoteEdit, pk = quoteEdit.phs[+ed.dataset.ed];
+    if (!pk || $('#quoteOcr').classList.contains('busy')) return;
+    if (!pk.canvas && pk.url) { fetch(pk.url).then(function (r) { return r.blob(); }).then(function (b) { return loadCanvas(b, 2200); }).then(function (c) { if (!pk.canvas) pk.canvas = c; }).catch(function () {}); }   // per leggere il testo resta la foto di prima
+    editPhoto(pk.blob || pk.url).then(function (marked) {
+      if (!marked || quoteEdit !== q) return;
+      if (pk.blob && pk.url) URL.revokeObjectURL(pk.url);
+      pk.blob = marked; pk.url = URL.createObjectURL(marked); pk.key = '';
+      paintQuotePh(); $('#quoteMsg').textContent = 'Segni aggiunti (salva per confermare).';
+    });
+    return;
+  }
+  var th = e.target.closest('[data-k]');
+  if (th) openPhs(quoteEdit.phs.map(function (p) { return p.url; }).filter(Boolean), +th.dataset.k, $('#quoteBook').textContent);
+});
+$('#quoteSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeQuote(); });
+
+/* ---- novità dei tuoi autori: libri recenti che non hai, da mettere nei Desideri ---- */
+var LS_NEWS = 'catalogo-libri-news', NEWS_EVERY = 14 * 86400000;
+var news = { at: 0, items: [], hide: [], busy: false };
+function loadNews() { try { var n = JSON.parse(ls.get(LS_NEWS) || '{}'); news.at = Number(n.at) || 0; news.items = Array.isArray(n.items) ? n.items.filter(function (x) { return x && x.t && x.k; }).slice(0, 80) : []; news.hide = Array.isArray(n.hide) ? n.hide.map(L.str).slice(-400) : []; } catch (e) {} }
+function saveNews() { ls.set(LS_NEWS, JSON.stringify({ at: news.at, items: news.items, hide: news.hide })); }
+function newsAuthors() {
+  var m = {};
+  state.books.forEach(function (b) { if (b.w || b.g.indexOf('a') >= 0) return; authorsOf(b).forEach(function (n) { var k = L.norm(n); (m[k] || (m[k] = { name: n, n: 0 })).n++; }); });
+  var all = Object.keys(m).map(function (k) { return m[k]; }).filter(function (x) { return !/^(aa\.? ?vv\.?|autori vari|anonimo)$/i.test(x.name); }).sort(function (x, y) { return y.n - x.n || coll.compare(x.name, y.name); });
+  var many = all.filter(function (x) { return x.n >= 2; });
+  return (many.length ? many.slice(0, 8) : all.slice(0, 5)).map(function (x) { return x.name; });
+}
+function newsOwn() {
+  var own = { titles: {}, isbns: {}, hide: {} };
+  state.books.forEach(function (b) { var k = L.titleKey(b.t); if (k) own.titles[k] = 1; var i = L.toIsbn13(b.i); if (i) own.isbns[i] = 1; });
+  news.hide.forEach(function (k) { own.hide[k] = 1; });
+  return own;
+}
+function newsFresh() { var own = newsOwn(); return news.items.filter(function (x) { return !own.titles[x.k] && !own.hide[x.k] && !(x.i && own.isbns[x.i]); }); }
+async function findNews() {
+  if (news.busy) return null;
+  var authors = newsAuthors(), y = new Date().getFullYear(), own = newsOwn(), found = [], seen = {}, errs = 0, done = 0;
+  if (!authors.length) return [];
+  news.busy = true;
+  try {
+    for (var i = 0; i < authors.length; i++) {
+      if (!googleLeft(true)) break;
+      try {
+        var j = await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent('inauthor:"' + authors[i].replace(/"/g, '') + '"') +
+          '&orderBy=newest&langRestrict=it&printType=books&maxResults=20&fields=items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,language,industryIdentifiers,imageLinks))' +
+          (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : ''), { waits: [900], timeout: 9000 });
+        L.pickNews(j, authors[i], own, y - 1, y + 1).slice(0, 6).forEach(function (x) { if (!seen[x.k]) { seen[x.k] = 1; found.push(x); } });
+        done++;
+      } catch (e) { errs++; if (errs >= 2 && !done) break; }
+      if (!$('#newsSheet').hidden) $('#newsMsg').textContent = 'Cerco… ' + (i + 1) + ' di ' + authors.length + ' autori';
+    }
+  } finally { news.busy = false; }
+  if (!done) throw { net: true };
+  news.items = found.slice(0, 80); news.at = Date.now(); saveNews();
+  return found;
+}
+function renderNews(note) {
+  var items = newsFresh(), authors = newsAuthors();
+  $('#newsMsg').textContent = note || (!authors.length ? 'Aggiungi qualche libro con l\'autore: cerco le novità di quelli che hai di più.' :
+    !news.at ? '' : items.length ? 'Usciti dal ' + (new Date().getFullYear() - 1) + ' in poi, di ' + authors.slice(0, 3).join(', ') + (authors.length > 3 ? ' e altri ' + (authors.length - 3) : '') + '. Ultimo controllo: ' + L.agoText(news.at) + '.' :
+    'Nessuna novità che non hai già, tra gli autori che hai di più (' + authors.slice(0, 3).join(', ') + (authors.length > 3 ? '…' : '') + '). Ultimo controllo: ' + L.agoText(news.at) + '.');
+  $('#newsList').innerHTML = items.map(function (x) {
+    return '<li data-k="' + esc(x.k) + '">' + (x.img ? '<img src="' + esc(x.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="nimg" aria-hidden="true"></span>') +
+      '<div class="nt"><b>' + esc(x.t) + '</b><span>' + esc([x.a, x.e, x.y].filter(Boolean).join(' · ')) + '</span>' +
+      '<div class="desc-acts"><button type="button" class="link" data-act="newswish">Metti nei Desideri</button><button type="button" class="link quiet" data-act="newshide">Non mi interessa</button></div></div></li>';
+  }).join('');
+  $('#newsAgain').disabled = news.busy || !authors.length;
+}
+async function runNews() {
+  if (navigator.onLine === false) { renderNews('Sei offline. Riprova quando c\'è connessione.'); return; }
+  if (!googleLeft(true)) { renderNews('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
+  $('#newsAgain').disabled = true; $('#newsMsg').textContent = 'Cerco le novità…';
+  try { await findNews(); renderNews(); }
+  catch (e) { renderNews('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza chiave capita spesso') + '). Riprova più tardi.'); }
+}
+function openNews() {
+  $('#newsAuto').checked = settings.newsAuto !== false;
+  $('#newsSheet').hidden = false;
+  renderNews();
+  if (!news.at && newsAuthors().length) runNews();
+}
+function newsPick(k, wish) {
+  var x = news.items.find(function (n) { return n.k === k; });
+  if (!x) return;
+  if (wish) {
+    var w = blankBook({ t: x.t, a: x.a, e: x.e, y: x.y, i: x.i || '', img: /^https:\/\//.test(x.img || '') ? x.img : '', w: true, rs: '' });
+    state.books.push(w); touch(); renderList(); updateSummary();
+    toast('Nei Desideri: ' + x.t, { label: 'Annulla', fn: function () { state.books = state.books.filter(function (b) { return b.id !== w.id; }); touch(); renderList(); updateSummary(); if (!$('#newsSheet').hidden) renderNews(); } });
+  } else { news.hide.push(k); saveNews(); }
+  renderNews();
+}
+function autoNews() {
+  if (settings.newsAuto === false || !settings.gbKey || navigator.onLine === false || Date.now() - news.at < NEWS_EVERY || !newsAuthors().length || !googleLeft(true)) return;
+  var before = {}; newsFresh().forEach(function (x) { before[x.k] = 1; });
+  findNews().then(function () {
+    var fresh = newsFresh().filter(function (x) { return !before[x.k]; });
+    if (fresh.length && $('#newsSheet').hidden) toast(fresh.length === 1 ? 'È uscito un libro di ' + fresh[0].by + ' che non hai.' : fresh.length + ' novità dei tuoi autori.', { label: 'Vedi', fn: openNews });
+  }, function () {});
+}
+/* ---- Suggerimenti: «Cosa leggere dopo» (dai tuoi «da leggere», senza rete) e «Da scoprire» (libri che non hai:
+   altri dei tuoi autori, novità dei tuoi generi, volumi che mancano alle tue serie). Da scoprire cerca da solo una volta a settimana. ---- */
+var LS_SUGG = 'catalogo-libri-sugg', SUGG_EVERY = 7 * 864e5, SUGG_RETRY = 864e5;
+var sugg = { at: 0, tried: 0, items: [], hide: [], busy: false }, sgTab = 'next', nxIdx = 0, nxBoxIdx = 0;
+function loadSugg() { try { var n = JSON.parse(ls.get(LS_SUGG) || '{}'); sugg.at = Number(n.at) || 0; sugg.tried = Number(n.tried) || 0; sugg.items = Array.isArray(n.items) ? n.items.filter(function (x) { return x && x.t && x.k; }).slice(0, 60) : []; sugg.hide = Array.isArray(n.hide) ? n.hide.map(L.str).slice(-400) : []; } catch (e) {} }
+function saveSugg() { ls.set(LS_SUGG, JSON.stringify({ at: sugg.at, tried: sugg.tried, items: sugg.items, hide: sugg.hide })); }
+function nextList() { return L.nextReads(state.books, Date.now()); }
+function nxCardHTML(r, small) {
+  var b = get(r.id); if (!b) return '';
+  var img = bigImg(b), why = small ? r.why.slice(0, 1) : r.why.slice(0, 3);
+  return '<div class="nx-card" data-id="' + b.id + '">' + (img ? '<img src="' + esc(img) + '" alt="" referrerpolicy="no-referrer">' :
+      '<span class="nimg ph" style="--h:' + hue(b.t + b.a + b.i) + '" aria-hidden="true"></span>') +
+    '<div class="nt"><b>' + esc(b.t || 'Senza titolo') + '</b><span>' + esc([b.a, b.pg ? b.pg + ' pagine' : ''].filter(Boolean).join(' · ')) + '</span>' +
+    '<ul class="nx-why">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div></div>';
+}
+function renderNext() {
+  var list = nextList(), card = $('#sgNextCard');
+  if (!list.length) {
+    var inRead = state.books.filter(function (b) { return !b.w && b.rs === 'in'; }).length;
+    $('#sgNextMsg').textContent = 'Non hai libri segnati «da leggere»' + (inRead ? ' (ne stai leggendo ' + (inRead === 1 ? 'uno' : inRead) + ')' : '') + '. Guarda in «Da scoprire» qualcosa di nuovo.';
+    card.innerHTML = ''; return;
+  }
+  nxIdx = ((nxIdx % list.length) + list.length) % list.length;
+  $('#sgNextMsg').textContent = list.length === 1 ? 'Hai un solo libro da leggere:' : 'Tra i tuoi ' + list.length + ' libri da leggere ti propongo questo (' + (nxIdx + 1) + ' di ' + list.length + '):';
+  card.innerHTML = nxCardHTML(list[nxIdx]) + '<div class="row-btns nx-btns"><button class="btn primary" type="button" data-act="nxstart" data-id="' + list[nxIdx].id + '">Inizio questo</button>' +
+    (list.length > 1 ? '<button class="btn" type="button" data-act="nxother">Un altro</button>' : '') + '</div>';
+}
+function startReading(id, after) {
+  var b = get(id); if (!b) return;
+  var was = b.rs;
+  b.rs = 'in'; touch(); renderList(); updateSummary();
+  toast('Buona lettura! «' + (b.t || 'Senza titolo') + '» è in lettura.', { label: 'Annulla', fn: function () { b.rs = was; touch(); renderList(); updateSummary(); if (!$('#suggSheet').hidden) renderSugg(); } });
+  if (after) after();
+}
+/* --- Da scoprire --- */
+function suggUnit(b) { var k = L.serKey(b.se); return k ? 'se:' + k : 'b:' + b.id; }   // una serie o collana conta come un libro solo
+function suggAuthors() {
+  var m = {};
+  state.books.forEach(function (b) {
+    if (b.w || b.g.indexOf('a') >= 0) return;
+    var u = suggUnit(b);
+    authorsOf(b).forEach(function (n) {
+      var k = L.norm(n), x = m[k] || (m[k] = { name: n, n: 0, r: 0, books: 0, seen: {}, liked: {} });
+      x.books++;                                                     // i libri veri (per il testo); n = unita' (per la classifica)
+      if (!x.seen[u]) { x.seen[u] = 1; x.n++; }
+      if (b.rt >= 4 && !x.liked[u]) { x.liked[u] = 1; x.r++; }
+    });
+  });
+  return Object.keys(m).map(function (k) { return m[k]; }).filter(function (x) { return x.n >= 2 && !/^(aa\.? ?vv\.?|autori vari|anonimo)$/i.test(x.name); })
+    .sort(function (x, y) { return (y.n + 2 * y.r) - (x.n + 2 * x.r) || coll.compare(x.name, y.name); }).slice(0, 4);
+}
+function suggGenres() {
+  var m = {};
+  state.books.forEach(function (b) {
+    if (b.w) return; var g = L.str(b.gen).trim(); if (!g) return;
+    var k = L.norm(g), x = m[k] || (m[k] = { name: g, n: 0, books: 0, seen: {} }), u = suggUnit(b);
+    x.books++;
+    if (!x.seen[u]) { x.seen[u] = 1; x.n++; }                // una collana di 30 volumi conta come un libro
+  });
+  return Object.keys(m).map(function (k) { return m[k]; }).filter(function (x) { return x.n >= 3; }).sort(function (x, y) { return y.n - x.n; }).slice(0, 2);
+}
+function suggSeries() {                       // volumi che mancano alle tue serie: si sa gia' quali sono, senza cercare
+  var m = L.seriesInfo(state.books), out = [];
+  Object.keys(m).forEach(function (k) {
+    var s = m[k]; if (!s.n || !s.toAdd.length) return;
+    s.toAdd.slice(0, 2).forEach(function (n) {
+      out.push({ k: 'se:' + k + ':' + n, t: s.name + ', vol. ' + n, a: s.author, se: s.name, sn: String(n), sq: s.total ? String(s.total) : '',
+        why: 'Manca alla serie «' + s.name + '»: ne hai ' + s.n + (s.total ? ' su ' + s.total : '') + '.' });
+    });
+  });
+  return out.slice(0, 8);
+}
+function suggFresh() {
+  var own = newsOwn(), hide = {};
+  sugg.hide.forEach(function (k) { hide[k] = 1; });
+  var net = sugg.items.filter(function (x) { return !own.titles[x.k] && !own.hide[x.k] && !hide[x.k] && !(x.i && own.isbns[x.i]); });
+  return suggSeries().filter(function (x) { return !hide[x.k]; }).concat(net);
+}
+function suggUrl(q, newest) {
+  var lang = settings.suggLang === 'all' ? '' : '&langRestrict=it';
+  return 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + (newest ? '&orderBy=newest' : '') + lang +
+    '&printType=books&maxResults=20&fields=items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,language,industryIdentifiers,imageLinks))' +
+    (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : '');
+}
+async function findSugg() {
+  if (sugg.busy) return null;
+  var authors = suggAuthors(), genres = suggGenres(), y = new Date().getFullYear(), own = newsOwn(), found = [], seen = {}, errs = 0, done = 0;
+  var lang = settings.suggLang === 'all' ? '' : 'it', jobs = [];
+  authors.forEach(function (a) { jobs.push({ q: 'inauthor:"' + a.name.replace(/"/g, '') + '"', by: a.name, min: 0, max: 0, n: 4,
+    why: 'Di ' + a.name + (a.r ? ', che ti piace: ' + (a.r === 1 ? 'un suo libro' : a.r + ' suoi libri') + ' con 4 stelle o più.' : ': ne hai ' + a.books + '.') }); });
+  genres.forEach(function (g) { jobs.push({ q: 'subject:"' + L.genreSubject(g.name).replace(/"/g, '') + '"', by: '', min: y - 2, max: y + 1, n: 4, newest: true,
+    why: 'Uscito da poco, nel genere che hai di più: ' + g.name + ' (' + g.books + ' libri).' }); });
+  if (!jobs.length) return [];
+  sugg.busy = true; sugg.tried = Date.now(); saveSugg();
+  try {
+    for (var i = 0; i < jobs.length; i++) {
+      var j = jobs[i];
+      if (!googleLeft(true)) break;
+      try {
+        var json = await L.getJson(apiFetch, suggUrl(j.q, j.newest), { waits: [900], timeout: 9000 });
+        var picked = L.pickNews(json, j.by, own, j.min, j.max, lang);
+        picked.filter(function (x) { return !seen[x.k]; }).slice(0, j.n).forEach(function (x) { seen[x.k] = 1; x.why = j.why; delete x.by; found.push(x); });
+        done++;
+      } catch (e) { errs++; if (errs >= 2 && !done) break; }
+      if (!$('#suggSheet').hidden && sgTab === 'disc') $('#sgDiscMsg').textContent = 'Cerco… ' + (i + 1) + ' di ' + jobs.length;
+    }
+  } finally { sugg.busy = false; }
+  if (!done) { saveSugg(); throw { net: true }; }
+  sugg.items = found.slice(0, 60); sugg.at = Date.now(); saveSugg();
+  return found;
+}
+function renderDisc(note) {
+  var items = suggFresh(), can = suggAuthors().length || suggGenres().length;
+  $('#sgDiscMsg').textContent = note || (sugg.busy ? 'Cerco…' : items.length ? 'Libri che non hai, ognuno col suo perché.' + (sugg.at ? ' Ultima ricerca: ' + L.agoText(sugg.at) + '.' : '') :
+    !can ? 'Aggiungi qualche libro con autore e genere: cerco altri libri dei tuoi autori e novità dei tuoi generi.' :
+    sugg.at ? 'Per ora niente di nuovo che non hai già. Ultima ricerca: ' + L.agoText(sugg.at) + '.' : '');
+  $('#sgList').innerHTML = items.map(function (x) {
+    return '<li data-k="' + esc(x.k) + '">' + (x.img ? '<img src="' + esc(x.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="nimg" aria-hidden="true"></span>') +
+      '<div class="nt"><b>' + esc(x.t) + '</b><span>' + esc([x.a, x.e, x.y].filter(Boolean).join(' · ')) + '</span><p class="sg-why">' + esc(x.why || '') + '</p>' +
+      '<div class="desc-acts"><button type="button" class="link" data-act="sgwish">+ Desideri</button><button type="button" class="link quiet" data-act="sghide">No, grazie</button></div></div></li>';
+  }).join('');
+  $('#sgAgain').disabled = sugg.busy || !can;
+}
+async function runSugg() {
+  if (navigator.onLine === false) { renderDisc('Sei offline. Riprova quando c\'è connessione.'); return; }
+  if (!googleLeft(true)) { renderDisc('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
+  $('#sgAgain').disabled = true; $('#sgDiscMsg').textContent = 'Cerco…';
+  try { await findSugg(); renderDisc(); }
+  catch (e) { renderDisc('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza chiave capita spesso') + '). Riprova più tardi.'); }
+}
+function suggPick(k, wish) {
+  var x = suggFresh().find(function (n) { return n.k === k; });
+  if (!x) return;
+  if (wish) {
+    var w = blankBook({ t: x.t, a: x.a || '', e: x.e || '', y: x.y || '', i: x.i || '', img: /^https:\/\//.test(x.img || '') ? x.img : '', se: x.se || '', sn: x.sn || '', sq: x.sq || '', w: true, rs: '' });
+    state.books.push(w); touch(); renderList(); updateSummary();
+    toast('Nei Desideri: ' + x.t, { label: 'Annulla', fn: function () { state.books = state.books.filter(function (b) { return b.id !== w.id; }); touch(); renderList(); updateSummary(); if (!$('#suggSheet').hidden) renderDisc(); } });
+  } else { sugg.hide.push(k); saveSugg(); }
+  renderDisc();
+}
+function autoSugg() {
+  var now = Date.now();
+  if (settings.suggAuto === false || navigator.onLine === false || now - sugg.at < SUGG_EVERY || now - sugg.tried < SUGG_RETRY || !(suggAuthors().length || suggGenres().length) || !googleLeft(true)) return;
+  var before = {}; suggFresh().forEach(function (x) { before[x.k] = 1; });
+  findSugg().then(function () {
+    var fresh = suggFresh().filter(function (x) { return !before[x.k] && !/^se:/.test(x.k); });
+    if (fresh.length && $('#suggSheet').hidden) toast(fresh.length === 1 ? 'Un libro nuovo da scoprire.' : fresh.length + ' libri nuovi da scoprire.', { label: 'Vedi', fn: function () { openSugg('disc'); } });
+  }, function () {});
+}
+/* --- finestra --- */
+function setSgTab(t) {
+  sgTab = t === 'disc' ? 'disc' : 'next';
+  $('#sgTabNext').setAttribute('aria-pressed', sgTab === 'next' ? 'true' : 'false'); $('#sgTabNext').setAttribute('aria-selected', sgTab === 'next' ? 'true' : 'false');
+  $('#sgTabDisc').setAttribute('aria-pressed', sgTab === 'disc' ? 'true' : 'false'); $('#sgTabDisc').setAttribute('aria-selected', sgTab === 'disc' ? 'true' : 'false');
+  $('#sgNext').hidden = sgTab !== 'next'; $('#sgDisc').hidden = sgTab !== 'disc'; $('#sgAgain').hidden = sgTab !== 'disc';
+  renderSugg();
+  if (sgTab === 'disc' && !sugg.at && !sugg.busy && (suggAuthors().length || suggGenres().length)) runSugg();
+}
+function renderSugg() { if (sgTab === 'disc') renderDisc(); else renderNext(); }
+function openSugg(t) {
+  $('#sgAuto').checked = settings.suggAuto !== false;
+  $('#sgLang').checked = settings.suggLang === 'all';
+  $('#suggSheet').hidden = false;
+  setSgTab(t || 'next');
+}
+function closeSugg() { $('#suggSheet').hidden = true; }
+$('#goSugg').addEventListener('click', function () { closeDrawer(); openSugg('next'); });
+$('#sgTabNext').addEventListener('click', function () { setSgTab('next'); });
+$('#sgTabDisc').addEventListener('click', function () { setSgTab('disc'); });
+$('#sgClose').addEventListener('click', closeSugg);
+$('#sgAgain').addEventListener('click', runSugg);
+$('#sgAuto').addEventListener('change', function (e) { settings.suggAuto = e.target.checked; saveSettings(); });
+$('#sgLang').addEventListener('change', function (e) { settings.suggLang = e.target.checked ? 'all' : 'it'; saveSettings(); sugg.items = []; sugg.at = 0; saveSugg(); renderDisc(); runSugg(); });
+$('#suggSheet').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) { closeSugg(); return; }
+  var b = e.target.closest('[data-act]'); if (!b) return;
+  var act = b.dataset.act;
+  if (act === 'nxother') { nxIdx++; renderNext(); }
+  else if (act === 'nxstart') startReading(b.dataset.id, function () { nxIdx = 0; renderNext(); });
+  else if (act === 'sgwish' || act === 'sghide') { var li = b.closest('li[data-k]'); if (li) suggPick(li.dataset.k, act === 'sgwish'); }
+});
+/* --- riquadro in cima all'elenco: hai appena finito un libro e non ne stai leggendo un altro --- */
+function nxJustRead() {
+  var lim = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);
+  var last = state.books.filter(function (b) { return !b.w && b.rs === 'ok' && b.rd && b.rd >= lim; }).sort(function (x, y) { return x.rd < y.rd ? 1 : x.rd > y.rd ? -1 : 0; })[0];
+  return last || null;
+}
+function nxBoxPaint() {
+  var box = $('#nxBox'); if (!box) return;
+  var last = tab === 'lib' && !q && !activeCount() ? nxJustRead() : null;
+  var list = last && last.id !== settings.nxSeen && !state.books.some(function (b) { return !b.w && b.rs === 'in'; }) ? nextList() : [];
+  box.hidden = !list.length;
+  if (!list.length) return;
+  nxBoxIdx = ((nxBoxIdx % list.length) + list.length) % list.length;
+  $('#nxBoxH').textContent = 'Hai finito «' + (last.t || 'un libro') + '». E adesso?';
+  $('#nxBoxCard').innerHTML = nxCardHTML(list[nxBoxIdx], true);
+  $('#nxBoxGo').dataset.id = list[nxBoxIdx].id;
+  $('#nxBoxNext').hidden = list.length < 2;
+}
+$('#nxBoxGo').addEventListener('click', function (e) { startReading(e.currentTarget.dataset.id); });
+$('#nxBoxNext').addEventListener('click', function () { nxBoxIdx++; nxBoxPaint(); });
+$('#nxBoxAll').addEventListener('click', function () { nxIdx = nxBoxIdx; openSugg('next'); });
+$('#nxBoxX').addEventListener('click', function () { var l = nxJustRead(); settings.nxSeen = l ? l.id : ''; saveSettings(); nxBoxPaint(); updateSummary(); });
+$('#btnNews').addEventListener('click', openNews);
+$('#newsClose').addEventListener('click', function () { $('#newsSheet').hidden = true; });
+$('#newsAgain').addEventListener('click', runNews);
+$('#newsAuto').addEventListener('change', function (e) { settings.newsAuto = e.target.checked; saveSettings(); });
+$('#newsSheet').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) { $('#newsSheet').hidden = true; return; }
+  var b = e.target.closest('[data-act]'), li = b && b.closest('li[data-k]');
+  if (li) newsPick(li.dataset.k, b.dataset.act === 'newswish');
+});
+/* ---- tutte le citazioni: elenco per libro, dal menu laterale ---- */
+function allQuotes() {
+  var out = [];
+  state.books.forEach(function (b) { (b.qs || []).forEach(function (c, i) { out.push({ b: b, c: c, i: i }); }); });
+  return out;
+}
+function renderAllQuotes() {
+  var nq = L.norm($('#allqQ').value.trim()), groups = {}, order = [], n = 0;
+  allQuotes().forEach(function (x) {
+    if (nq && L.norm([x.c.x, x.b.t, x.b.a].join(' ')).indexOf(nq) < 0) return;
+    if (!groups[x.b.id]) { groups[x.b.id] = []; order.push(x.b); }
+    groups[x.b.id].push(x); n++;
+  });
+  order.sort(function (x, y) { return coll.compare(L.sortKeyTitle(x.t) || '~', L.sortKeyTitle(y.t) || '~'); });
+  var tot = allQuotes().length;
+  $('#allqMsg').textContent = !tot ? 'Non hai ancora salvato citazioni: aprile da «Citazioni e appunti» nella scheda di un libro.' :
+    nq ? (n ? (n === 1 ? '1 citazione trovata' : n + ' citazioni trovate') : 'Nessuna citazione con queste parole.') :
+    (tot === 1 ? '1 citazione' : tot + ' citazioni') + ' da ' + (order.length === 1 ? '1 libro' : order.length + ' libri') + '. Tocca il titolo per aprire il libro.';
+  $('#allqList').innerHTML = order.map(function (b) {
+    return '<li class="aq-book"><button type="button" class="aq-h" data-open="' + b.id + '"><b>' + esc(b.t || 'Senza titolo') + '</b>' + (b.a ? '<span>' + esc(b.a) + '</span>' : '') + (b.w ? '<span class="tag">Desideri</span>' : '') + '</button>' + (groups[b.id].length > 1 && !nq ? '<button type="button" class="link aq-all" data-all="' + b.id + '">Condividi tutte (' + groups[b.id].length + ')</button>' : '') +
+      '<ul class="qlist">' + groups[b.id].map(function (x) {
+        return '<li><div class="qitem aq-q' + (qPhs(x.c).length ? ' has-ph' + (x.c.x ? '' : ' only-ph') : '') + '">' + (qPhs(x.c).length ? '<button type="button" class="qimg-btn" data-ph="' + esc(qPhs(x.c).join(' ')) + '" data-cap="' + esc(b.t || '') + '" aria-label="Ingrandisci le foto">' + qThumb(x.c) + '</button>' : '') +
+          (x.c.x ? '<span class="qt">' + esc(x.c.x) + '</span>' : '<span class="qt q-only">Foto della pagina</span>') + '<span class="qp">' + (x.c.pg ? 'p. ' + esc(x.c.pg) : '') +
+          '<button type="button" class="link" data-copy="' + b.id + '" data-i="' + x.i + '">Condividi</button></span></div></li>';
+      }).join('') + '</ul></li>';
+  }).join('');
+}
+function openAllQuotes() {
+  $('#allqQ').value = '';
+  renderAllQuotes();
+  $('#allqSheet').hidden = false;
+}
+function closeAllQuotes() { $('#allqSheet').hidden = true; }
+function goToQuotes(id) {
+  var b = get(id); if (!b) return;
+  closeAllQuotes();
+  if (!!b.w !== (tab === 'wish')) setTab(b.w ? 'wish' : 'lib');
+  flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = '';
+  q = ''; $('#q').value = '';
+  collapseCards(); openState = {}; openState[id] = true; quoteOpen[id] = true;
+  if (settings.view === 'grid') setView('list');
+  renderList(); updateSummary();
+  var el = rowEl(id), d = el && el.querySelector('details.quotes');
+  if (el) { (d || el).scrollIntoView({ block: 'start' }); window.scrollBy(0, -80); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+}
+/* condivisione delle citazioni: testo (e foto, se il telefono le accetta); senza condivisione, copia */
+function quoteLine(c, withPg) { return (c.x ? '«' + c.x + '»' : '[' + (qPhs(c).length > 1 ? 'foto delle pagine' : 'foto della pagina') + ']') + (withPg && c.pg ? ' (p. ' + c.pg + ')' : ''); }
+async function sendQuotes(text, blobs, what) {
+  text += '\n\nInviato con Next Libris, l\'app per catalogare la propria libreria: ' + APP_URL;
+  if (blobs.length && navigator.share && navigator.canShare) {
+    try {
+      var files = blobs.slice(0, 10).map(function (bl, k) { return new File([bl], 'citazione' + (blobs.length > 1 ? '-' + (k + 1) : '') + '.jpg', { type: 'image/jpeg' }); });
+      if (navigator.canShare({ files: files })) { await navigator.share({ text: text, files: files }); return; }
+    } catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  if (navigator.share) { try { await navigator.share({ text: text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  toast(await copyText(text) ? what + ' copiat' + (what === 'Citazione' ? 'a' : 'e') + ': incolla' + (what === 'Citazione' ? 'la' : 'le') + ' dove vuoi.' : 'Non sono riuscito a copiarle.');
+}
+async function phBlob(key) { try { return qphURL[key] ? await (await fetch(qphURL[key])).blob() : null; } catch (e) { return null; } }
+async function shareQuoteObj(b, c, blobs) {
+  var src = [b.t, b.a].filter(Boolean).join(', ') + (c.pg ? ', p. ' + c.pg : '');
+  var text = c.x ? '«' + c.x + '»\n— ' + src : src;
+  if (!blobs) { blobs = []; var ks = qPhs(c); for (var k = 0; k < ks.length; k++) { var bl = await phBlob(ks[k]); if (bl) blobs.push(bl); } }
+  await sendQuotes(text, blobs, 'Citazione');
+}
+async function shareQuote(id, i) {
+  var b = get(id), c = b && (b.qs || [])[i];
+  if (c) await shareQuoteObj(b, c);
+}
+async function shareAllQuotes(id) {
+  var b = get(id), qs = b && (b.qs || []);
+  if (!qs || !qs.length) return;
+  if (qs.length === 1) { await shareQuoteObj(b, qs[0]); return; }
+  var head = (b.t ? '«' + b.t + '»' : 'Senza titolo') + (b.a ? ' di ' + b.a : '');
+  var text = 'Citazioni da ' + head + '\n\n' + qs.map(function (c) { return quoteLine(c, true); }).join('\n\n') + (settings.name ? '\n\n— scelte da ' + settings.name : '');
+  var blobs = [];
+  for (var k = 0; k < qs.length; k++) { var ks = qPhs(qs[k]); for (var j = 0; j < ks.length; j++) { var bl = await phBlob(ks[j]); if (bl) blobs.push(bl); } }
+  await sendQuotes(text, blobs, 'Citazioni');
+}
+/* dalla finestra della citazione: quello che c'e' scritto ora, anche se non ancora salvato */
+async function shareQuoteForm() {
+  if (!quoteEdit) return;
+  var b = get(quoteEdit.id), x = $('#quoteText').value.replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n').trim();
+  if (!b) return;
+  if (!x && !quoteEdit.phs.length) { $('#quoteMsg').textContent = 'Scrivi il testo o aggiungi una foto, poi condividi.'; return; }
+  var blobs = [];
+  for (var k = 0; k < quoteEdit.phs.length; k++) { var p = quoteEdit.phs[k], bl = p.blob || await phBlob(p.key); if (bl) blobs.push(bl); }
+  await shareQuoteObj(b, { x: x, pg: $('#quotePage').value.replace(/\D/g, '') }, blobs);
+}
+$('#allqQ').addEventListener('input', renderAllQuotes);
+$('#allqClose').addEventListener('click', closeAllQuotes);
+$('#allqSheet').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) { closeAllQuotes(); return; }
+  var o = e.target.closest('[data-open]'); if (o) { goToQuotes(o.dataset.open); return; }
+  var ph = e.target.closest('[data-ph]'); if (ph) { openPhs(ph.dataset.ph.split(' ').map(function (k) { return qphURL[k]; }).filter(Boolean), 0, ph.dataset.cap); return; }
+  var al = e.target.closest('[data-all]'); if (al) { shareAllQuotes(al.dataset.all); return; }
+  var c = e.target.closest('[data-copy]'); if (c) shareQuote(c.dataset.copy, +c.dataset.i);
+});
+/* stato di lettura, voto e data (solo Libreria) */
+var MESI_IT = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+function rdLong(v) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? (+m[3]) + ' ' + MESI_IT[+m[2] - 1] + ' ' + m[1] : 'aggiungi la data'; }   // «10 febbraio 2026»
+function ppHTML(b, d) {                            // «Sono a pagina [212] di 624 · 34%», con la barra
+  var q = ppInfo(b);
+  return '<div class="pp"><svg class="pp-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z"/></svg>' +
+    (guest ? '<span class="pp-l">' + (q.p ? 'È a pagina ' + q.p : 'Lo sta leggendo') + '</span>' :   // libro di un amico: solo da leggere
+    '<label class="pp-l">Sono a pagina <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="pp" value="' + (q.p || '') + '" placeholder="…" maxlength="5" aria-label="Pagina a cui sei arrivato"' + d + '></label>') +
+    (q.tot ? '<span class="pp-of">di ' + q.tot + '</span><span class="pp-pct">' + (q.pct != null ? q.pct + '%' : '') + '</span>' : '') +
+    (q.tot ? '<span class="pp-bar" aria-hidden="true"><i style="width:' + (q.pct || 0) + '%"></i></span>' : '') + '</div>';
+}
+var RD_CAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/></svg>';
+var RATE_BOOK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="pg" d="M3 6a9 9 0 0 1 9 0v13a9 9 0 0 0-9 0z"/><path class="pg" d="M12 6a9 9 0 0 1 9 0v13a9 9 0 0 0-9 0z"/></svg>';   // libro aperto (Piero: «era più bella l'icona con il libro aperto»)
+function readHTML(b, off) {
+  if (b.w) return '';
+  var d = off ? ' disabled' : '';
+  var seg = [['da', 'Da leggere'], ['in', 'In lettura'], ['ok', 'Letto']].map(function (x) {
+    return '<button type="button" data-act="rs" data-v="' + x[0] + '" aria-pressed="' + (b.rs === x[0]) + '"' + d + '>' + x[1] + '</button>';
+  }).join('');
+  /* il voto: cinque libricini, con la parola sotto o accanto (Piero, 16/11/2026: le stelle si confondevano con il preferito) */
+  var stars = [1, 2, 3, 4, 5].map(function (n) {
+    return '<button type="button" class="star bk' + (b.rt >= n ? ' on' : '') + '" data-act="rt" data-v="' + n + '" role="radio" aria-checked="' + (b.rt === n) + '" aria-label="' + n + (n === 1 ? ' libricino' : ' libricini') + ': ' + L.rateWord(n) + '"' + d + '>' + RATE_BOOK + '</button>';
+  }).join('');
+  return '<div class="read"><span class="lbl">Lettura</span><div class="seg" role="group" aria-label="Stato di lettura">' + seg + '</div>' +
+    (b.rs === 'in' ? ppHTML(b, d) : '') +
+    '<div class="rate"><div class="stars" role="radiogroup" aria-label="Voto">' + stars + '</div><span class="rt-word' + (b.rt ? '' : ' none') + '">' + (b.rt ? L.rateWord(b.rt) : guest ? 'Senza voto' : 'Dai un voto') + '</span></div>' +
+    (b.rs === 'ok' ? '<label class="f f-rd"><span class="lbl">Letto il</span><span class="rd-show' + (b.rd ? '' : ' none') + '">' + esc(rdLong(b.rd)) + RD_CAL + '</span><input type="date" data-k="rd" id="rd-' + b.id + '" value="' + esc(b.rd || '') + '"' + d + '></label>' : '') + '</div>';
+}
+/* «Tutti i libri di …» se dello stesso autore ce ne sono altri */
+function authorLinkHTML(b, ex) {
+  if (ex || !hasData(b)) return '';
+  var out = '';
+  if (!b.w && (b.t || L.toIsbn13(b.i))) out += '<button type="button" class="link" data-act="addcopy">+ Aggiungi un\'altra copia</button>';
+  return out ? '<div class="links">' + out + '</div>' : '';
+}
+var FACET_ICON = { a: 'user', e: 'pub', gen: 'tag', sh: 'shelf' };
+var FACET_WORD = { a: 'Autore', e: 'Casa editrice', gen: 'Genere', sh: 'Scaffale' };
+function facetsHTML(b, ex) {
+  if (ex || !hasData(b)) return '';
+  var books = tabBooks(), out = [];
+  function chip(f, key, label, n) {
+    out.push('<button type="button" class="fchip" data-act="facet" data-f="' + f + '" data-v="' + esc(key) + '" data-name="' + esc(label) + '" title="Mostra tutti i ' + n + ' libri: ' + esc(FACET_WORD[f].toLowerCase() + ' ' + label) + '">' +
+      icon(FACET_ICON[f]) + '<span class="fl">' + esc(label) + '</span><span class="n">' + n + '</span></button>');
+  }
+  if (b.g.indexOf('a') < 0) authorsOf(b).slice(0, 3).forEach(function (name) {
+    var k = L.norm(name);
+    var n = books.filter(function (x) { return authorsOf(x).some(function (y) { return L.norm(y) === k; }); }).length;
+    if (n > 1) chip('a', k, name, n);
+  });
+  [['e', b.g.indexOf('e') < 0], ['gen', true], ['sh', true]].forEach(function (p) {
+    var f = p[0], v = String(b[f] || '').trim();
+    if (!p[1] || !v) return;
+    var k = facetKey(v), n = books.filter(function (x) { return facetKey(x[f]) === k; }).length;
+    if (n > 1) chip(f, k, v, n);
+  });
+  return out.length ? '<div class="facets"><span class="facets-h">' + icon('filt') + 'Vedi tutti i libri di</span><div class="fchips">' + out.join('') + '</div></div>' : '';
+}
+function applyFacet(f, key, name) {
+  flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = '';
+  q = ''; $('#q').value = '';
+  collapseCards();
+  if (f === 'a') { autFlt = key; autName = name; }
+  else if (f === 'e') edFlt = key;
+  else if (f === 'gen') genFlt = key;
+  else if (f === 'sh') shFlt = key;
+  renderList(); updateSummary();
+  window.scrollTo(0, 0); setTimeout(function () { window.scrollTo(0, 0); }, 60); setTimeout(function () { window.scrollTo(0, 0); }, 300);   // anche dopo l'Indietro che chiude la scheda
+  var n = visible().length;
+  toast((f === 'a' ? 'Libri di ' : FACET_WORD[f] + ' «') + name + (f === 'a' ? '' : '»') + ': ' + n + '. Per tornare a tutti, tocca la × del filtro sotto la ricerca.');
+}
+function dupTag(v) {
+  if (v === 'dup') return '<span class="tag tap" data-act="dup" role="button" tabindex="0" title="Un altro libro nell\'elenco ha lo stesso ISBN o lo stesso titolo e autore: tocca per decidere">Doppione?</span>';
+  if (v > 1) return '<span class="tag copies tap" data-act="dup" role="button" tabindex="0" title="Hai più copie di questo libro">' + v + ' copie</span>';
+  return '';
+}
+function bar(txt, extra) { return '<div class="status"><span class="bar"></span><span class="txt">' + esc(txt) + '</span>' + (extra || '') + '</div>'; }
+function rowHTML(b, dups, ex) {
+  var s = S[b.id] || {}, st = s.st;
+  var busy = st === 'queued' || st === 'reading' || st === 'lookup' || st === 'search';
+  var fresh = st && !hasData(b);
+  var dis = (busy || ex) ? ' disabled' : '';
+  var imgSrc = smallImg(b);
+  var canShoot = !ex && !busy && !imgSrc && hasData(b);
+  var hasThumb = !!imgSrc || (!!st && !ex) || canShoot;
+  var cls = 'row' + (busy ? ' busy' : '') + (st === 'error' ? ' bad' : '') + (hasThumb ? ' has-thumb' : '') + (ex ? ' ex' : '') + (b.xs ? ' gone' : '');
+  function fieldTitle(k) { return b.g.indexOf(k) >= 0 ? ' title="Da verificare"' : ''; }
+  function ta(k, label, val, ph) {
+    if (k === 'a' && !dis && String(val || '').trim() && !auEditing[b.id]) {     // autore compilato: nomi da toccare (profilo) e matita per modificare
+      var names = authorsOf(b);
+      return '<div class="f f-a au-view' + (b.g.indexOf('a') >= 0 ? ' is-guess' : '') + '"' + fieldTitle('a') + '><span class="lbl">Autore</span><span class="au-names">' +
+        names.map(function (n) { return '<button type="button" class="au-name" data-act="auinfo" data-n="' + esc(n) + '" title="Chi è ' + esc(n) + '">' + esc(n) + '</button>'; }).join('<span class="au-sep">, </span>') +
+        '</span><button type="button" class="ico au-edit" data-act="auedit" aria-label="Modifica l\'autore" title="Modifica l\'autore">' + icon('pen') + '</button></div>';
+    }
+    return '<label class="f f-' + k + (b.g.indexOf(k) >= 0 ? ' is-guess' : '') + '"' + fieldTitle(k) + '><span class="lbl">' + label + '</span>' +
+      '<textarea id="' + k + '-' + b.id + '" data-k="' + k + '" rows="1" spellcheck="false" enterkeyhint="done" placeholder="' + ph + '"' + dis + '>' + esc(val) + '</textarea></label>';
+  }
+  function inp(k, label, val, mode, ph, max, listId) {
+    return '<label class="f f-' + k + (b.g.indexOf(k) >= 0 ? ' is-guess' : '') + '"' + fieldTitle(k) + '><span class="lbl">' + label + '</span>' +
+      '<input id="' + k + '-' + b.id + '" data-k="' + k + '" inputmode="' + mode + '" enterkeyhint="done" autocomplete="off" placeholder="' + ph + '"' + (max ? ' maxlength="' + max + '"' : '') + (listId ? ' list="' + listId + '"' : '') + ' value="' + esc(val) + '"' + dis + '></label>';
+  }
+  var status = '';
+  /* libro senza dati (foto della copertina, ISBN non trovato…): titolo e autore si possono scrivere a mano subito, anche mentre cerca */
+  var man = st && !ex && !b.t && !b.i ? '<button class="btn man" data-act="manual">Scrivi a mano</button>' : '';
+  if (st === 'queued') status = bar('In coda…', man);
+  else if (st === 'reading') status = bar(s.msg || 'Leggo la foto…', man);
+  else if (st === 'lookup') status = bar('Cerco nelle banche dati…', man);
+  else if (st === 'search') status = bar('Cerco il libro…', man);
+  else if (st === 'choose') status = '<div class="status"><span class="txt">Trovate ' + ((s.cands || []).length) + ' possibili edizioni.</span><button class="btn primary" data-act="choose">Scegli</button>' + man + '</div>';
+  else if (st === 'nf') status = '<div class="status nf" role="alert"><span class="txt">Non ho trovato questo libro online.</span><button class="btn primary man" data-act="manual">Scrivi titolo e autore</button>' +
+    ((s.lines || []).length ? '<button class="btn" data-act="ocrtext">Usa il testo letto</button>' : '') + '</div>';
+  else if (st === 'wait') status = '<div class="status wait"><span class="txt">' + esc(s.err || 'In attesa della rete.') + '</span><button class="btn" data-act="retry">Riprova ora</button>' + man + '</div>';
+  else if (st === 'error') status = '<div class="status err" role="alert"><span class="txt">' + esc(s.err || 'Operazione non riuscita.') + '</span>' + (s.retry ? '<button class="btn" data-act="retry">Riprova</button>' : '') + man.replace('class="btn man"', 'class="btn primary man"') + '</div>';
+
+  var thumb = canShoot
+    ? (covSearching[b.id]
+      ? '<span class="thumb add busy" role="status" title="Cerco la copertina…"><span class="spin" aria-hidden="true"></span><span class="tl">Cerco…</span></span>'
+      : '<button class="thumb add" data-act="coverphoto" title="Cerca la copertina online; se non c\'è, la fotografi">' + icon('cam') + '<span class="tl">Copertina</span></button>')
+    : '<div class="thumb' + (hasThumb ? '' : ' empty') + (imgSrc && !ex ? ' zoom" data-act="zoom" role="button" tabindex="0" title="Ingrandisci la copertina' : '') + '">' + (imgSrc ? '<img src="' + esc(imgSrc) + '" alt="" referrerpolicy="no-referrer">' : '') + '</div>';
+  var body;
+  if (fresh) {
+    cls += ' fresh';
+    var acts = (st === 'error' || st === 'choose' || st === 'nf') ? '<div class="tail"><button class="ico act danger" data-act="del" title="Elimina il libro" aria-label="Elimina il libro">' + icon('x') + '<span class="al" aria-hidden="true">Elimina</span></button></div>' : '';
+    return '<article class="' + cls + '" data-id="' + b.id + '">' + (hasThumb ? thumb : '') + status + acts + '</article>';
+  } else {
+    if (!ex && !isOpen(b)) return summaryHTML(b, dups, status);
+    var canLookup = !busy && !ex && !b.t && L.toIsbn13(b.i);
+    var openCard = !ex && !settings.openAll;
+    if (openCard) cls += ' open has-top';
+    /* azioni principali: in alto accanto alla freccetta (scheda aperta), in fondo nelle schede sempre aperte */
+    var stateOn = !!(b.p || b.xs);
+    /* azioni con icona e scritta, tutte nello stesso stile; la × (elimina) e la freccetta (chiudi) restano solo icona */
+    function act(a, ic, label, title, cls) { return '<button class="ico act' + (cls || '') + '" data-act="' + a + '" title="' + esc(title) + '" aria-label="' + esc(title) + '">' + icon(ic) + '<span class="al" aria-hidden="true">' + esc(label) + '</span></button>'; }
+    var stateLabel = b.xs ? (L.GONE_LABEL[b.xs] || 'Non più qui') : b.p ? 'Prestato' : 'Presta, vendi o regala';
+    var loanBtn = (!busy && hasData(b) && (openCard || !stateOn))           // anche nei Desideri (Piero, 16/11/2026)
+      ? act('loan', 'loan', stateLabel, stateOn ? (b.xs ? goneText(b) : loanText(b)) + ': tocca per cambiare' : 'Presta, vendi o regala il libro', stateOn ? ' on' : '') : '';
+    var delBtn = act('del', 'x', 'Elimina', 'Elimina il libro', ' danger');
+    var moveBtn = !busy && hasData(b) ? (b.w
+      ? act('tolib', 'tolib', 'Libreria', 'Sposta in Libreria (l\'ho comprato)', ' move')
+      : act('towish', 'towish', 'Desideri', 'Sposta nei Desideri', ' move')) : '';
+    var favBtn = !busy && hasData(b) ? act('fav', 'fav', 'Preferito', b.fav ? 'È tra i preferiti: tocca per toglierlo' : 'Metti tra i preferiti', b.fav ? ' fav on' : ' fav') : '';
+    var kdp = kdpHint(b, busy);                  // pubblicazione Amazon non trovata: «Cerca sul web» sta nel suo riquadro
+    var webBtn = !kdp && !busy && (b.t || b.i) ? act('websearch', 'search', 'Cerca sul web', 'Cerca questo libro su Google: prezzo, recensioni, dove comprarlo') : '';
+    var shareBtn = !busy && (b.t || L.toIsbn13(b.i)) ? act('share', 'share', 'Condividi', 'Manda questo libro a un amico') : '';
+    var moreActs = shareBtn + (canLookup ? act('lookup', 'redo', 'Cerca di nuovo', 'Cerca di nuovo nelle banche dati') : '') +
+
+
+
+        '';
+    body = (openCard ? '<div class="card-top"><span class="top-acts"><span class="acts-main">' + loanBtn + moveBtn + favBtn + webBtn + delBtn + '</span><span class="acts-win">' +
+        '<button class="chev-btn" data-act="toggle" aria-expanded="true" aria-label="Chiudi la scheda" title="Chiudi la scheda">' + icon('chev') + '</button></span></span>' +
+        '<span class="flags">' + flagsHTML(b, dups) + '</span></div>' + kdp : '') +
+      '<div class="head">' + thumb + ta('t', 'Titolo', b.t, 'Titolo') + ta('a', 'Autore', b.a, 'Autore') + '</div>' +
+      '<div class="meta">' + ta('e', 'Casa editrice', b.e, 'Casa editrice') + inp('y', 'Anno', b.y, 'numeric', 'Anno', 4) + inp('c', 'Costo €', b.c == null ? '' : L.fmtNum(b.c), 'decimal', '—') + '</div>' +
+      (settings.extra ? '<div class="more">' + inp('sh', 'Scaffale', b.sh || '', 'text', 'Scaffale', 80) + inp('gen', 'Genere', b.gen || '', 'text', 'Genere', 80) +
+        inp('pg', 'Pagine', b.pg || '', 'numeric', 'Pagine', 5) + ta('n', 'Note', b.n || '', 'Note') + '</div>' +
+        '<div class="ser">' + inp('se', 'Serie o collana', b.se || '', 'text', 'Serie o collana', 80) + inp('sn', 'Volume', b.sn || '', 'numeric', 'N.', 3) + inp('sq', 'di', b.sq || '', 'numeric', 'Totale', 3) + '</div>' : '') +
+      seriesHTML(b, ex || busy) + facetsHTML(b, ex || busy) + descHTML(b, ex || busy) + quotesHTML(b, ex || busy) + readHTML(b, ex || busy) + authorLinkHTML(b, ex) +
+      '<div class="foot">' + inp('i', 'ISBN', b.i, 'numeric', 'ISBN', 13) +
+      (openCard ? (moreActs ? '<div class="tail">' + moreActs + '</div>' : '') :
+        '<div class="tail"><span class="flags">' + flagsHTML(b, dups) + '</span>' +
+        (ex ? '<span class="tag">Esempio</span>' : moreActs + favBtn + moveBtn + loanBtn + delBtn) + '</div>') +
+      '</div>';
+  }
+  return '<article class="' + cls + '" data-id="' + b.id + '"' + (ex ? ' data-ex="1"' : '') + '>' + status + body + '</article>';
+}
+/* benvenuto della Libreria vuota: i tre modi di aggiungere (toccabili come i tasti in basso) e il ripristino da backup */
+function emptyHTML() {
+  function way(act, ic, html) { return '<li><button type="button" class="way" data-act="' + act + '"><span class="way-i" aria-hidden="true">' + icon(ic) + '</span><span class="way-t">' + html + '</span></button></li>'; }
+  return '<section class="empty welcome"><h2>Aggiungi il primo libro</h2>' +
+    '<p class="lead">Di solito basta il codice a barre sul retro: titolo, autore, editore e anno si compilano da soli.</p>' +
+    '<ul class="ways">' +
+    way('way-scan', 'scan', '<b>Scansiona</b><small>Inquadra il codice a barre. Se il libro non ce l\'ha, nella fotocamera scegli «ISBN scritto» o «Copertina».</small>') +
+    way('way-photo', 'cam', '<b>Foto</b><small>Scatta la copertina o prendila dalla galleria, anche più foto insieme: l\'app le legge e cerca i libri.</small>') +
+    way('way-type', 'key', '<b>Digita</b><small>Scrivi l\'ISBN o il titolo e scegli tra i risultati.</small>') +
+    '</ul>' +
+    '<p class="then">Dopo ogni libro puoi inquadrare il prezzo, scriverlo o saltarlo. Poi tocca un libro per aprire la sua scheda: scaffale, genere, lettura, prestiti e note.</p>' +
+    '<label class="who"><span>Come ti chiami? <small>(facoltativo)</small></span><input type="text" id="welcomeName" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero" value="' + esc(settings.name || '') + '">' +
+    '<small>Serve quando mandi un libro o una lista a un amico: vedrà «Piero ti consiglia un libro».</small></label>' +
+    '<p class="restore-l">Hai già un backup, da un altro telefono o da prima? <button type="button" class="link" data-act="restore">Ripristinalo</button></p>' +
+    '</section>';
+}
+function wishEmptyHTML() {
+  return '<section class="empty"><h2>La lista dei Desideri è vuota</h2>' +
+    '<p>Qui metti i libri che vuoi comprare. Mentre sei in questa scheda, <b>Scansiona</b>, <b>Foto</b> e <b>Digita</b> aggiungono i libri ai Desideri invece che alla Libreria.</p>' +
+    '<p>Un amico ti consiglia un libro? Cercalo per titolo e aggiungilo qui:</p><p><button class="btn primary" data-act="typeadd">' + icon('search') + 'Cerca per titolo</button></p>' +
+    '<p>Quando ne compri uno, nella sua scheda tocca il tasto con i libri e la freccia: passa in Libreria. In negozio usa <b>Ce l\'ho già?</b> per non ricomprare un libro che hai.</p></section>';
+}
+/* vista copertine */
+function hue(s) { var h = 0; s = String(s || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h % 360; }
+function ppCov(b) {                               // sotto l'autore: barra sottile e la percentuale in piccolo (la copertina resta libera, Piero 16/11/2026)
+  var q = !b.w && b.rs === 'in' ? ppInfo(b) : {};
+  return q.pct != null ? '<span class="pp-cov" title="Sei al ' + q.pct + '%"><span class="pp-ln"><i style="width:' + q.pct + '%"></i></span><span class="pp-n">' + q.pct + '%</span></span>' : '';
+}
+function coverHTML(b) {
+  var s = S[b.id] || {}, img = bigImg(b);
+  var badge = isBusy(b) ? '<span class="badge">…</span>' : b.p ? '<span class="badge loan">Prestato</span>' : b.g.length ? '<span class="badge warn">Da verificare</span>' : '';
+  var fav = b.fav && !b.w ? '<span class="ribbon fav-star" title="Preferito"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.3l2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.7l6-.9z"/></svg></span>' : '';   // stellina sulla copertina
+  return '<button class="cover' + (fav ? ' is-fav' : '') + '" data-id="' + b.id + '" aria-label="' + esc([b.t || 'Senza titolo', b.a, fav ? 'preferito' : ''].filter(Boolean).join(', ')) + '">' +
+    '<span class="art">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' :
+      '<span class="ph" style="--h:' + hue(b.t + b.a + b.i) + '"><b>' + esc(b.t || b.i || 'Senza titolo') + '</b><small>' + esc(b.a) + '</small></span>') + badge + fav + '</span>' +
+    '<span class="cap">' + esc(b.t || b.i || '…') + '</span><span class="cap2">' + esc(b.a) + '</span>' + ppCov(b) + '</button>';
+}
+function autosize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+function autosizeAll(root) {
+  var els = Array.prototype.slice.call(root.querySelectorAll('textarea'));
+  els.forEach(function (e) { e.style.height = 'auto'; });
+  var hs = els.map(function (e) { return e.scrollHeight; });
+  els.forEach(function (e, i) { if (hs[i]) e.style.height = hs[i] + 'px'; });
+}
+function syncThumbs() {
+  var any = state.books.some(function (b) { return !!smallImg(b); });
+  document.body.classList.toggle('thumbs', any);
+}
+function fillDatalists() {
+  function opts(k) {
+    var seen = {}, out = [];
+    state.books.forEach(function (b) { var v = (b[k] || '').trim(); if (v && !seen[v.toLowerCase()]) { seen[v.toLowerCase()] = 1; out.push(v); } });
+    return out.sort(coll.compare).map(function (v) { return '<option value="' + esc(v) + '">'; }).join('');
+  }
+  $('#shelfList').innerHTML = opts('sh');
+  $('#genreList').innerHTML = opts('gen');
+  $('#loanNames').innerHTML = opts('p');
+  $('#seriesList').innerHTML = opts('se');
+}
+var tGrid = null;
+/* Barra in alto (schede, ricerca, filtri, Copertine...) ferma mentre scorri l'elenco compatto;
+   se c'e' una scheda aperta torna a scorrere via con la pagina, per lasciare spazio ai campi. */
+function updateStick() {
+  var open = settings.openAll || !!document.querySelector('#list .row.open');
+  document.body.classList.toggle('card-open', open);
+  var st = $('#stick');
+  if (st) document.documentElement.style.setProperty('--stick-h', (open ? 0 : st.offsetHeight) + 'px');
+}
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(function (en) {
+    var stuck = !en[0].isIntersecting && en[0].boundingClientRect.top < 0;
+    $('#stick').classList.toggle('stuck', stuck);
+    document.body.classList.toggle('stuck', stuck);
+    setTimeout(updateStick, 0);
+  }).observe($('#stickSentinel'));
+}
+window.addEventListener('resize', function () { updateStick(); });
+function renderList() {
+  clearTimeout(tGrid);
+  setTimeout(updateStick, 0);
+  if (scanning) return;
+  donPaint(); nxBoxPaint();
+  var list = $('#list');
+  syncThumbs();
+  fillDatalists();
+  var vis = visible(), n = tabBooks().length;
+  document.body.classList.toggle('gridview', settings.view === 'grid');
+  document.body.classList.toggle('openall', settings.openAll);
+  $('#thead').hidden = n === 0 || settings.view === 'grid' || !settings.openAll;
+  document.body.classList.toggle('welcome-on', !n && tab !== 'wish');   // col benvenuto il suggerimento sotto i tasti ripeterebbe le stesse cose
+  if (!n && guest) { list.innerHTML = '<p class="none">' + esc((guest.info.empty || {})[tab] || (tab === 'wish' ? 'Nessun desiderio da mostrare.' : 'Nessun libro da mostrare.')) + '</p>'; return; }
+  if (!n) { list.innerHTML = tab === 'wish' ? wishEmptyHTML() : emptyHTML(); autosizeAll(list); return; }
+  if (!vis.length) {
+    var only = !q && activeCount() === 1;
+    list.innerHTML = only && flt === 'loan'
+      ? '<p class="none">Nessun libro in prestito. Per prestarne uno apri la sua scheda con la freccetta e tocca il tasto con la freccia verso destra.</p>'
+      : only && flt === 'gone' ? '<p class="none">Nessun libro venduto o regalato.</p>'
+      : '<p class="none">Nessun libro corrisponde ' + (activeCount() ? (q ? 'alla ricerca e ai filtri.' : 'ai filtri.') : 'alla ricerca.') + '</p><p><button class="btn" data-act="clearflt">' + (activeCount() ? (q ? 'Azzera ricerca e filtri' : 'Azzera i filtri') : 'Cancella la ricerca') + '</button></p>';
+    return;
+  }
+  /* i libri «In lettura» in cima, in una sezione che si apre e chiude; sotto gli altri (solo Libreria, ordine «Più recenti», senza ricerca ne' filtri) */
+  var now = tab === 'lib' && !q && !activeCount() && sortBy === 'recent' ? vis.filter(function (b) { return b.rs === 'in'; }) : [];   // con un altro ordine (voto, titolo…) vale l'ordine scelto
+  var parts = now.length ? [['now', 'In lettura', now], ['all', now.length < vis.length ? 'Gli altri libri' : '', vis.filter(function (b) { return b.rs !== 'in'; })]] : null;
+  var shelfOpen = function (k) { return !(settings.shelfShut || {})[k]; };
+  var shelf = function (k, title, books, inner) {
+    if (!books.length) return '';
+    var open = shelfOpen(k);
+    return '<section class="shelf shelf-' + k + '"><button type="button" class="shelf-h" data-shelf="' + k + '" aria-expanded="' + open + '" aria-controls="shelf-' + k + '">' +
+      (k === 'now' ? '<svg class="sh-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10a1 1 0 0 1 1 1v16l-6-4-6 4v-16a1 1 0 0 1 1-1z"/></svg>' : '') +
+      '<span>' + esc(title) + '</span><span class="sh-n">' + books.length + '</span><svg class="sh-c" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>' +
+      '<div class="shelf-b" id="shelf-' + k + '"' + (open ? '' : ' hidden') + '>' + inner(books) + '</div></section>';
+  };
+  if (settings.view === 'grid') {
+    var gridOf = function (a) { return '<div class="grid">' + a.map(coverHTML).join('') + '</div>'; };
+    list.innerHTML = parts ? parts.map(function (x) { return shelf(x[0], x[1], x[2], gridOf); }).join('') : gridOf(vis);
+    paintSel(); return;
+  }
+  var dups = computeDups();
+  var rowsOf = function (a) { return a.map(function (b) { return rowHTML(b, dups); }).join(''); };
+  list.innerHTML = parts ? parts.map(function (x) { return shelf(x[0], x[1], x[2], rowsOf); }).join('') : rowsOf(vis);
+  emit('rows', list);                              // i moduli possono sistemare le schede appena disegnate
+  autosizeAll(list);
+  paintSel();
+}
+function rowEl(id) { return $('#list').querySelector('[data-id="' + id + '"]'); }
+function refreshRow(id) {
+  if (scanning) return;
+  if (settings.view === 'grid') { clearTimeout(tGrid); tGrid = setTimeout(renderList, 120); return; }
+  var b = get(id), el = rowEl(id);
+  if (!b || !inTab(b)) { if (el) el.remove(); if (!tabBooks().length) renderList(); return; }
+  if (!el) { renderList(); return; }
+  syncThumbs();
+  var t = document.createElement('template');
+  t.innerHTML = rowHTML(b, computeDups());
+  var fresh = t.content.firstElementChild;
+  el.replaceWith(fresh);
+  emit('rows', fresh);
+  if (selOn) paintSel();
+  autosizeAll(fresh);
+}
+function eur(n) { return eurFmt.format(n); }
+function updateSummary() {
+  var all = tabBooks().filter(hasData), done = all.filter(function (b) { return !b.xs; });
+  var gone = all.length - done.length;
+  var total = done.reduce(function (a, b) { return a + (b.c || 0); }, 0);
+  var g = all.filter(function (b) { return b.g.length; }).length;
+  var loans = tab === 'lib' ? done.filter(function (b) { return b.p; }).length : 0;
+  var n = done.length;
+  $('#summary').innerHTML = tab === 'wish'
+    ? (n ? '<b>' + n + '</b> da comprare · <b>' + esc(eur(total)) + '</b>' : 'Nessun libro da comprare')
+    : (n ? '<b>' + n + '</b> ' + (n === 1 ? 'libro' : 'libri') + (settings.sumEur ? ' · <b>' + esc(eur(total)) + '</b>' : '') + (g ? ' · ' + g + ' da verificare' : '') +
+        (loans && settings.sumLoan ? ' · <button type="button" class="sum-link" data-sum="loan" aria-pressed="' + (flt === 'loan' ? 'true' : 'false') + '">' + loans + ' in prestito</button>' : '') +
+        (gone && settings.sumGone ? ' · ' + gone + ' non più in libreria' : '')
+      : (gone ? gone + ' non più in libreria' : 'Ancora nessun libro')) + alertBtn();
+  var nl = state.books.filter(function (b) { return !b.w && !b.xs && hasData(b); }).length, nw = state.books.filter(function (b) { return b.w && hasData(b); }).length;
+  $('#cntLib').textContent = nl; $('#cntWish').textContent = nw;
+  $('#tabLib').setAttribute('aria-selected', tab === 'lib' ? 'true' : 'false');
+  $('#tabWish').setAttribute('aria-selected', tab === 'wish' ? 'true' : 'false');
+  nxBoxPaint(); emit('list');
+  $('#btnNews').hidden = tab !== 'wish' || !state.books.some(function (b) { return !b.w && b.a; });
+  $('#btnShareWish').hidden = !shareable().length || !(tab === 'wish' || activeCount() || q);     // Desideri, oppure una selezione (preferiti, genere, ricerca...)
+  updateActiveFilters();
+  var fg = $('#fltGuess');
+  fg.textContent = 'Da verificare · ' + g;
+  fg.hidden = g === 0 && flt !== 'guess';
+  fg.setAttribute('aria-pressed', flt === 'guess' ? 'true' : 'false');
+  var allLoans = state.books.filter(function (b) { return !b.w && b.p; }).length;
+  $('#cntLoan').textContent = allLoans;
+  $('#fltLoan').setAttribute('aria-pressed', flt === 'loan' ? 'true' : 'false');
+  var td = todoRows().length;
+  var bt = $('#btnTodo');
+  bt.hidden = td === 0;
+  bt.textContent = 'Completa ' + td + (td === 1 ? ' libro' : ' libri') + ' con l\'ISBN';
+}
+
+/* ---------- azioni sulle righe ---------- */
+function delBook(id) {
+  var i = state.books.findIndex(function (b) { return b.id === id; });
+  if (i < 0) return;
+  var b = state.books[i], s = S[id];
+  var active = s && (s.st === 'reading' || s.st === 'queued' || s.st === 'lookup' || s.st === 'search');
+  state.books.splice(i, 1);
+  delete S[id];
+  var el = rowEl(id);
+  if (el) el.remove();
+  if (!tabBooks().length || settings.view === 'grid') renderList();
+  touch(); updateSummary();
+  if (active || !hasData(b)) { toast('Libro eliminato'); return; }
+  toast('Libro eliminato', { label: 'Annulla', fn: function () {
+    state.books.push(b); if (s) S[id] = s;
+    renderList(); touch(); updateSummary();
+  } });
+}
+function retryRow(id) {
+  var s = S[id], b = get(id);
+  if (!s || !b) return;
+  clearTimeout(s.timer);
+  var what = s.retry;
+  s.err = ''; s.retry = null;
+  if (what === 'lookup') { s.st = 'queued'; refreshRow(id); lookupPool(function () { return doLookup(id); }); }
+  else if (what === 'text') {
+    s.st = 'search'; refreshRow(id);
+    var qs = L.buildQueries(s.lines || []);
+    Promise.allSettled(qs.map(function (qq) { return L.searchText(qq, lookupOpts()); })).then(function (out) {
+      if (!get(id) || s.manual) return;
+      var all = [], seen = {};
+      out.forEach(function (r) { if (r.status === 'fulfilled') r.value.forEach(function (c) { if (!seen[c.id]) { seen[c.id] = 1; all.push(c); } }); });
+      if (out.every(function (r) { return r.status === 'rejected'; })) { s.st = 'error'; s.err = 'Le banche dati non rispondono. Riprova tra poco.'; s.retry = 'text'; refreshRow(id); return; }
+      var ranked = L.rankCandidates(all, s.lines || []);
+      if (!ranked.length) { s.st = 'nf'; refreshRow(id); autoManual(id); return; }
+      if (L.strongMatch(ranked)) { applyCandidate(id, ranked[0]); return; }
+      s.st = 'choose'; s.cands = ranked.slice(0, 6); refreshRow(id);
+    });
+  }
+}
+
+/* ---------- finestre ---------- */
+function openIsbnSheet() {
+  $('#isbnText').value = '';
+  $('#isbnErr').hidden = true;
+  $('#isbnResBox').hidden = true; $('#isbnRes').innerHTML = ''; titleSeq++;
+  $('#isbnH').textContent = tab === 'wish' ? 'Aggiungi ai Desideri' : 'Titolo o ISBN';
+  $('#isbnSheet').hidden = false;
+  setTimeout(function () { $('#isbnText').focus(); }, 50);
+}
+/* ---------- ricerca per titolo (per esempio un libro consigliato da un amico) ---------- */
+var titleSeq = 0, titleCands = [], titleText = '';
+function looksLikeTitle(s) { return (String(s).replace(/isbn/ig, '').match(/[a-zàèéìòùç]/ig) || []).length >= 3; }
+function whereTxt() { return tab === 'wish' ? 'ai Desideri' : 'alla Libreria'; }
+async function searchTitle(text) {
+  var my = ++titleSeq;
+  titleText = text; titleCands = [];
+  $('#isbnErr').hidden = true;
+  $('#isbnResBox').hidden = false;
+  $('#isbnResMsg').textContent = 'Cerco «' + text + '»…';
+  $('#isbnRes').innerHTML = '';
+  var asIs = $('#isbnAsIs');
+  asIs.textContent = 'Aggiungi solo «' + (text.length > 40 ? text.slice(0, 38) + '…' : text) + '», senza cercare'; asIs.hidden = true;
+  var res;
+  try { res = await L.searchText(text, lookupOpts()); }
+  catch (e) {
+    if (my !== titleSeq) return;
+    $('#isbnResMsg').textContent = e && e.code === 'rate' ? 'Google Libri è al limite di richieste: riprova tra poco, oppure aggiungi solo il titolo e completalo dopo.' : 'Non riesco a cercare: controlla la connessione. Puoi aggiungere solo il titolo e completarlo dopo.';
+    asIs.hidden = false; return;
+  }
+  if (my !== titleSeq || $('#isbnSheet').hidden) return;
+  // prima le edizioni italiane, poi quelle con l'ISBN; per il resto l'ordine di Google
+  titleCands = res.map(function (c, i) { return { c: c, i: i }; }).sort(function (x, y) {
+    return ((y.c.lang === 'it') - (x.c.lang === 'it')) || ((!!y.c.i) - (!!x.c.i)) || (x.i - y.i);
+  }).map(function (x) { return x.c; }).slice(0, 8);
+  $('#isbnRes').innerHTML = titleCands.map(function (c, i) {
+    var have = (c.isbns || []).map(findByIsbn).filter(Boolean)[0];
+    var badge = have ? '<span class="tag ' + (have.w ? 'loan' : 'warn') + '">' + (have.w ? 'Già nei Desideri' : 'Ce l\'hai già') + '</span>' : '';
+    return '<li><button class="cand" data-i="' + i + '"><span class="cimg">' + (c.img ? '<img src="' + esc(c.img) + '" alt="" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</span><span><b>' + esc(c.t) + '</b>' +
+      '<span>' + esc(c.a || 'Autore non indicato') + '</span><span>' + esc([c.e, c.y].filter(Boolean).join(', ') || 'Editore e anno non indicati') + '</span>' + badge + '</span></button></li>';
+  }).join('');
+  $('#isbnResMsg').textContent = titleCands.length ? 'Tocca il libro giusto per aggiungerlo ' + whereTxt() + ':' : 'Non ho trovato libri per «' + text + '». Prova con meno parole, o aggiungi l\'autore.';
+  asIs.hidden = false;
+}
+function addedToast(b) {
+  var id = b.id;
+  if (settings.price && !scanning) return;            // c'e' il riquadro «Libro aggiunto» (con «Togli il libro»)
+  toast('Aggiunto ' + (b.w ? 'ai Desideri' : 'alla Libreria') + ': ' + (b.t || b.i), { label: 'Annulla', fn: function () {
+    state.books = state.books.filter(function (x) { return x.id !== id; }); delete S[id]; renderList(); touch(); updateSummary();
+  } });
+}
+function pickTitle(i) {
+  var c = titleCands[i];
+  if (!c) return;
+  var code = L.toIsbn13(c.i);
+  q = ''; $('#q').value = '';
+  if (code) {
+    var res = addIsbn(code);
+    if (res.dup) { toast((res.dup.w ? 'È già nei Desideri: ' : 'Ce l\'hai già in Libreria: ') + (res.dup.t || code)); return; }
+    $('#isbnSheet').hidden = true;
+    if (res.moved) { openState[res.moved.id] = false; renderList(); updateSummary(); toast('Era nei Desideri: spostato in Libreria. ' + (res.moved.t || code)); return; }
+    var b = res.book;
+    b.t = c.t; b.a = c.a; if (c.img) b.img = c.img;           // si vede subito; il resto arriva dalle banche dati
+    openState[b.id] = false;
+    renderList(); updateSummary(); addedToast(b); askPrice(b.id);
+    return;
+  }
+  var nb = blankBook({ t: c.t, a: c.a, e: c.e, y: c.y, img: c.img || '', gen: c.gen || '', pg: c.pg || '' });
+  takeDesc(nb, c.ds, ''); state.books.push(nb); openState[nb.id] = false; queueDesc(nb.id);
+  $('#isbnSheet').hidden = true;
+  touch(); renderList(); updateSummary(); addedToast(nb); askPrice(nb.id);
+}
+function addTitleAsIs() {
+  var t = titleText.replace(/\s+/g, ' ').trim();
+  if (!t) return;
+  var nb = blankBook({ t: t.slice(0, 300) });
+  state.books.push(nb); openState[nb.id] = false;
+  $('#isbnSheet').hidden = true; q = ''; $('#q').value = '';
+  touch(); renderList(); updateSummary(); addedToast(nb); askPrice(nb.id);
+}
+$('#isbnRes').addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) pickTitle(+b.dataset.i); });
+$('#isbnAsIs').addEventListener('click', addTitleAsIs);
+$('#isbnText').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && !e.shiftKey && looksLikeTitle(e.target.value)) { e.preventDefault(); submitIsbn(); }
+});
+$('#isbnText').addEventListener('input', function () { $('#isbnErr').hidden = true; });
+
+function submitIsbn() {
+  var raw = $('#isbnText').value.trim();
+  if (looksLikeTitle(raw) && !L.parseIsbnList(raw).valid.length) { searchTitle(raw); return; }
+  var r = L.parseIsbnList($('#isbnText').value);
+  var err = $('#isbnErr');
+  if (!r.valid.length) {
+    err.textContent = r.invalid.length ? 'Codice non valido: ' + r.invalid.slice(0, 3).join(', ') + '. Controlla le cifre.' : 'Scrivi un titolo o un codice ISBN.';
+    err.hidden = false;
+    return;
+  }
+  var added = 0, dupes = 0, moved = 0, dupIds = [], newBook = null;
+  q = ''; flt = ''; $('#q').value = ''; setView('list');
+  r.valid.forEach(function (code) {
+    var res = addIsbn(code);
+    if (res.dup) { dupes++; if (!res.dup.w && tab === 'lib') dupIds.push(res.dup.id); } else if (res.moved) moved++; else { added++; newBook = res.book; }
+  });
+  if (r.valid.length === 1 && newBook) (S[newBook.id] || (S[newBook.id] = {})).heard = true;   // un ISBN scritto a mano: se non si trova, suona
+  $('#isbnSheet').hidden = true;
+  renderList(); updateSummary();
+  if (added === 1 && r.valid.length === 1 && newBook && settings.price) { askPrice(newBook.id); return; }
+  var parts = [];
+  if (added) parts.push(added + (added === 1 ? ' libro aggiunto' : ' libri aggiunti') + (tab === 'wish' ? ' ai Desideri' : ''));
+  if (moved) parts.push(moved + (moved === 1 ? ' spostato dai Desideri alla Libreria' : ' spostati dai Desideri alla Libreria'));
+  if (dupes) parts.push(dupes + (dupes === 1 ? ' già in elenco' : ' già in elenco'));
+  if (r.invalid.length) parts.push(r.invalid.length + (r.invalid.length === 1 ? ' codice non valido' : ' codici non validi'));
+  toast(parts.join(', ') + '.', dupIds.length ? { label: dupIds.length === 1 ? 'Aggiungi un\'altra copia' : 'Aggiungi come altre copie', fn: function () {
+    dupIds.forEach(function (id) { addCopy(id, true); });
+    renderList(); updateSummary(); toast(dupIds.length === 1 ? 'Aggiunta un\'altra copia.' : 'Aggiunte ' + dupIds.length + ' copie.');
+  } } : null);
+}
+var pickId = null;
+function openPick(id) {
+  var s = S[id];
+  if (!s || !s.cands) return;
+  pickId = id;
+  $('#pickList').innerHTML = s.cands.map(function (c, i) {
+    return '<li><button class="cand" data-i="' + i + '"><span class="cimg">' + (c.img ? '<img src="' + esc(c.img) + '" alt="" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</span><span><b>' + esc(c.t) + '</b>' +
+      '<span>' + esc(c.a || 'Autore non indicato') + '</span><span>' + esc([c.e, c.y].filter(Boolean).join(' · ') || 'Editore e anno non indicati') + '</span></span></button></li>';
+  }).join('');
+  $('#pickSheet').hidden = false;
+}
+function closePick() { $('#pickSheet').hidden = true; pickId = null; }
+
+/* ---- Titolo e autore a mano: quando la foto della copertina non trova il libro (o mentre cerca ancora) ---- */
+var manId = null;
+var manPrice = false;
+function openManual(id, withPrice) {
+  var b = get(id), s = S[id] || {};
+  if (!b) return;
+  manId = id;
+  if (flow.id === id) { flow.id = null; hideFlow(); withPrice = true; }      // aperta dalla riga mentre c'era la finestra dell'avanzamento
+  manPrice = !!(withPrice && settings.price && b.c == null);
+  $('#manP').value = s.price != null ? L.fmtNum(s.price) : '';
+  document.querySelectorAll('#manForm .man-p').forEach(function (x) { x.hidden = !manPrice; });
+  $('#manA').setAttribute('enterkeyhint', manPrice ? 'next' : 'done');
+  var ta = (s.lines || []).length ? L.splitTitleAuthor(s.lines) : {};    // il testo letto dalla foto come punto di partenza
+  $('#manT').value = b.t || (ta.t ? niceCase(ta.t, false) : '');
+  $('#manA').value = b.a || (ta.a ? niceCase(ta.a, true) : '');
+  var src = s.thumb || smallImg(b);
+  $('#manImg').style.backgroundImage = src ? 'url("' + src.replace(/"/g, '%22') + '")' : '';
+  $('#manImg').hidden = !src;
+  var st = s.st;
+  $('#manMsg').textContent = st === 'nf' ? 'Non ho trovato questo libro online. Scrivilo tu' + (src ? ': la foto diventa la copertina.' : '.')
+    : st === 'choose' ? 'Nessuna delle edizioni trovate va bene? Scrivilo tu' + (src ? ': la foto diventa la copertina.' : '.')
+    : st === 'error' || st === 'wait' ? 'Scrivilo tu' + (src ? ': la foto diventa la copertina.' : '.')
+    : 'Lo scrivi tu: smetto di cercarlo.';
+  $('#manErr').hidden = true; $('#manErr').textContent = 'Scrivi almeno il titolo.';
+  $('#manSheet').hidden = false;
+  setTimeout(function () { try { var i = $('#manT').value ? $('#manA') : $('#manT'); i.focus(); } catch (e) {} }, 60);
+}
+function closeManual() { $('#manSheet').hidden = true; manId = null; try { document.activeElement.blur(); } catch (e) {} }
+function autoManual(id) {                          // si apre da sola se e' l'unica foto in lavorazione e non c'e' altro aperto
+  var b = get(id);
+  if (!b || b.t || b.i || (S[id] && S[id].later) || flow.id === id || scanning || !$('#manSheet').hidden || document.querySelector('.sheet:not([hidden]), .lightbox:not([hidden])')) return;
+  var others = state.books.some(function (x) { var t = S[x.id] && S[x.id].st; return x.id !== id && (t === 'queued' || t === 'reading' || t === 'search' || t === 'nf'); });
+  if (!others) openManual(id);
+}
+$('#manForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var id = manId, b = get(id), s = S[id] || {};
+  var t = $('#manT').value.trim().replace(/\s+/g, ' '), a = $('#manA').value.trim().replace(/\s+/g, ' ');
+  if (!t) { $('#manErr').textContent = 'Scrivi almeno il titolo.'; $('#manErr').hidden = false; $('#manT').focus(); return; }
+  var price = null, pv = manPrice ? $('#manP').value.trim() : '';
+  if (pv) {
+    price = L.parseNum(pv);
+    if (!(price > 0 && price < 1000)) { $('#manErr').textContent = 'Scrivi un prezzo, per esempio 14,50, oppure lascialo vuoto.'; $('#manErr').hidden = false; $('#manP').focus(); return; }
+    price = Math.round(price * 100) / 100;
+  }
+  closeManual();
+  if (!b) return;
+  b.t = t; b.a = a;
+  b.g = b.g.filter(function (k) { return k !== 't' && k !== 'a'; });
+  if (s.big && !b.img && !coverURL[id]) saveCoverData(id, s.big);          // la foto scattata diventa la copertina
+  if (price != null) b.c = price;
+  else if (s.price != null && b.c == null) b.c = s.price;
+  b.nf = false;
+  if (S[id]) { S[id].manual = true; ['st', 'cands', 'lines', 'price', 'err', 'retry', 'msg'].forEach(function (k) { delete S[id][k]; }); }
+  touch(); refreshRow(id); updateSummary();
+  queueDesc(id);                                                            // la descrizione si cerca da titolo e autore
+  chime();
+  toast('Salvato: ' + t + (a ? ', ' + a : '') + '.');
+});
+$('#manCancel').addEventListener('click', closeManual);
+$('#manSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeManual(); });
+$('#manT').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('#manA').focus(); } });
+$('#manA').addEventListener('keydown', function (e) { if (e.key === 'Enter' && manPrice) { e.preventDefault(); $('#manP').focus(); } });
+
+/* ---------- export e backup ---------- */
+function exportBooks() {
+  var a = tabBooks().filter(hasData);
+  return a.sort(sortBy === 'recent' ? function (x, y) { return x.ts - y.ts; } : cmpFor(sortBy));
+}
+function today() {
+  var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function downloadBlob(name, data, type) {
+  var blob = new Blob([data], { type: type });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+}
+async function copyTSV() {
+  var books = exportBooks();
+  if (!books.length) { toast('L\'elenco è vuoto.'); return; }
+  var text = L.buildTSV(books);
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Copiato. Incollalo in Excel o Fogli Google.');
+  } catch (e) {
+    $('#copyBox').value = text;
+    $('#copySheet').hidden = false;
+    $('#copyBox').focus(); $('#copyBox').select();
+  }
+}
+function fileBase() { return (tab === 'wish' ? 'desideri-' : 'libreria-') + today(); }
+function saveCSV() {
+  var books = exportBooks();
+  if (!books.length) { toast('L\'elenco è vuoto.'); return; }
+  downloadBlob(fileBase() + '.csv', L.buildCSV(books), 'text/csv;charset=utf-8');
+  toast('File CSV scaricato.');
+}
+function saveXLSX() {
+  var books = exportBooks();
+  if (!books.length) { toast('L\'elenco è vuoto.'); return; }
+  downloadBlob(fileBase() + '.xlsx', L.buildXLSX(books, tab === 'wish' ? 'Desideri' : 'Libreria'), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('File Excel scaricato: lo trovi nei Download.');
+}
+/* ---------- backup ---------- */
+var backupReady = null;
+/* «Libreria di Piero - Next Libris - 2026-11-14 22.58»: si riconosce a colpo d'occhio tra i file, anche con piu' backup nello stesso giorno */
+function backupName() {
+  var who = String(settings.name || '').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  var d = new Date(), hm = String(d.getHours()).padStart(2, '0') + '.' + String(d.getMinutes()).padStart(2, '0');   // ora con il punto: i due punti non vanno nei nomi dei file
+  return (who ? 'Libreria di ' + who : 'La mia libreria') + ' - Next Libris - ' + today() + ' ' + hm;
+}
+function coverIds() { return Object.keys(coverURL).filter(function (id) { return !!get(id); }).concat(quotePhKeys().filter(function (k) { return !!qphURL[k]; })); }
+/* Senza foto tue il backup e' pronto subito; con le foto va preparato prima (si leggono dal telefono), cosi' la condivisione parte al tocco. */
+/* nel backup vanno anche worker SBN e chiave Google (in uso e salvati): ripristinando su un altro telefono tornano anche loro */
+function backupCfg() { return { sbnUrl: settings.sbnUrl, gbKey: settings.gbKey, saved: { sbn: saved.sbn.slice(), key: saved.key.slice() } }; }
+function backupData() { return coverIds().length ? backupReady : JSON.stringify({ app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }); }
+async function buildBackup() {
+  var o = { app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }, ids = coverIds();
+  if (ids.length) {
+    o.covers = {};
+    var all = await idbAll();
+    for (var i = 0; i < all.length; i++) if (ids.indexOf(all[i][0]) >= 0) o.covers[all[i][0]] = await blobToDataURL(all[i][1]);
+  }
+  return JSON.stringify(o);
+}
+function prepBackup() {
+  var btns = [$('#btnShareBackup'), $('#btnBackup')], n = coverIds().length;
+  if (!n) { btns.forEach(function (x) { x.disabled = false; }); return; }
+  btns.forEach(function (x) { x.disabled = true; });
+  $('#backupNote').textContent = 'Preparo il backup con ' + n + (n === 1 ? ' tua foto' : ' tue foto') + '…';
+  buildBackup().then(function (data) {
+    backupReady = data;
+    btns.forEach(function (x) { x.disabled = false; });
+    $('#backupNote').textContent = 'Il backup comprende ' + n + (n === 1 ? ' tua foto' : ' tue foto') + ' (copertine e citazioni, ' + (data.length / 1048576).toFixed(1).replace('.', ',') + ' MB).';
+  }, function () { btns.forEach(function (x) { x.disabled = false; }); $('#backupNote').textContent = 'Non riesco a leggere le tue foto: il backup comprenderà solo i dati dei libri.'; backupReady = JSON.stringify({ app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }); });
+}
+function markBackup() { settings.lastBackup = Date.now(); saveSettings(); updateBackupInfo(); if (noticeKind === 'backup') $('#notice').hidden = true; }
+function backup() {
+  if (!storable().length) { toast('L\'elenco è vuoto: non c\'è niente da salvare.'); return; }
+  if (!backupData()) { openExport(); toast('Preparo il backup con le tue foto: riprova tra un attimo.'); return; }
+  downloadBlob(backupName() + '.json', backupData(), 'application/json');
+  markBackup();
+  toast('Backup scaricato. Tienine una copia anche fuori dal telefono (Drive, email).');
+}
+/* Condivide il file di backup (Drive, Gmail, WhatsApp…). Chrome condivide solo alcuni tipi di file: se il .json non e' ammesso
+   lo mando come .txt (il contenuto e' identico e «Ripristina» lo accetta). Se la condivisione non parte, non scarico in silenzio:
+   lo dico, con «Riprova» (un tocco nuovo spesso basta) e «Salvalo nei Download». */
+async function shareBackup() {
+  if (!storable().length) { toast('L\'elenco è vuoto: non c\'è niente da salvare.'); return; }
+  var data = backupData(), base = backupName(), file = null;
+  if (!data) { openExport(); toast('Preparo il backup con le tue foto: riprova tra un attimo.'); return; }
+  try {
+    var cands = [new File([data], base + '.json', { type: 'application/json' }), new File([data], base + '.txt', { type: 'text/plain' })];
+    for (var i = 0; i < cands.length && !file; i++) if (navigator.canShare && navigator.canShare({ files: [cands[i]] })) file = cands[i];
+  } catch (e) { file = null; }
+  if (!file || !navigator.share) { bkFail('Questo telefono non permette di inviare il file da qui.', false); return; }
+  try {
+    await navigator.share({ files: [file] });
+    markBackup(); $('#bkFailSheet').hidden = true; toast('Backup inviato.');
+  } catch (e) {
+    if (e && e.name === 'AbortError') { toast('Invio annullato: il backup non è stato salvato.'); return; }
+    bkFail('Il telefono non ha aperto la condivisione' + (e && e.name ? ' (' + e.name + ')' : '') + '. Di solito riprovando parte.', true);
+  }
+}
+function bkFail(msg, retry) {
+  $('#bkFailMsg').textContent = msg;
+  $('#bkFailRetry').hidden = !retry;
+  $('#bkFailSheet').hidden = false;
+}
+$('#bkFailRetry').addEventListener('click', function () { shareBackup(); });
+$('#bkFailDl').addEventListener('click', function () { $('#bkFailSheet').hidden = true; backup(); });
+$('#bkFailClose').addEventListener('click', function () { $('#bkFailSheet').hidden = true; });
+$('#bkFailSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) $('#bkFailSheet').hidden = true; });
+function updateBackupInfo() {
+  var n = storable().length;
+  $('#backupInfo').textContent = 'Ultimo backup: ' + L.agoText(settings.lastBackup) + ' · ' + n + (n === 1 ? ' libro' : ' libri') + ' salvati solo su questo telefono.';
+}
+/* Promemoria: con almeno 10 libri, se ci sono modifiche non salvate in un backup da piu' di 14 giorni (o mai). */
+function checkBackupNag() {
+  if (scanning) return;
+  var n = storable().length, now = Date.now(), DAY = 86400000;
+  var due = n >= 10 && state.updated > settings.lastBackup && now - Math.max(settings.lastBackup, settings.snooze) > 14 * DAY;
+  if (!due) { if (noticeKind === 'backup') { $('#notice').hidden = true; noticeKind = ''; } return; }
+  if (noticeKind === 'backup' || !$('#notice').hidden) return;
+  notice('Ultimo backup: ' + L.agoText(settings.lastBackup) + '. I ' + n + ' libri sono salvati solo su questo telefono: se cambi telefono o cancelli i dati di Chrome li perdi.',
+    'Fai il backup', function () { if (coverIds().length) openExport(); else shareBackup(); }, function () { settings.snooze = Date.now(); saveSettings(); }, 'backup');
+}
+/* dal backup: worker e chiave tornano tra i salvati; se qui mancano, li rimette in uso. Restituisce cosa ha rimesso. */
+function restoreCfg(c) {
+  if (!c || typeof c !== 'object') return '';
+  var okW = function (v) { v = cleanWorker(v); return /^https:\/\/[^\s/]+\.[^\s]+$/.test(v) ? v : ''; };
+  var okK = function (v) { return typeof v === 'string' ? v.replace(/\s+/g, '') : ''; };
+  var sv = c.saved || {}, put = [];
+  ['sbn', 'key'].forEach(function (k) {
+    var list = (Array.isArray(sv[k]) ? sv[k] : []).concat([k === 'sbn' ? c.sbnUrl : c.gbKey]).map(k === 'sbn' ? okW : okK).filter(Boolean);
+    list.forEach(function (v) { if (saved[k].indexOf(v) < 0 && saved[k].length < 4) saved[k].push(v); });
+  });
+  ls.set(LS_SAVED, JSON.stringify(saved));
+  var w = okW(c.sbnUrl), k2 = okK(c.gbKey);
+  if (w && !settings.sbnUrl) { setSvc('sbn', w); put.push('il worker SBN'); }
+  if (k2 && !settings.gbKey) { setSvc('key', k2); put.push('la chiave Google'); }
+  renderSvc();
+  return put.join(' e ');
+}
+function restore(file) {
+  var rd = new FileReader();
+  rd.onload = function () {
+    try {
+      var d = JSON.parse(String(rd.result));
+      if (d && d.share) {                                  // non e' un backup: e' una lista ricevuta da un amico
+        var sh = L.parseShare(d.share);
+        if (!sh) throw new Error('lista');
+        $('#exportSheet').hidden = true; openImport(sh); return;
+      }
+      var incoming = (d.books || []).map(cleanBook).filter(Boolean);
+      var have = {};
+      state.books.forEach(function (b) { have[b.id] = 1; });
+      var n = 0;
+      incoming.forEach(function (b) { if (!have[b.id]) { state.books.push(b); n++; } });
+      if (!incoming.length && !Array.isArray(d.books)) throw new Error('formato');
+      var nc = 0;
+      if (d.covers && typeof d.covers === 'object') Object.keys(d.covers).forEach(function (id) {
+        if (/^q:/.test(id)) { if (!qphURL[id] && quotePhKeys().indexOf(id) >= 0 && /^data:image\//.test(d.covers[id])) { nc++; fetch(d.covers[id]).then(function (r) { return r.blob(); }).then(function (bl) { return saveQuotePh(id, bl); }).then(function () { paintQuotesAll(); }).catch(function () {}); } return; }
+        if (get(id) && !coverURL[id] && /^data:image\//.test(d.covers[id])) { nc++; saveCoverData(id, d.covers[id]); }
+      });
+      var cfg = restoreCfg(d.cfg);
+      touch(); renderList(); updateSummary();
+      toast(n + (n === 1 ? ' libro ripristinato' : ' libri ripristinati') + (nc ? ', ' + nc + ' foto' : '') + '.' +
+        (cfg ? ' Torn' + (/ e /.test(cfg) ? 'ano' : 'a') + ' in uso anche ' + cfg + '.' : ''));
+    } catch (e) { toast('Il file non è un backup né una lista di Next Libris.'); }
+  };
+  rd.readAsText(file);
+}
+
+/* ---------- copertine: le tue foto (salvate sul telefono) e versioni grandi ---------- */
+var coverURL = {};          // id libro -> immagine della tua foto (dal database del telefono)
+var coverPhotoId = null, noBig = {}, probing = {};
+var idbP = null;
+function idb() {
+  if (idbP) return idbP;
+  idbP = new Promise(function (res, rej) {
+    if (!window.indexedDB) { rej(new Error('IndexedDB non disponibile')); return; }
+    var r = indexedDB.open((COPIA ? COPIA + '-' : '') + 'catalogo-libri', 1);   // copertine e foto: anche queste separate in ogni copia
+    r.onupgradeneeded = function () { r.result.createObjectStore('covers'); };
+    r.onsuccess = function () { res(r.result); };
+    r.onerror = function () { rej(r.error); };
+  });
+  idbP.catch(function () { idbP = null; });
+  return idbP;
+}
+function idbDo(mode, fn) {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction('covers', mode);
+      fn(tx.objectStore('covers'));
+      tx.oncomplete = function () { res(); };
+      tx.onerror = tx.onabort = function () { rej(tx.error || new Error('db')); };
+    });
+  });
+}
+function idbAll() {
+  return idb().then(function (db) {
+    return new Promise(function (res, rej) {
+      var out = [], tx = db.transaction('covers', 'readonly'), rq = tx.objectStore('covers').openCursor();
+      rq.onsuccess = function () { var c = rq.result; if (c) { out.push([String(c.key), c.value]); c.continue(); } };
+      tx.oncomplete = function () { res(out); };
+      tx.onerror = function () { rej(tx.error); };
+    });
+  });
+}
+function blobToDataURL(blob) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(String(r.result)); }; r.onerror = rej; r.readAsDataURL(blob); }); }
+function askPersist() { try { if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(function (p) { if (!p) navigator.storage.persist(); }); } catch (e) {} }
+async function loadCovers() {
+  try {
+    var all = await idbAll(), keep = 0, gone = [];
+    var qk = quotePhKeys();
+    all.forEach(function (kv) {
+      if (/^q:/.test(kv[0])) { if (qk.indexOf(kv[0]) >= 0) { qphURL[kv[0]] = URL.createObjectURL(kv[1]); keep++; } else gone.push(kv[0]); return; }   // foto delle citazioni
+      if (get(kv[0])) { coverURL[kv[0]] = URL.createObjectURL(kv[1]); keep++; }
+      else gone.push(kv[0]);                                   // libro eliminato: tolgo anche la foto
+    });
+    if (gone.length) idbDo('readwrite', function (st) { gone.forEach(function (k) { st.delete(k); }); }).catch(function () {});
+    if (keep) { syncThumbs(); renderList(); }
+    if (!$('#allqSheet').hidden) renderAllQuotes();
+  } catch (e) { /* senza database le tue foto non si possono salvare: restano le copertine scaricate */ }
+}
+async function saveCover(id, blob) {
+  await idbDo('readwrite', function (st) { st.put(blob, id); });
+  if (coverURL[id]) URL.revokeObjectURL(coverURL[id]);
+  coverURL[id] = URL.createObjectURL(blob);
+  askPersist();
+  touch(); syncThumbs(); refreshRow(id);
+}
+/* foto -> JPEG di al massimo 900 px, salvato sul telefono */
+async function saveCoverCanvas(id, canvas) {
+  var c = scaled(canvas, 900);
+  var blob = await new Promise(function (res) { c.toBlob(res, 'image/jpeg', 0.82); });
+  if (!blob) throw new Error('jpeg');
+  await saveCover(id, blob);
+}
+function saveCoverData(id, du) {
+  var img = new Image();
+  img.onload = function () {
+    var c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    saveCoverCanvas(id, c).catch(function () {});
+  };
+  img.src = du;
+}
+async function removeCover(id) {
+  await idbDo('readwrite', function (st) { st.delete(id); });
+  if (coverURL[id]) URL.revokeObjectURL(coverURL[id]);
+  delete coverURL[id];
+  touch(); syncThumbs(); refreshRow(id);
+}
+/* Prova un'immagine: vale come copertina grande se arriva, e' larga almeno 250 px e ha le proporzioni di un libro. */
+function testImage(u) {
+  return new Promise(function (res) {
+    var im = new Image(), t = setTimeout(function () { res(false); }, 12000);
+    im.referrerPolicy = 'no-referrer';
+    im.onload = function () { clearTimeout(t); var w = im.naturalWidth, r = im.naturalHeight / Math.max(1, w); res(w >= 250 && r > 1.05 && r < 2.1); };
+    im.onerror = function () { clearTimeout(t); res(false); };
+    im.src = u;
+  });
+}
+/* Cerca la copertina grande: prima quella ufficiale di Google (scheda completa del volume), poi Open Library. La ricorda nel libro. */
+function probeCover(id) {
+  var b = get(id);
+  if (!b || b.imgL || coverURL[id] || b.nb || !(b.img || L.toIsbn13(b.i))) return Promise.resolve(!!(b && (b.imgL || coverURL[id])));
+  if (probing[id]) return probing[id];
+  probing[id] = (async function () {
+    var cands = [], gid = L.googleVolumeId(b.img), sure = true;
+    if (gid && navigator.onLine !== false) {
+      sure = false;
+      try {
+        var j = await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes/' + encodeURIComponent(gid) + '?fields=volumeInfo/imageLinks' + (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : ''), { waits: [], timeout: 10000 });
+        var gu = L.bestGoogleImage(j);
+        if (gu) cands.push(gu);
+        sure = true;
+      } catch (e) { /* limite o rete: resta Open Library, e riproveremo un'altra volta */ }
+    }
+    cands = cands.concat(L.coverCandidates(b.img, b.i));
+    for (var i = 0; i < cands.length; i++) {
+      if (await testImage(cands[i])) {
+        var x = get(id);
+        if (x && !x.imgL) { x.imgL = cands[i]; x.nb = false; touch(); refreshRow(id); }
+        return true;
+      }
+    }
+    var y = get(id);
+    if (y && sure && navigator.onLine !== false) { y.nb = true; touch(); }       // non esiste: non lo richiedo piu'
+    return false;
+  })();
+  return probing[id].then(function (ok) { delete probing[id]; if (!ok) noBig[id] = true; return ok; });
+}
+/* ---------- libro senza copertina: prima di aprire la fotocamera la cerco online ----------
+   1) stessa edizione (stesso ISBN): Open Library e Google Libri;
+   2) altrimenti la copertina di un'altra edizione: Open Library (opera dell'ISBN) e Google Libri per titolo e autore.
+   Tutto entro pochi secondi: Chrome lascia aprire la fotocamera solo poco dopo il tocco. */
+var covSearching = {}, covNone = {};
+function testImg(u, minW, ms) {
+  return new Promise(function (res) {
+    var im = new Image(), t = setTimeout(function () { im.onload = im.onerror = null; res(0); }, ms || 3000);
+    im.referrerPolicy = 'no-referrer';
+    im.onload = function () { clearTimeout(t); var w = im.naturalWidth, r = im.naturalHeight / Math.max(1, w); res(w >= (minW || 80) && r > 1.05 && r < 2.1 ? w : 0); };
+    im.onerror = function () { clearTimeout(t); res(0); };
+    im.src = u;
+  });
+}
+function tkey(s) { return L.norm(s).replace(/[^a-z0-9]+/g, ' ').trim(); }
+function gThumb(v) { var l = v && v.imageLinks; var u = l && (l.thumbnail || l.smallThumbnail); return u ? String(u).replace(/^http:\/\//i, 'https://').replace(/&edge=curl/g, '') : ''; }
+async function findCover(b, budget, sameOnly) {
+  var deadline = Date.now() + (budget || 3500);
+  function left() { return Math.max(300, deadline - Date.now()); }
+  var isbn = L.toIsbn13(b.i), i10 = isbn ? L.isbn13to10(isbn) : '', useG = googleLeft(false);
+  function gq(q, n) {
+    return L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(q) + '&maxResults=' + n +
+      '&fields=items(volumeInfo(title,authors,language,publisher,industryIdentifiers,imageLinks))' + (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : ''), { waits: [], timeout: left() });
+  }
+  async function img(u, rank, alt, minW) { var w = u ? await testImg(u, minW || 80, left()) : 0; return w ? { url: u, big: w >= 250, alt: alt, rank: rank } : null; }
+  function safe(p) { return p.then(function (x) { return x; }, function () { return null; }); }
+  var jobs = [];
+  if (isbn) {
+    [isbn, i10].filter(Boolean).forEach(function (x) { jobs.push(safe(img('https://covers.openlibrary.org/b/isbn/' + x + '-L.jpg?default=false', 1, false))); });
+    if (useG) jobs.push(safe(gq('isbn:' + isbn, 3).then(function (j) {
+      var v = ((j && j.items) || []).map(function (it) { return it.volumeInfo; }).filter(function (v) { return gThumb(v); })[0];
+      return v ? img(gThumb(v), 2, false, 60) : null;
+    })));
+    jobs.push(safe(L.getJson(fetch, 'https://openlibrary.org/search.json?q=' + encodeURIComponent('isbn:' + isbn) + '&fields=cover_i&limit=1', { waits: [], timeout: left() }).then(function (j) {
+      var c = j && j.docs && j.docs[0] && j.docs[0].cover_i;
+      return c ? img('https://covers.openlibrary.org/b/id/' + c + '-L.jpg', 3, true) : null;
+    })));
+  }
+  var tk = tkey(b.t), sur = tkey(String(b.a || '').split(/[,;]| e /)[0]).split(' ').pop() || '';
+  if (!sameOnly && useG && tk.length >= 3) jobs.push(safe(gq('intitle:"' + b.t + '"' + (sur ? ' inauthor:' + sur : ''), 10).then(function (j) {
+    var ok = ((j && j.items) || []).map(function (it) { return it.volumeInfo || {}; }).filter(function (v) {
+      var vt = tkey(v.title);
+      if (!gThumb(v) || !vt || !(vt.indexOf(tk) === 0 || tk.indexOf(vt) === 0)) return false;
+      return !sur || (v.authors || []).some(function (a) { return tkey(a).indexOf(sur) >= 0; });
+    });
+    var same = ok.filter(function (v) { return isbn && (v.industryIdentifiers || []).some(function (x) { return L.toIsbn13(x.identifier) === isbn; }); })[0];
+    if (same) return img(gThumb(same), 2, false, 60);
+    var pub = tkey(b.e);
+    ok.sort(function (x, y) {
+      function sc(v) { return (v.language === 'it' ? 2 : 0) + (pub && tkey(v.publisher).indexOf(pub) >= 0 ? 1 : 0); }
+      return sc(y) - sc(x);
+    });
+    return ok[0] ? img(gThumb(ok[0]), 4, true, 60) : null;
+  })));
+  // la migliore: stessa edizione prima di un'altra, grande prima di piccola; una grande della stessa edizione chiude subito la ricerca
+  return new Promise(function (res) {
+    var best = null, pending = jobs.length;
+    if (!pending) { res(null); return; }
+    jobs.forEach(function (p) {
+      p.then(function (x) {
+        if (x && (!best || x.rank < best.rank || (x.rank === best.rank && x.big && !best.big))) best = x;
+        if (--pending === 0 || (best && !best.alt && best.big)) res(best);
+      });
+    });
+  });
+}
+function openCoverCamera(id) { coverPhotoId = id; snapPhoto('Foto della copertina', '#fileCover').then(function (f) { if (f) coverFromFile(f); else coverPhotoId = null; }); }
+var covAskId = null;
+function askCoverPhoto(id, msg) { covAskId = id; $('#covMsg').textContent = msg; $('#toast').hidden = true; $('#covSheet').hidden = false; }
+function closeCovAsk() { $('#covSheet').hidden = true; covAskId = null; }
+$('#covShot').addEventListener('click', function () { var id = covAskId; closeCovAsk(); if (id) openCoverCamera(id); });
+$('#covLater').addEventListener('click', closeCovAsk);
+$('#covSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeCovAsk(); });
+async function coverTap(id) {
+  var b = get(id);
+  if (!b || covSearching[id]) return;
+  if (navigator.onLine === false) { askCoverPhoto(id, 'Sei senza rete: non posso cercarla online. Puoi fotografarla tu.'); return; }
+  covSearching[id] = true; refreshRow(id);
+  var r = null;
+  try { r = await findCover(b, 3500); } catch (e) {}
+  delete covSearching[id];
+  var x = get(id);
+  if (!x) return;
+  if (r && !smallImg(x)) {
+    var before = { img: x.img, imgL: x.imgL, nb: x.nb };
+    x.img = r.url; if (r.big) x.imgL = r.url; x.nb = false;
+    touch(); syncThumbs(); refreshRow(id);
+    if (r.alt) toast('Ho trovato la copertina di un\'altra edizione: controlla che vada bene.', { label: 'Non è questa', fn: function () {
+      var y = get(id); if (y) { Object.assign(y, before); touch(); syncThumbs(); refreshRow(id); } covNone[id] = true; openCoverCamera(id); } });
+    else toast('Copertina trovata.', { label: 'Usa una mia foto', fn: function () { openCoverCamera(id); } });
+    return;
+  }
+  refreshRow(id);
+  askCoverPhoto(id, 'Non ho trovato online la copertina di «' + (x.t || 'ISBN ' + x.i) + '». Puoi fotografarla tu.');
+}
+async function improveCovers() {
+  var todo = state.books.filter(function (b) { return !b.imgL && !coverURL[b.id] && !b.nb && (b.img || L.toIsbn13(b.i)); });
+  if (!todo.length) { toast('Non ci sono copertine da migliorare: per gli altri libri ho già controllato che non ne esista una più grande.'); return; }
+  if (!googleLeft(true)) { toast('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
+  if (navigator.onLine === false) { toast('Sei offline. Riprova quando c\'è connessione.'); return; }
+  var btn = $('#btnCovers'), done = 0, found = 0;
+  btn.disabled = true;
+  await Promise.all(todo.map(function (b) {
+    return coverPool(async function () {
+      delete noBig[b.id];
+      if (await probeCover(b.id)) found++;
+      btn.textContent = 'Cerco le copertine… ' + (++done) + '/' + todo.length;
+    });
+  }));
+  btn.disabled = false; btn.textContent = 'Cerca copertine più grandi';
+  renderList();
+  toast('Trovate ' + found + ' copertine grandi su ' + todo.length + '.' + (found < todo.length ? ' Per le altre puoi usare una tua foto: tocca la copertina e poi «Usa una mia foto».' : ''));
+}
+
+/* ---------- copertina in grande ---------- */
+var lbToken = 0, lbPushed = false, lbId = null;
+function lbButtons(b) {
+  var local = !!coverURL[b.id];
+  $('#lbPhoto').textContent = local ? 'Rifai la foto' : 'Usa una mia foto';
+  $('#lbReset').hidden = !local;
+  $('#lbReset').textContent = (b.imgL || b.img) ? 'Torna alla copertina scaricata' : 'Togli la mia foto';
+}
+function openCover(id) {
+  var b = get(id);
+  if (!b) return;
+  var src = bigImg(b);
+  if (!src) return;
+  lbId = id;
+  var tok = ++lbToken, img = $('#lbImg');
+  img.src = src;
+  $('#lbCap').textContent = [b.t || 'Senza titolo', b.a].filter(Boolean).join(' — ');
+  lbButtons(b);
+  var tryBig = !coverURL[id] && !b.imgL && !noBig[id] && !b.nb && !!(b.img || L.toIsbn13(b.i));
+  $('#lbNote').textContent = tryBig ? 'Cerco un\'immagine più grande…'
+    : (!coverURL[id] && !b.imgL && (b.img || b.nb) ? 'Non esiste una versione più grande: per una copertina migliore usa una tua foto.' : '');
+  $('#lightbox').hidden = false;
+  if (!lbPushed) { try { history.pushState({ lb: 1 }, ''); lbPushed = true; } catch (e) {} }
+  $('#lbClose').focus({ preventScroll: true });
+  if (tryBig) probeCover(id).then(function (ok) {
+    if (tok !== lbToken) return;
+    var x = get(id);
+    if (ok && x && x.imgL && !coverURL[id]) { img.src = x.imgL; $('#lbNote').textContent = ''; }
+    else if (!coverURL[id]) $('#lbNote').textContent = 'Non esiste una versione più grande: per una copertina migliore usa una tua foto.';
+  });
+}
+function closeCover(fromPop) {
+  if ($('#lightbox').hidden) return;
+  lbToken++;
+  $('#lightbox').hidden = true;
+  $('#lbImg').removeAttribute('src');
+  if (lbPushed && !fromPop) { lbPushed = false; try { history.back(); } catch (e) {} }
+  lbPushed = false;
+}
+$('#lbClose').addEventListener('click', function () { closeCover(false); });
+$('#lbPhoto').addEventListener('click', function (e) { e.stopPropagation(); openCoverCamera(lbId); });
+$('#lbReset').addEventListener('click', async function (e) {
+  e.stopPropagation();
+  var id = lbId, b = get(id);
+  if (!b) return;
+  try { await removeCover(id); } catch (err) { toast('Non riesco a togliere la foto.'); return; }
+  var src = bigImg(b);
+  if (!src) { closeCover(false); toast('Foto tolta.'); return; }
+  $('#lbImg').src = src; $('#lbNote').textContent = ''; lbButtons(b);
+});
+bindFile('#fileCover', function (f) { coverFromFile(f[0]); });
+async function coverFromFile(file) {
+  var f = [file];
+  var id = coverPhotoId; coverPhotoId = null;
+  if (!id || !get(id)) return;
+  try {
+    var canvas = await loadCanvas(f[0], 1400);
+    await saveCoverCanvas(id, canvas);
+    if (!$('#lightbox').hidden && lbId === id) { $('#lbImg').src = coverURL[id]; $('#lbNote').textContent = '✓ Copertina salvata sul telefono (e nel backup).'; lbButtons(get(id)); }
+    else toast('Copertina salvata sul telefono (e nel backup).');
+  } catch (e) { toast('Non riesco a salvare la foto sul telefono.'); }
+}
+$('#btnCovers').addEventListener('click', improveCovers);
+$('#lightbox').addEventListener('click', function (e) { if (e.target === e.currentTarget || e.target.id === 'lbCap' || e.target.id === 'lbNote') closeCover(false); });
+window.addEventListener('popstate', function () { if (!$('#lightbox').hidden) { lbPushed = false; closeCover(true); } });
+
+function setRead(id, what, v) {
+  var b = get(id);
+  if (!b) return;
+  if (what === 'rs') {
+    b.rs = b.rs === v ? '' : v;
+    if (b.rs === 'ok' && !b.rd) b.rd = today();
+  } else {
+    var n = parseInt(v, 10) || 0;
+    b.rt = b.rt === n ? 0 : n;
+  }
+  touch(); refreshRow(id); updateSummary();
+  var el = rowEl(id), f = el && el.querySelector('[data-act="' + what + '"][data-v="' + v + '"]');
+  if (f) f.focus({ preventScroll: true });
+}
+
+/* ---------- pannello Filtri (a sinistra): si apre dal pulsante o trascinando il pollice dal bordo sinistro verso destra ---------- */
+var NONE = '\u0001';
+var READ_TXT = { da: 'Da leggere', in: 'In lettura', ok: 'Letti', no: 'Non indicato' };
+var FLT_TXT = { notmine: 'Che non hai', qs: 'Con citazioni', fav: 'Preferiti', loan: 'In prestito', gone: 'Venduti e regalati', guess: 'Da verificare', dup: 'Copie e doppioni' };
+function facetKey(s) { var k = L.norm(String(s || '').trim().replace(/\s+/g, ' ')); return k || NONE; }
+/* scaffali o generi del tab corrente: chiave normalizzata, nome piu' usato, quanti libri */
+function facets(field) {
+  var m = {};
+  tabBooks().forEach(function (b) {
+    var k = facetKey(b[field]);
+    var e = m[k] || (m[k] = { k: k, n: 0, names: {} });
+    e.n++;
+    if (k !== NONE) e.names[b[field].trim()] = (e.names[b[field].trim()] || 0) + 1;
+  });
+  return Object.keys(m).map(function (k) {
+    var e = m[k], best = '';
+    Object.keys(e.names).forEach(function (s) { if (!best || e.names[s] > e.names[best]) best = s; });
+    return { k: k, n: e.n, name: k === NONE ? '' : best };
+  });
+}
+function facetName(field, k) { if (k === NONE) return field === 'sh' ? 'senza scaffale' : 'senza genere'; var f = facets(field).find(function (x) { return x.k === k; }); return f ? f.name : ''; }
+var frFlt = '';                 // filtro «ricevuti da»
+var drawerMore = {};            // scaffali / generi: elenco completo aperto con «Altri…»
+function activeCount() { return (flt ? 1 : 0) + (frFlt ? 1 : 0) + (readFlt && tab === 'lib' ? 1 : 0) + (shFlt ? 1 : 0) + (genFlt ? 1 : 0) + (autFlt ? 1 : 0) + (edFlt ? 1 : 0); }
+function authorsOf(b) { return String(b.a || '').split(/\s*[,;]\s*/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 1; }); }
+function clearFilters() {
+  flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = '';
+  q = ''; $('#q').value = ''; collapseCards();
+  renderList(); updateSummary();
+  if (drawerOpen) renderDrawer();
+}
+function updateActiveFilters() {
+  var o = '';
+  function chip(k, txt) { o += '<button class="chip on" data-clear="' + k + '" aria-label="Togli il filtro ' + esc(txt) + '">' + esc(txt) + '<span class="x" aria-hidden="true">×</span></button>'; }
+  if (flt && FLT_TXT[flt]) chip('flt', FLT_TXT[flt]);   // anche «In prestito» e «Da verificare»: il filtro usato si vede sempre (16/11/2026)
+  if (frFlt) chip('fr', 'Ricevuti da ' + frFlt);
+  if (readFlt && tab === 'lib') chip('read', READ_TXT[readFlt]);
+  if (shFlt) chip('sh', shFlt === NONE ? 'Senza scaffale' : 'Scaffale: ' + facetName('sh', shFlt));
+  if (genFlt) chip('gen', genFlt === NONE ? 'Senza genere' : 'Genere: ' + facetName('gen', genFlt));
+  if (autFlt) chip('aut', 'Autore: ' + autName);
+  if (edFlt) chip('ed', 'Casa editrice: ' + facetName('e', edFlt));
+  $('#activeFlt').innerHTML = o;
+  var n = activeCount(), bd = $('#fltBadge');
+  bd.hidden = !n; bd.textContent = n;
+  $('#btnFilters').setAttribute('aria-pressed', n ? 'true' : 'false');
+  $('#edgeTab').classList.toggle('on', !!n);
+  $('#edgeTab').setAttribute('aria-label', 'Apri il menu' + (n ? ' (' + n + (n === 1 ? ' attivo)' : ' attivi)') : ''));
+  $('#btnFilters').setAttribute('aria-label', 'Filtri e ordine' + (n ? ' (' + n + (n === 1 ? ' filtro attivo)' : ' filtri attivi)') : ''));
+}
+$('#activeFlt').addEventListener('click', function (e) {
+  var x = e.target.closest('[data-clear]');
+  if (!x) return;
+  var k = x.dataset.clear;
+  if (k === 'flt') flt = ''; else if (k === 'read') readFlt = ''; else if (k === 'sh') shFlt = ''; else if (k === 'gen') genFlt = '';
+  else if (k === 'aut') { autFlt = ''; autName = ''; } else if (k === 'ed') edFlt = ''; else if (k === 'fr') frFlt = '';
+  collapseCards(); renderList(); updateSummary();
+});
+function renderDrawer() {
+  var books = tabBooks(), lib = tab === 'lib', o = '';
+  /* filtri come «pillole» raggruppate per tema; il numero accanto dice quanti libri ci sono */
+  function pill(group, val, label, n, cur, extra) {
+    return '<button type="button" class="dpill' + (extra || '') + '" data-g="' + group + '" data-v="' + esc(val) + '" aria-pressed="' + (cur === val ? 'true' : 'false') + '">' + esc(label) + (n != null ? '<span class="n">' + n + '</span>' : '') + '</button>';
+  }
+  var cnt = { fav: 0, loan: 0, gone: 0, guess: 0, dup: 0, qs: 0 }, dm = L.analyzeDups(dupPool()), frs = {};
+  books.forEach(function (b) { if (b.qs && b.qs.length) cnt.qs++; if (b.fav) cnt.fav++; if (b.fr) frs[b.fr] = (frs[b.fr] || 0) + 1; if (b.p) cnt.loan++; if (b.xs) cnt.gone++; if (b.g.length) cnt.guess++; if (dm[b.id]) cnt.dup++; });
+  o += '<h3>' + (lib ? 'Libri' : 'Desideri') + '</h3><div class="dpills">' + pill('flt', '', lib ? 'Tutti' : 'Tutti', books.length, ['guess', 'dup'].indexOf(flt) >= 0 ? null : flt);
+  (lib ? ['fav', 'loan', 'qs', 'gone'] : ['qs']).forEach(function (k) {
+    if (cnt[k] || flt === k || k === 'loan' || k === 'fav') o += pill('flt', k, FLT_TXT[k], cnt[k], flt);
+  });
+  o += '</div>';
+  if (lib) {
+    var rc = { da: 0, in: 0, ok: 0, no: 0 };
+    books.forEach(function (b) { rc[b.rs || 'no']++; });
+    o += '<h3>Lettura</h3><div class="dpills">' + pill('read', '', 'Tutti', null, readFlt);
+    ['da', 'in', 'ok', 'no'].forEach(function (k) { if (rc[k] || readFlt === k || k !== 'no') o += pill('read', k, READ_TXT[k], rc[k], readFlt); });
+    o += '</div>';
+  }
+  [['sh', 'Scaffale', 'Senza scaffale', shFlt], ['gen', 'Genere', 'Senza genere', genFlt]].forEach(function (f) {
+    var list = facets(f[0]), named = list.filter(function (x) { return x.k !== NONE; });
+    if (!named.length && !f[3]) return;
+    named.sort(f[0] === 'sh' ? function (x, y) { return coll.compare(x.name, y.name); } : function (x, y) { return y.n - x.n || coll.compare(x.name, y.name); });
+    var none = list.find(function (x) { return x.k === NONE; });
+    var all = named.concat(none ? [none] : []), MAXP = 8, open = drawerMore[f[0]] || all.length <= MAXP + 2;
+    var shown = open ? all : all.slice(0, MAXP);
+    if (!open && f[3] && !shown.some(function (x) { return x.k === f[3]; })) { var cur = all.find(function (x) { return x.k === f[3]; }); if (cur) shown = shown.concat([cur]); }   // quello scelto resta visibile
+    o += '<h3>' + f[1] + '</h3><div class="dpills">' + shown.map(function (x) {
+      return pill(f[0], x.k, x.k === NONE ? f[2] : x.name, x.n, f[3], x.k === NONE ? ' none-sh' : '');
+    }).join('') + (open ? '' : '<button type="button" class="dpill more" data-g="more" data-v="' + f[0] + '">Altri ' + (all.length - shown.length) + '…</button>') + '</div>';
+  });
+  var frNames = Object.keys(frs).sort(coll.compare);
+  if (frNames.length || frFlt) o += '<h3>Ricevuti da</h3><div class="dpills">' + frNames.map(function (n) {
+    return '<button type="button" class="dpill" data-g="fr" data-v="' + esc(n) + '" aria-pressed="' + (frFlt === n ? 'true' : 'false') + '">' + esc(n) + '<span class="n">' + frs[n] + '</span></button>';
+  }).join('') + '</div>';
+  /* da sistemare: tenuti a parte, in fondo, perche' non servono a sfogliare ma a mettere ordine */
+  var fix = ['guess', 'dup'].filter(function (k) { return cnt[k] || flt === k; });
+  if (fix.length) o += '<h3>Da sistemare</h3><div class="dpills">' + fix.map(function (k) { return pill('flt', k, FLT_TXT[k], cnt[k], flt, ' fix'); }).join('') + '</div>';
+  var pre = '';
+  if (autFlt) pre += '<p class="dq"><span>Autore: ' + esc(autName) + '</span><button type="button" class="ico" data-g="aut" data-v="" aria-label="Togli il filtro autore">×</button></p>';
+  if (edFlt) pre += '<p class="dq"><span>Casa editrice: ' + esc(facetName('e', edFlt)) + '</span><button type="button" class="ico" data-g="ed" data-v="" aria-label="Togli il filtro casa editrice">×</button></p>';
+  o = pre + o;
+  var body = $('#drawerBody'), st = body.scrollTop;
+  $('#drawerFlt').innerHTML = o;
+  body.scrollTop = st;
+  $('#sort').value = sortBy;
+  paintMenuHome();
+  $('#drawerHint').hidden = !!settings.swiped;
+  updateDrawerFoot();
+}
+function updateDrawerFoot() {
+  var n = visible().length;
+  $('#drawerShow').textContent = n === 1 ? 'Mostra 1 libro' : 'Mostra ' + n + ' libri';
+  $('#drawerReset').disabled = !activeCount() && !q;
+  $('#drawerQ').hidden = !q;
+  $('#drawerQTxt').textContent = 'Ricerca: «' + q + '»';
+}
+$('#drawerFlt').addEventListener('click', function (e) {
+  var x = e.target.closest('[data-g]');
+  if (!x) return;
+  var g = x.dataset.g, v = x.dataset.v;
+  if (g === 'quotes') { closeDrawer(); openAllQuotes(); return; }
+  if (g === 'more') { drawerMore[v] = true; renderDrawer(); return; }
+  if (g === 'flt') flt = flt === v ? '' : v;
+  else if (g === 'read') readFlt = readFlt === v ? '' : v;
+  else if (g === 'sh') shFlt = shFlt === v ? '' : v;
+  else if (g === 'gen') genFlt = genFlt === v ? '' : v;
+  else if (g === 'fr') frFlt = frFlt === v ? '' : v;
+  else if (g === 'aut') { autFlt = ''; autName = ''; }
+  else if (g === 'ed') edFlt = '';
+  collapseCards(); renderList(); updateSummary(); renderDrawer();
+});
+
+var drawerOpen = false, drawerPushed = false, drawerTimer = null, drawerReturn = null;
+var drawerEl = $('#drawer'), scrimEl = $('#drawerScrim');
+function drawerWidth() { return drawerEl.getBoundingClientRect().width || 320; }
+function showDrawerEls() {
+  clearTimeout(drawerTimer);
+  drawerEl.hidden = false; scrimEl.hidden = false; drawerEl.removeAttribute('inert');
+}
+/* posizione durante il trascinamento: px = quanto pannello si vede */
+function dragDrawer(px) {
+  var w = drawerWidth();
+  px = Math.max(0, Math.min(w, px));
+  drawerEl.style.transition = 'none'; scrimEl.style.transition = 'none';
+  drawerEl.style.transform = 'translateX(' + (px - w) + 'px)';
+  scrimEl.style.opacity = String(px / w);
+}
+function releaseDrawerStyles() {
+  drawerEl.style.transition = ''; scrimEl.style.transition = '';
+  drawerEl.style.transform = ''; scrimEl.style.opacity = '';
+}
+var drawerTab = 'opt', drawerSub = false;      // 'opt' = pagina principale del menu, 'flt' = filtri e ordine
+function setDrawerTab(t) {
+  drawerTab = t === 'flt' ? 'flt' : 'opt';
+  $('#drawerH').textContent = drawerTab === 'flt' ? 'Filtri e ordine' : 'Menu';
+  $('#drawerBack').hidden = drawerTab !== 'flt';
+  $('#drawerFilters').hidden = drawerTab !== 'flt';
+  $('#drawerOpts').hidden = drawerTab !== 'opt';
+  $('#drawerFoot').hidden = drawerTab !== 'flt';
+  if (drawerTab === 'opt') { $('#optBackupHint').textContent = backupHint(); renderVersion(); checkVersion(); paintMenuHome(); }
+  $('#drawerBody').scrollTop = 0;
+}
+var SORT_TXT = { recent: 'dai più recenti', titolo: 'per titolo', autore: 'per autore', editore: 'per casa editrice', anno: 'per anno', scaffale: 'per scaffale', voto: 'per voto', letti: 'letti di recente' };
+function paintMenuHome() {                        // la pagina principale riassume filtri e ordine, senza mostrarli
+  var n = activeCount(), lib = tab === 'lib';
+  var what = n ? (n === 1 ? '1 filtro attivo' : n + ' filtri attivi') : (lib ? 'Tutti i libri' : 'Tutti i desideri');
+  $('#goFltTxt').textContent = what + (q ? ', con ricerca' : '') + ', ' + (SORT_TXT[sortBy] || 'dai più recenti');
+  $('#goFltN').hidden = !n; $('#goFltN').textContent = n;
+  $('#goFilters').classList.toggle('on', !!(n || q));
+  var nq = allQuotes().length;
+  $('#goQuotes').hidden = !nq; $('#goQTxt').textContent = nq === 1 ? '1 citazione salvata' : nq + ' citazioni salvate';
+  emit('menu');
+}
+function goFilters() {
+  setDrawerTab('flt'); renderDrawer();
+  if (!drawerSub) { try { history.pushState({ drawer: 1, sub: 1 }, ''); drawerSub = true; } catch (e) {} }   // Indietro torna al menu
+}
+function backupHint() {
+  var last = settings.lastBackup;
+  return last ? 'Ultimo backup: ' + new Date(last).toLocaleDateString('it-IT') + '.' : 'Non hai ancora fatto un backup: i libri sono solo su questo telefono.';
+}
+function openDrawer(t, reuse) {
+  if (t === 'opt' || t === 'flt') setDrawerTab(t);
+  else if (!drawerOpen) setDrawerTab('opt');          // dal bordo o dalla linguetta: il menu, non direttamente i filtri
+  if (reuse) { try { history.replaceState({ drawer: 1 }, ''); drawerPushed = true; } catch (e) {} }
+  if (!drawerOpen && !reuse && typeof setsOpen === 'function') setsOpen(false);   // il Menu si apre con le impostazioni chiuse (tornando da una di esse restano aperte)
+  if (!drawerOpen) { renderDrawer(); drawerReturn = document.activeElement; }
+  showDrawerEls();
+  void drawerEl.offsetWidth;                         // parte dalla posizione attuale
+  releaseDrawerStyles();
+  drawerEl.classList.add('open'); scrimEl.classList.add('open');
+  document.body.classList.add('drawer-open');
+  $('#btnFilters').setAttribute('aria-expanded', 'true');
+  if (!drawerOpen) {
+    drawerOpen = true;
+    if (!drawerPushed) { try { history.pushState({ drawer: 1 }, ''); drawerPushed = true; } catch (e) {} }   // il gesto Indietro chiude il pannello
+    setTimeout(function () { try { $('#drawerX').focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+}
+function closeDrawer(fromPop) {
+  var was = drawerOpen;
+  drawerOpen = false;
+  releaseDrawerStyles();
+  drawerEl.classList.remove('open'); scrimEl.classList.remove('open');
+  document.body.classList.remove('drawer-open');
+  $('#btnFilters').setAttribute('aria-expanded', 'false');
+  clearTimeout(drawerTimer);
+  drawerTimer = setTimeout(function () { if (!drawerOpen) { drawerEl.hidden = true; scrimEl.hidden = true; drawerEl.setAttribute('inert', ''); } }, 280);
+  if (drawerPushed && !fromPop) { drawerPushed = false; try { if (drawerSub) history.go(-2); else history.back(); } catch (e) {} }
+  drawerSub = false;
+  if (was && drawerReturn && drawerReturn.focus && drawerEl.contains(document.activeElement)) { try { drawerReturn.focus({ preventScroll: true }); } catch (e) {} }
+}
+$('#btnFilters').addEventListener('click', function () { drawerOpen ? closeDrawer() : openDrawer('flt'); });
+$('#edgeTab').addEventListener('click', function () { openDrawer('opt'); });
+$('#btnOpts').addEventListener('click', function () { openDrawer('opt'); setsOpen(true); });   // l'ingranaggio porta dritto alle impostazioni
+/* menu: le impostazioni stanno tutte sotto «Impostazioni», chiuse finche' non le apri (Piero, 16/11/2026) */
+var setsShown = false;
+function setsOpen(on) {
+  setsShown = !!on;
+  $('#setList').hidden = !setsShown;
+  $('#goSettings').setAttribute('aria-expanded', setsShown ? 'true' : 'false');
+  $('#goSettings').classList.toggle('on', setsShown);
+}
+$('#goSettings').querySelector('.dset-i').innerHTML = icon('gear');
+$('#goSettings').addEventListener('click', function () {
+  setsOpen(!setsShown);
+  if (setsShown) setTimeout(function () { var l = $('#setList'); if (l.scrollIntoView) l.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 30);
+});
+$('#goFilters').addEventListener('click', goFilters);
+$('#drawerBack').addEventListener('click', function () { if (drawerSub) history.back(); else setDrawerTab('opt'); });
+$('#goQuotes').addEventListener('click', function () { closeDrawer(); openAllQuotes(); });
+$('#goStats').addEventListener('click', function () { closeDrawer(); openStats(); });
+window.addEventListener('popstate', function (e) { if (drawerOpen && drawerSub && e.state && e.state.drawer && !e.state.sub) { drawerSub = false; setDrawerTab('opt'); } });
+$('#drawerOpts').addEventListener('click', function (e) {
+  var x = e.target.closest('[data-sec]');
+  if (!x) return;
+  if (x.dataset.sec === 'export') { closeDrawer(); openExport(); return; }
+  var had = drawerPushed; drawerPushed = false;
+  closeDrawer(true);
+  openOptions(x.dataset.sec, had);
+});
+
+/* ---------- Aspetto: tema automatico / chiaro / scuro, colori e caratteri ---------- */
+var darkMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function applyLook(rerender) {
+  var root = document.documentElement;
+  root.setAttribute('data-look', settings.look);
+  if (settings.theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', settings.theme);
+  root.setAttribute('data-pal', settings.pal); root.setAttribute('data-ft', settings.ft); root.setAttribute('data-fb', settings.fb);
+  var dark = settings.theme === 'dark' || (settings.theme === 'auto' && darkMQ && darkMQ.matches);
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m && !root.hasAttribute('data-splash')) m.setAttribute('content', PALS[settings.pal][dark ? 1 : 0]);   // durante l'apertura la barra resta verde
+  ['theme', 'pal', 'ft', 'fb', 'viewDef'].forEach(function (k) {
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="' + k + '"]'), function (r) { r.checked = r.value === settings[k]; });
+  });
+  $('#icoLoan').innerHTML = icon('loan');
+  if (rerender) { renderList(); updateSummary(); }
+}
+if (darkMQ) { var onDark = function () { if (settings.theme === 'auto') applyLook(false); }; if (darkMQ.addEventListener) darkMQ.addEventListener('change', onDark); else if (darkMQ.addListener) darkMQ.addListener(onDark); }
+document.addEventListener('change', function (e) {
+  var t = e.target;
+  if (t.name === 'theme') { settings.theme = t.value === 'light' || t.value === 'dark' ? t.value : 'auto'; saveSettings(); applyLook(true); }
+  else if (t.name === 'pal' && PALS[t.value]) { settings.pal = t.value; saveSettings(); applyLook(false); }
+  else if (t.name === 'ft' && FONTS_T.indexOf(t.value) >= 0) { settings.ft = t.value; saveSettings(); applyLook(false); }
+  else if (t.name === 'fb' && FONTS_B.indexOf(t.value) >= 0) { settings.fb = t.value; saveSettings(); applyLook(false); }
+  else if (t.name === 'viewDef') { settings.viewDef = t.value === 'list' ? 'list' : 'grid'; setView(settings.viewDef); collapseCards(); renderList(); toast(settings.viewDef === 'grid' ? 'All\'apertura: copertine.' : 'All\'apertura: elenco.'); }
+});
+$('#lookReset').addEventListener('click', function () {
+  var before = { theme: settings.theme, pal: settings.pal, ft: settings.ft, fb: settings.fb };
+  settings.theme = 'light'; settings.pal = 'bosco'; settings.ft = 'literata'; settings.fb = 'plex'; saveSettings(); applyLook(true);
+  toast('Aspetto predefinito: tema chiaro, verde, Literata.', { label: 'Annulla', fn: function () { Object.assign(settings, before); saveSettings(); applyLook(true); } });
+});
+
+/* ---------- versione: quale stai usando e se ce n'e' una piu' nuova ---------- */
+var latestVer = null, verChecking = null;
+var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
+function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
+function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
+function buildText(b) { var m = /^(\d{4})-(\d\d)-(\d\d) (\d\d:\d\d)$/.exec(b || ''); return m ? m[3] + '/' + m[2] + ' alle ' + m[4] : b; }
+function itLongDate(d) { try { return new Date(d + 'T12:00:00').toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return d; } }
+function renderVersion() {
+  $('#verNum').textContent = 'Versione ' + APP_VERSION.v;
+  $('#verDate').textContent = 'del ' + itLongDate(APP_VERSION.date) + (COPIA && BUILD.t ? ' · ' + COPIA + ' ' + (BUILD.n ? BUILD.n + ' ' : '') + 'del ' + buildText(BUILD.t) : '');
+  $('#verNote').textContent = COPIA && BUILD.note ? 'Ultime novità ' + copiaDi() + ': ' + BUILD.note : 'Ultime novità: ' + APP_VERSION.note;
+  var st = $('#verState'), up = $('#verUpdate');
+  if (verNewer(latestVer)) {
+    st.textContent = latestVer.v > APP_VERSION.v ? 'È disponibile la versione ' + latestVer.v + ' del ' + itLongDate(latestVer.date) + '.' : 'C\'è un aggiornamento ' + copiaDi() + ((latestVer.copia || latestVer.prova) ? ' (' + (latestVer.copia || latestVer.prova) + ', del ' : ' (del ') + buildText(latestVer.build) + ').';
+    st.className = 'ver-state new'; up.hidden = false;
+  } else if (latestVer) { st.textContent = '✓ È l\'ultima versione.'; st.className = 'ver-state ok'; up.hidden = true; }
+  else if (navigator.onLine === false) { st.textContent = 'Senza rete: non posso controllare se ce n\'è una più nuova.'; st.className = 'ver-state'; up.hidden = true; }
+  else { st.textContent = 'Controllo se ce n\'è una più nuova…'; st.className = 'ver-state'; up.hidden = true; }
+  $('#verApp').textContent = 'Versione ' + APP_VERSION.v + ' del ' + itLongDate(APP_VERSION.date) + (latestVer && latestVer.v > APP_VERSION.v ? ' (c\'è la ' + latestVer.v + ': aggiorna dal menu)' : '') + '.';
+}
+function checkVersion() {
+  if (navigator.onLine === false) { renderVersion(); return Promise.resolve(null); }
+  if (verChecking) return verChecking;
+  verChecking = fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (j && j.v) latestVer = { v: +j.v, date: String(j.date || ''), note: String(j.note || ''), build: String(j.build || ''), prova: String(j.prova || ''), copia: String(j.copia || '') };
+    return latestVer;
+  }).catch(function () { return null; }).then(function (x) { verChecking = null; renderVersion(); return x; });
+  return verChecking;
+}
+/* Aggiorna: chiede di nuovo i file al sito saltando la memoria del telefono, poi ricarica */
+async function updateNow() {
+  var b = $('#verUpdate');
+  b.disabled = true; b.textContent = 'Aggiorno…';
+  try {
+    var reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if (reg) await reg.update().catch(function () {});
+    var files = ['./', 'index.html', 'app.js', 'lib.js', 'style.css', 'sw.js', 'manifest.json', 'REGISTRO_MODIFICHE.md'];
+    Array.prototype.forEach.call(document.querySelectorAll('script[src], link[rel="stylesheet"][href]'), function (el) {   // anche i moduli (wrap.js, layout.css…)
+      var u = el.getAttribute('src') || el.getAttribute('href');
+      if (u && !/^(https?:)?\/\//.test(u) && files.indexOf(u) < 0) files.push(u);
+    });
+    await Promise.all(files.map(function (u) { return fetch(u, { cache: 'reload' }).catch(function () {}); }));
+  } catch (e) {}
+  location.reload();
+}
+$('#verUpdate').addEventListener('click', updateNow);
+
+/* Pagina delle opzioni: una sezione alla volta, con «‹» per tornare al menu e il tasto Indietro del telefono per chiudere */
+var optOpen = false, optPushed = false;
+function openOptions(sec, reuse) {
+  try { paintLensState(); } catch (e) {}                 // stato dell'obiettivo con la luce, sempre aggiornato
+  emit('options', sec);
+  paintSumOpts();
+  var found = false;
+  Array.prototype.forEach.call(document.querySelectorAll('#optSheet .opt-sec'), function (s) {
+    var on = s.dataset.sec === sec; s.hidden = !on;
+    if (on) { found = true; $('#optH').textContent = s.dataset.title; }
+  });
+  if (!found) return;
+  $('#optSheet').hidden = false; optOpen = true;
+  $('#optSheet .sheet-in').scrollTop = 0;
+  if (reuse) { try { history.replaceState({ opt: 1 }, ''); optPushed = true; } catch (e) {} }
+  else if (!optPushed) { try { history.pushState({ opt: 1 }, ''); optPushed = true; } catch (e) {} }
+  if (sec === 'search') renderSvc();
+  if (sec === 'share') renderSvcShare();
+  if (sec === 'app') { renderVersion(); checkVersion(); updateInstallUi(); }
+}
+function closeOptions(fromPop) {
+  if (!optOpen) return;
+  $('#optSheet').hidden = true; optOpen = false;
+  if (optPushed && !fromPop) { optPushed = false; try { history.back(); } catch (e) {} }
+  else optPushed = false;
+}
+$('#optClose').addEventListener('click', function () { closeOptions(); });
+$('#optBack').addEventListener('click', function () {
+  var had = optPushed; optPushed = false;
+  $('#optSheet').hidden = true; optOpen = false;
+  openDrawer('opt', had);
+});
+window.addEventListener('popstate', function (e) { if (optOpen && !(e.state && (e.state.opt || e.state.log))) { optPushed = false; closeOptions(true); } });
+$('#drawerX').addEventListener('click', function () { closeDrawer(); });
+$('#drawerShow').addEventListener('click', function () { closeDrawer(); window.scrollTo({ top: 0 }); });
+$('#drawerReset').addEventListener('click', clearFilters);
+$('#drawerQX').addEventListener('click', function () { q = ''; $('#q').value = ''; renderList(); updateSummary(); renderDrawer(); });
+scrimEl.addEventListener('click', function () { closeDrawer(); });
+window.addEventListener('popstate', function (e) { if (drawerOpen && !(e.state && e.state.drawer)) { drawerPushed = false; closeDrawer(true); } });
+
+/* Il gesto: dal bordo sinistro (o da un punto qualsiasi della meta' sinistra, perche' con la navigazione a gesti
+   di Android il bordo e' riservato a Indietro) si trascina verso destra; il pannello segue il pollice.
+   Per chiudere: trascina verso sinistra, tocca fuori o usa Indietro. */
+var swipe = null;
+function swipeBlocked(target) {
+  if (scanning || !$('#lightbox').hidden || document.querySelector('.sheet:not([hidden])')) return true;
+  return !!(target.closest && target.closest('input, textarea, select, [contenteditable="true"], .chips, .cand, video, .lightbox, [data-noswipe]'));   // [data-noswipe]: elementi che scorrono da soli (avvisi della disposizione A)
+}
+document.addEventListener('touchstart', function (e) {
+  swipe = null;
+  if (e.touches.length !== 1) return;
+  var t = e.touches[0];
+  if (drawerOpen) {
+    if (e.target.closest('#drawer, #drawerScrim') && !e.target.closest('select')) swipe = { mode: 'close', x0: t.clientX, y0: t.clientY, dir: 0, px: drawerWidth() };
+    return;
+  }
+  if (t.clientX > window.innerWidth * 0.5 || swipeBlocked(e.target)) return;
+  swipe = { mode: 'open', x0: t.clientX, y0: t.clientY, dir: 0, px: 0 };
+}, { passive: true });
+document.addEventListener('touchmove', function (e) {
+  if (!swipe || e.touches.length !== 1) return;
+  var t = e.touches[0], now = Date.now();
+  var dx = swipe.mode === 'open' ? t.clientX - swipe.x0 : swipe.x0 - t.clientX, dy = t.clientY - swipe.y0;
+  if (!swipe.dir) {
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+    if (dx > 0 && dx > Math.abs(dy) * 1.5) {
+      swipe.dir = 1; swipe.base = dx; swipe.lt = now; swipe.lx = dx; swipe.v = 0;
+      if (swipe.mode === 'open') { renderDrawer(); drawerReturn = document.activeElement; showDrawerEls(); }
+    } else { swipe = null; return; }
+  }
+  var d = dx - swipe.base, w = drawerWidth();
+  if (now > swipe.lt) { swipe.v = (dx - swipe.lx) / (now - swipe.lt); swipe.lt = now; swipe.lx = dx; }
+  swipe.px = swipe.mode === 'open' ? Math.min(w, d) : Math.max(0, w - d);
+  dragDrawer(swipe.px);
+}, { passive: true });
+function endSwipe(cancel) {
+  var s = swipe; swipe = null;
+  if (!s || !s.dir) return;
+  var w = drawerWidth();
+  if (s.mode === 'open') {
+    if (!cancel && (s.px > w * 0.3 || s.v > 0.35)) {
+      openDrawer();
+      if (!settings.swiped) { settings.swiped = true; saveSettings(); $('#drawerHint').hidden = true; }
+    } else { releaseDrawerStyles(); closeDrawer(true); }
+  } else {
+    if (!cancel && (s.px < w * 0.7 || s.v > 0.35)) closeDrawer();
+    else openDrawer();
+  }
+}
+document.addEventListener('touchend', function () { endSwipe(false); }, { passive: true });
+document.addEventListener('touchcancel', function () { endSwipe(true); }, { passive: true });
+
+/* ---------- suggerimenti per scaffale, genere e «a chi» (al posto dell'elenco a tendina del browser) ---------- */
+var sugg = { el: null, input: null, k: '', idx: -1 };
+function suggKey(input) {
+  if (input.id === 'loanWho') return loanKind === 's' ? '' : 'p';
+  var k = input.dataset && input.dataset.k;
+  return (k === 'sh' || k === 'gen' || k === 'se') && input.closest('#list') && !input.closest('[data-ex]') ? k : '';
+}
+function suggValues(k, input) {
+  var m = {};
+  state.books.forEach(function (b) {
+    var vals = k === 'p' ? [b.p, b.xa] : [b[k]];
+    vals.forEach(function (v) { v = String(v || '').trim(); if (!v) return; var key = L.norm(v); (m[key] || (m[key] = { v: v, n: 0 })).n++; });
+  });
+  return Object.keys(m).map(function (key) { return m[key]; }).sort(function (x, y) { return y.n - x.n || coll.compare(x.v, y.v); });
+}
+function hideSugg() {
+  if (sugg.el) sugg.el.remove();
+  if (sugg.input) sugg.input.setAttribute('aria-expanded', 'false');
+  sugg = { el: null, input: null, k: '', idx: -1 };
+}
+function showSugg(input) {
+  var k = suggKey(input);
+  if (!k) { hideSugg(); return; }
+  var cur = L.norm(input.value.trim());
+  var list = suggValues(k, input).filter(function (x) { var n = L.norm(x.v); return n !== cur && (!cur || n.indexOf(cur) >= 0); }).slice(0, 8);
+  if (sugg.input !== input) hideSugg();
+  if (!list.length) { if (sugg.el) sugg.el.remove(); sugg.el = null; input.setAttribute('aria-expanded', 'false'); return; }
+  var box = sugg.el || document.createElement('div');
+  box.className = 'sugg'; box.id = 'suggBox'; box.setAttribute('role', 'listbox');
+  box.innerHTML = list.map(function (x) { return '<button type="button" role="option" tabindex="-1" data-v="' + esc(x.v) + '">' + esc(x.v) + '<span class="n">' + x.n + '</span></button>'; }).join('');
+  if (!sugg.el) {
+    (input.closest('.f, .field') || input.parentNode).appendChild(box);
+    box.addEventListener('pointerdown', function (e) { e.preventDefault(); });        // il campo resta attivo
+    box.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    box.addEventListener('click', function (e) { var o = e.target.closest('[data-v]'); if (o) { e.preventDefault(); pickSugg(o.dataset.v); } });
+  }
+  input.setAttribute('aria-expanded', 'true'); input.setAttribute('aria-controls', 'suggBox'); input.setAttribute('aria-autocomplete', 'list');
+  sugg = { el: box, input: input, k: k, idx: -1 };
+}
+function pickSugg(v) {
+  var input = sugg.input;
+  hideSugg();
+  if (!input) return;
+  input.value = v;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+document.addEventListener('focusin', function (e) { var t = e.target; if (t && t.tagName === 'INPUT' && suggKey(t)) showSugg(t); });
+/* mentre scrivi: niente barra in basso (la tastiera la spingerebbe sopra il campo) e il campo resta in vista */
+var typingT = 0;
+function isTyping(t) { return t && t.closest && !!t.closest('#list') && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || (t.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|file|range|color)$/.test(t.type))); }
+function showField(t) { if (t && document.activeElement === t && t.closest('#list')) { try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { t.scrollIntoView(); } } }
+document.addEventListener('focusin', function (e) {
+  if (!isTyping(e.target)) return;
+  clearTimeout(typingT); document.body.classList.add('typing');
+  var t = e.target; setTimeout(function () { showField(t); }, 350);     // dopo che la tastiera si e' aperta
+});
+document.addEventListener('focusout', function (e) {
+  if (!isTyping(e.target)) return;
+  clearTimeout(typingT); typingT = setTimeout(function () { if (!isTyping(document.activeElement)) document.body.classList.remove('typing'); }, 150);
+});
+function typingCheck() { if (!isTyping(document.activeElement)) document.body.classList.remove('typing'); }
+if (window.visualViewport) window.visualViewport.addEventListener('resize', function () { var t = document.activeElement; if (isTyping(t)) showField(t); else typingCheck(); });
+document.addEventListener('pointerdown', function () { setTimeout(typingCheck, 0); }, true);     // campo sparito senza perdere il fuoco: la barra torna
+document.addEventListener('input', function (e) { var t = e.target; if (t && t.tagName === 'INPUT' && suggKey(t)) showSugg(t); });
+document.addEventListener('focusout', function (e) { if (sugg.input && e.target === sugg.input) setTimeout(function () { if (sugg.input && document.activeElement !== sugg.input) hideSugg(); }, 120); });
+document.addEventListener('keydown', function (e) {
+  if (!sugg.el || e.target !== sugg.input) return;
+  var opts = sugg.el.querySelectorAll('[data-v]');
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    sugg.idx = (sugg.idx + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length;
+    Array.prototype.forEach.call(opts, function (o, i) { o.setAttribute('aria-selected', i === sugg.idx ? 'true' : 'false'); });
+  } else if (e.key === 'Enter' && sugg.idx >= 0) { e.preventDefault(); e.stopPropagation(); pickSugg(opts[sugg.idx].dataset.v); }
+  else if (e.key === 'Escape') { e.stopPropagation(); hideSugg(); }
+}, true);
+
+/* ---------- copie dello stesso libro ---------- */
+/* Un'altra copia: stessi dati del libro, ma scaffale, note, prestito e lettura propri. Entrambe vengono segnate come copie. */
+function addCopy(id, quiet) {
+  var src = get(id);
+  if (!src) return null;
+  var wasCp = src.cp;
+  var copy = cleanBook(Object.assign({}, src, { id: newId(), ts: Date.now(), cp: true, sh: '', n: '', p: '', pd: '', rs: 'da', rt: 0, rd: '', xs: '', xd: '', xa: '', qs: [], g: src.g.slice() }));
+  src.cp = true;
+  state.books.push(copy);
+  if (coverURL[id]) fetch(coverURL[id]).then(function (r) { return r.blob(); }).then(function (bl) { return saveCover(copy.id, bl); }).catch(function () {});
+  touch();
+  if (!quiet && !scanning) {
+    openState[copy.id] = true;
+    renderList(); updateSummary();
+    toast('Aggiunta un\'altra copia di «' + (src.t || src.i) + '».', { label: 'Annulla', fn: function () {
+      state.books = state.books.filter(function (b) { return b.id !== copy.id; });
+      var x = get(id); if (x) x.cp = wasCp;
+      renderList(); touch(); updateSummary();
+    } });
+  }
+  return copy;
+}
+var dupId = null;
+function dupGroupOf(id) {
+  return L.dupGroups(dupPool()).find(function (g) { return g.some(function (x) { return x.id === id; }); }) || [get(id)].filter(Boolean);
+}
+function openDup(id) {
+  var b = get(id);
+  if (!b) return;
+  dupId = id;
+  var g = dupGroupOf(id), cps = g.filter(function (x) { return x.cp; }), title = b.t || b.i, where = b.w ? 'nei Desideri' : 'in Libreria';
+  var allCopies = cps.length === g.length && g.length > 1;
+  $('#dupH').textContent = allCopies ? 'Hai ' + g.length + ' copie' : 'Stesso libro più volte';
+  $('#dupMsg').textContent = allCopies
+    ? '«' + title + '» è segnato come ' + g.length + ' copie ' + where + '. Ognuna può avere il suo scaffale, le sue note e il suo prestito.'
+    : '«' + title + '» compare ' + g.length + ' volte ' + where + (cps.length ? ' (' + cps.length + ' già segnate come copie).' : '.') + ' Sono copie diverse che possiedi, o lo stesso libro inserito due volte?';
+  $('#dupCopies').hidden = allCopies; $('#dupMerge').hidden = allCopies; $('#dupUnmark').hidden = !allCopies;
+  $('#dupSheet').hidden = false;
+}
+function closeDup() { $('#dupSheet').hidden = true; dupId = null; }
+function dupCopies() {
+  var g = dupGroupOf(dupId), before = g.map(function (x) { return [x.id, x.cp]; });
+  g.forEach(function (x) { x.cp = true; });
+  closeDup(); renderList(); touch(); updateSummary();
+  toast('Segnate come ' + g.length + ' copie.', { label: 'Annulla', fn: function () { before.forEach(function (p) { var x = get(p[0]); if (x) x.cp = p[1]; }); renderList(); touch(); updateSummary(); } });
+}
+function dupUnmark() {
+  var g = dupGroupOf(dupId);
+  g.forEach(function (x) { x.cp = false; });
+  closeDup(); renderList(); touch(); updateSummary();
+  toast('Non più copie: ora sono segnalati come doppione.');
+}
+function dupMerge() {
+  var g = dupGroupOf(dupId), cps = g.filter(function (x) { return x.cp; }), plain = g.filter(function (x) { return !x.cp; });
+  // con copie segnate: la registrazione in piu' confluisce nella prima copia, le altre copie restano
+  var grp = cps.length ? [cps[0]].concat(plain) : g;
+  if (grp.length < 2) { closeDup(); return; }
+  var snapshot = JSON.stringify(state.books);
+  var m = L.mergeBooks(grp), keep = cleanBook(m.keep);
+  var i = state.books.findIndex(function (b) { return b.id === keep.id; });
+  if (i >= 0) state.books[i] = keep;
+  m.removed.forEach(function (rid) { if (!coverURL[keep.id] && coverURL[rid]) fetch(coverURL[rid]).then(function (r) { return r.blob(); }).then(function (bl) { return saveCover(keep.id, bl); }).catch(function () {}); });
+  state.books = state.books.filter(function (b) { return m.removed.indexOf(b.id) < 0; });
+  closeDup(); renderList(); touch(); updateSummary();
+  toast('Unito in un solo libro.', { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot).map(cleanBook).filter(Boolean); renderList(); touch(); updateSummary(); } });
+}
+
+/* ---------- condividi la lista dei Desideri ---------- */
+function wishText() {
+  var books = state.books.filter(function (b) { return b.w && hasData(b); }).sort(cmpFor('titolo'));
+  var total = books.reduce(function (s, b) { return s + (b.c || 0); }, 0);
+  var lines = books.map(function (b) {
+    var ed = [b.e, b.y].filter(Boolean).join(', ');
+    return '• ' + (b.t || 'ISBN ' + b.i) + (b.a ? ' — ' + b.a : '') + (ed ? ' (' + ed + ')' : '') + (b.c != null ? ' · ' + eur(b.c) : '') + (L.toIsbn13(b.i) ? '\n   ISBN ' + L.toIsbn13(b.i) : '');
+  });
+  return { n: books.length, text: 'Libri che vorrei (' + books.length + '):\n\n' + lines.join('\n') + (total ? '\n\nTotale: ' + eur(total) : '') };
+}
+/* ---------- condividere un libro o una lista, e aprire quelli ricevuti ----------
+   Il pacchetto (L.buildShare) viaggia nel link dell'app dopo «#l=»: compresso quando il browser lo permette («z…»), altrimenti
+   in chiaro («j…»). Le liste troppo lunghe per un link partono come file, che si apre da Esporta › Ripristina. */
+var SHARE_URL_MAX = 3600;
+function b64url(bytes) { var bin = ''; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function unb64url(t) { var bin = atob(t.replace(/-/g, '+').replace(/_/g, '/')), out = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+async function pipeBytes(bytes, stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer()); }
+async function encodeShare(o) {
+  var raw = new TextEncoder().encode(JSON.stringify(o));
+  if (window.CompressionStream) { try { return 'z' + b64url(await pipeBytes(raw, new CompressionStream('deflate-raw'))); } catch (e) {} }
+  return 'j' + b64url(raw);
+}
+async function decodeShare(t) {
+  var sh = L.parseShare(await decodeRaw(t));
+  if (!sh) throw new Error('formato');
+  return sh;
+}
+async function decodeRaw(t) {
+  t = String(t || '');
+  if (!/^[zj][\w-]+$/.test(t) || t.length > 60000) throw new Error('formato');
+  var bytes = unb64url(t.slice(1));
+  if (t[0] === 'z') {
+    if (!window.DecompressionStream) throw new Error('vecchio');
+    bytes = await pipeBytes(bytes, new DecompressionStream('deflate-raw'));
+    if (bytes.length > 400000) throw new Error('formato');
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+/* i libri che vedi ora, adatti a essere mandati */
+function shareable() { return visible().filter(function (b) { return hasData(b) && (b.t || L.toIsbn13(b.i)); }); }
+function toggleFav(id) {
+  var b = get(id);
+  if (!b) return;
+  b.fav = !b.fav; touch(); refreshRow(id);
+  if (flt === 'fav' && !b.fav) { renderList(); updateSummary(); }
+  toast(b.fav ? 'Tra i preferiti. Li trovi in Filtri › Preferiti: da lì puoi anche condividerli.' : 'Tolto dai preferiti.');
+}
+var shareCtx = null;
+/* books: cosa mando; ctx.kind: book / fav / wish / list; ctx.title: nome proposto per la lista */
+function openShare(books, ctx) {
+  books = (books || []).filter(function (b) { return b.t || L.toIsbn13(b.i); });
+  if (!books.length) { toast('Non c\'è niente da condividere.'); return; }
+  var cut = books.length > L.SHARE_MAX;
+  shareCtx = { books: books.slice(0, L.SHARE_MAX), kind: ctx.kind };
+  var one = ctx.kind === 'book', n = shareCtx.books.length;
+  $('#shareH').textContent = one ? 'Condividi il libro' : 'Condividi la lista';
+  $('#shareWhat').textContent = one ? '«' + (books[0].t || 'ISBN ' + books[0].i) + '»' + (books[0].a ? ' di ' + books[0].a : '')
+    : (ctx.kind === 'fav' ? 'I tuoi preferiti: ' : ctx.kind === 'wish' ? 'I tuoi desideri: ' : '') + n + (n === 1 ? ' libro' : ' libri') + (cut ? ' (i primi ' + L.SHARE_MAX + ' su ' + books.length + ')' : '') + '.';
+  $('#shareTitleBox').hidden = ctx.kind !== 'list';
+  $('#shareTitle').value = ctx.kind === 'list' ? (ctx.title || '') : '';
+  $('#shareName').value = settings.name || '';
+  $('#exportSheet').hidden = true; $('#toast').hidden = true;
+  $('#shareSheet').hidden = false;
+  sharePreview();
+  emit('share', { books: books, kind: ctx && ctx.kind });   // il modulo amici: «Consiglialo a un amico»
+}
+function sharePack() {
+  var name = $('#shareName').value.replace(/\s+/g, ' ').trim().slice(0, 30);
+  return L.buildShare(shareCtx.books, { kind: shareCtx.kind, name: name, title: $('#shareTitle').value });
+}
+function sharePreview() { if (shareCtx) $('#sharePrev').textContent = 'Chi riceve vedrà: ' + L.shareHeading(L.parseShare(sharePack())); }
+function closeShare() { $('#shareSheet').hidden = true; shareCtx = null; }
+function saveName(v) {
+  v = String(v || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  if (v === (settings.name || '')) return;
+  settings.name = v; saveSettings();
+  $('#optName').value = v;
+  var wn = $('#welcomeName'); if (wn && document.activeElement !== wn) wn.value = v;   // anche nel benvenuto, se e' aperto
+  renderOwner();
+  emit('name', v);                           // il modulo «amici» lo usa come nome per gli amici (16/11/2026)
+}
+/* in testata, sotto «Next Libris»: «Libreria di Piero»; senza nome, l'invito a scriverlo */
+function renderOwner() {
+  var el = $('#owner');
+  if (guest) { el.innerHTML = 'Libreria di <b>' + esc(guest.name) + '</b>'; return; }
+  el.innerHTML = settings.name ? 'Libreria di <b>' + esc(settings.name) + '</b>'
+    : '<button type="button" class="link" id="ownerSet">Scrivi il tuo nome</button>';
+}
+$('#owner').addEventListener('click', function (e) { if (e.target.closest('#ownerSet')) { openOptions('share'); setTimeout(function () { try { $('#optName').focus(); } catch (x) {} }, 80); } });
+async function sendShare(copyOnly) {
+  if (!shareCtx) return;
+  var pack = sharePack(), sh = L.parseShare(pack);
+  if (pack.n) saveName(pack.n);
+  var head = L.shareHeading(sh), text = L.shareText(sh), code = await encodeShare(pack);
+  var url = APP_URL + '#l=' + code, one = sh.books.length === 1;
+  var invite = one ? 'Aprilo in Next Libris per aggiungerlo ai tuoi libri:' : 'Aprila in Next Libris per aggiungerli ai tuoi:';
+  closeShare();
+  if (url.length > SHARE_URL_MAX) return shareListFile(pack, sh, head);
+  if (!copyOnly && navigator.share) {
+    try { await navigator.share({ title: head, text: text + '\n\n' + invite, url: url }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  var all = text + '\n\n' + invite + '\n' + url;
+  if (await copyText(all)) toast('Copiato: incollalo in WhatsApp, in un messaggio o in una mail.');
+  else { $('#copyBox').value = all; $('#copySheet').hidden = false; $('#copyBox').focus(); $('#copyBox').select(); }
+}
+/* lista troppo lunga per un link: parte come file (.json, o .txt se il telefono non condivide i .json) */
+async function shareListFile(pack, sh, head) {
+  var data = JSON.stringify({ app: 'next-libris', share: pack });
+  var base = 'next-libris-lista' + (sh.name ? '-' + L.norm(sh.name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
+  var how = 'Per aggiungerli: salva il file allegato, poi in Next Libris apri Esporta › «Ripristina da backup o apri una lista ricevuta».';
+  var cands = [new File([data], base + '.json', { type: 'application/json' }), new File([data], base + '.txt', { type: 'text/plain' })], file = null;
+  for (var i = 0; i < cands.length && !file; i++) if (navigator.canShare && navigator.canShare({ files: [cands[i]] })) file = cands[i];
+  if (file && navigator.share) {
+    try { await navigator.share({ files: [file], title: head, text: L.shareText(sh, 10) + '\n\n' + how }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  downloadBlob(base + '.json', data, 'application/json');
+  toast('La lista è lunga: l\'ho scaricata come file. Mandalo come allegato; chi lo riceve lo apre da Esporta › Ripristina.');
+}
+function shareList() {
+  var books = shareable().filter(function (b) { return !b.xs; });
+  var onlyFlt = !q && activeCount() === (flt ? 1 : 0);
+  var kind = tab === 'wish' && !q && !activeCount() ? 'wish' : (flt === 'fav' && onlyFlt ? 'fav' : 'list');
+  var title = genFlt && genFlt !== NONE ? facetName('gen', genFlt) : autFlt ? autName : shFlt && shFlt !== NONE ? facetName('sh', shFlt) : edFlt ? facetName('e', edFlt) : q ? q : '';
+  openShare(books, { kind: kind, title: String(title || '').slice(0, 40) });
+}
+$('#shareForm').addEventListener('submit', function (e) { e.preventDefault(); sendShare(false); });
+$('#shareCopy').addEventListener('click', function () { sendShare(true); });
+$('#shareClose').addEventListener('click', closeShare);
+$('#shareSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeShare(); });
+$('#shareName').addEventListener('input', sharePreview);
+$('#shareTitle').addEventListener('input', sharePreview);
+$('#btnShareList2').addEventListener('click', shareList);
+$('#optName').addEventListener('change', function (e) { saveName(e.target.value); e.target.value = settings.name; toast(settings.name ? 'Nome salvato: ' + settings.name + '.' : 'Nome tolto.'); });
+document.addEventListener('change', function (e) { if (e.target.id === 'welcomeName') { saveName(e.target.value); e.target.value = settings.name; } });
+
+/* --- libri ricevuti: anteprima, scelta, e dove metterli --- */
+var incoming = null;
+function ownedLike(x) {
+  var k = L.norm(x.t) + '|' + L.norm(x.a);
+  return state.books.find(function (b) {
+    var bi = L.toIsbn13(b.i);
+    if (x.i && bi) return bi === x.i;                      // due ISBN: decide l'ISBN (edizioni diverse = libri diversi)
+    return !!x.t && L.norm(b.t) + '|' + L.norm(b.a) === k;
+  }) || null;
+}
+function openImport(sh) {
+  incoming = sh;
+  var n = sh.books.length, have = 0;
+  $('#importH').textContent = L.shareHeading(sh);
+  $('#importList').innerHTML = sh.books.map(function (x, i) {
+    var o = ownedLike(x), where = o ? (o.w ? 'Già nei Desideri' : 'Ce l\'hai già') : '';
+    if (o) have++;
+    var ed = [x.e, x.y, x.gen, x.pg ? x.pg + ' pagine' : '', x.c != null ? eur(x.c) : ''].filter(Boolean).join(' · ');
+    return '<li><label class="imp-row' + (o ? ' have' : '') + '"><input type="checkbox" data-i="' + i + '"' + (o ? ' disabled' : ' checked') + '>' +
+      '<span class="imp-c">' + (x.img ? '<img src="' + esc(x.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</span>' +
+      '<span class="imp-t"><b>' + esc(x.t || 'ISBN ' + x.i) + '</b>' + (x.a ? '<span>' + esc(x.a) + '</span>' : '') + (ed ? '<small>' + esc(ed) + '</small>' : '') + '</span>' +
+      (where ? '<span class="tag">' + where + '</span>' : '') + '</label></li>';
+  }).join('');
+  $('#importList').classList.toggle('single', n === 1);
+  $('#importMsg').textContent = (n === 1 ? '' : n + ' libri. ') + (have === n ? (n === 1 ? 'Questo libro è già nel tuo elenco.' : 'Sono già tutti nel tuo elenco.')
+    : (n === 1 ? 'Dove lo metto?' : 'Togli la spunta a quelli che non ti interessano, poi scegli dove metterli.') + (have ? ' ' + have + (have === 1 ? ' ce l\'hai già.' : ' li hai già.') : ''));
+  $('#importHint').textContent = 'Desideri: libri da comprare o da leggere. Libreria: libri che hai già in casa.' + (sh.name ? ' Resteranno segnati «Da ' + sh.name + '».' : '');
+  $('#importWish').hidden = $('#importLib').hidden = have === n;
+  $('#importClose').textContent = have === n ? 'Chiudi' : 'Non ora';
+  $('#importSheet').hidden = false;
+}
+function closeImport() { $('#importSheet').hidden = true; incoming = null; }
+function doImport(wish) {
+  var sh = incoming;
+  if (!sh) return;
+  var picked = Array.prototype.map.call($('#importList').querySelectorAll('input:checked:not(:disabled)'), function (c) { return sh.books[+c.dataset.i]; }).filter(Boolean);
+  if (!picked.length) { toast('Metti la spunta ad almeno un libro.'); return; }
+  var from = sh.name || 'un amico', label = L.shareLabel(sh), ids = [], now = Date.now();
+  picked.forEach(function (x, k) {
+    var b = blankBook({ t: x.t, a: x.a, e: x.e, y: x.y, i: x.i, c: x.c, img: x.img, imgL: x.imgL, gen: x.gen, pg: x.pg, w: wish, fr: from, fl: label, ts: now + k, ck: today() });
+    state.books.push(b); ids.push(b.id);
+  });
+  closeImport();
+  q = ''; $('#q').value = ''; setView('list'); setTab(wish ? 'wish' : 'lib');
+  frFlt = from; renderList(); updateSummary(); touch();
+  toast(ids.length + (ids.length === 1 ? ' libro aggiunto' : ' libri aggiunti') + (wish ? ' ai Desideri.' : ' alla Libreria.'), { label: 'Annulla', fn: function () {
+    state.books = state.books.filter(function (b) { return ids.indexOf(b.id) < 0; }); frFlt = ''; renderList(); updateSummary(); touch(); } });
+  // le copertine: le cerco con calma, solo della stessa edizione
+  if (navigator.onLine !== false) ids.slice(0, 40).forEach(function (id) {
+    coverPool(async function () {
+      var b = get(id);
+      if (!b || smallImg(b) || !L.toIsbn13(b.i)) return;
+      try { var r = await findCover(b, 6000, true); b = get(id); if (r && !r.alt && b && !smallImg(b)) { b.img = r.url; if (r.big) b.imgL = r.url; touch(); syncThumbs(); refreshRow(id); } } catch (e) {}
+    });
+  });
+}
+$('#importWish').addEventListener('click', function () { doImport(true); });
+$('#importLib').addEventListener('click', function () { doImport(false); });
+$('#importClose').addEventListener('click', closeImport);
+/* link ricevuto: l'app si apre con «#l=...» nell'indirizzo */
+var hashBusy = false;
+async function checkIncoming() {
+  var m = /^#([lk])=([\w-]+)$/.exec(location.hash || '');
+  if (!m || hashBusy) return;
+  hashBusy = true;
+  try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) {}
+  try {
+    if (m[1] === 'k') { var o = await decodeRaw(m[2]); if (!o || o.v !== 1 || o.t !== 'svc') throw new Error('formato'); openSvcImport(o); }
+    else openImport(await decodeShare(m[2]));
+  }
+  catch (e) { toast(e && e.message === 'vecchio' ? 'Questo browser è troppo vecchio per aprire il link: aggiorna Chrome e riprova.' : (m[1] === 'k' ? 'Il link non contiene una chiave o un worker validi' : 'Il link non contiene una lista valida') + ': forse è stato tagliato. Fattelo rimandare.'); }
+  hashBusy = false;
+}
+window.addEventListener('hashchange', checkIncoming);
+async function shareWish() { shareList(); }
+/* ---------- condividere chiave Google e worker SBN (link «#k=...») ----------
+   Chi riceve vede cosa arriva e da chi, e decide; quelli che aveva gia' restano tra i salvati. */
+function cleanKey(v) { v = String(v || '').replace(/\s+/g, ''); return /^[A-Za-z0-9_-]{20,80}$/.test(v) ? v : ''; }
+function okWorker(v) { v = cleanWorker(v); return /^https:\/\/[^\s/]+\.[^\s]+$/.test(v) && v.length <= 200 ? v : ''; }
+function renderSvcShare() {
+  var has = !!(settings.sbnUrl || settings.gbKey);
+  $('#svcShareBtn').disabled = !has;
+  $('#svcShareNone').hidden = has;
+}
+function openSvcShare() {
+  if (!settings.sbnUrl && !settings.gbKey) { toast('Non hai né chiave Google né worker da condividere: impostali in Menu › Impostazioni › Ricerca dei libri.'); return; }
+  $('#svcWhat').textContent = [settings.sbnUrl ? 'Worker SBN: ' + svcShort('sbn', settings.sbnUrl) : '', settings.gbKey ? 'Chiave Google: ' + svcShort('key', settings.gbKey) : ''].filter(Boolean).join(' · ');
+  $('#svcSbnOn').checked = !!settings.sbnUrl; $('#svcSbnOn').disabled = !settings.sbnUrl;
+  $('#svcKeyOn').checked = !!settings.gbKey; $('#svcKeyOn').disabled = !settings.gbKey;
+  $('#svcSendName').value = settings.name || '';
+  closeOptions(); $('#toast').hidden = true;
+  $('#svcSheet').hidden = false;
+}
+function closeSvcShare() { $('#svcSheet').hidden = true; }
+async function sendSvcShare(copyOnly) {
+  var o = { v: 1, t: 'svc' };
+  if ($('#svcSbnOn').checked && settings.sbnUrl) o.sb = settings.sbnUrl;
+  if ($('#svcKeyOn').checked && settings.gbKey) o.gk = settings.gbKey;
+  if (!o.sb && !o.gk) { toast('Scegli almeno uno dei due.'); return; }
+  var name = $('#svcSendName').value.replace(/\s+/g, ' ').trim().slice(0, 30);
+  if (name) { o.n = name; saveName(name); }
+  var what = o.sb && o.gk ? 'la chiave Google e il worker SBN' : o.gk ? 'la chiave Google' : 'il worker SBN';
+  var text = (name || 'Ti mando') + (name ? ' ti manda ' : ' ') + what + ' per Next Libris: con questi la ricerca dei libri è più completa. Aprilo in Next Libris (non inoltrarlo ad altri):';
+  var url = APP_URL + '#k=' + await encodeShare(o);
+  closeSvcShare();
+  if (!copyOnly && navigator.share) {
+    try { await navigator.share({ title: 'Impostazioni di ricerca per Next Libris', text: text, url: url }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  var all = text + '\n' + url;
+  if (await copyText(all)) toast('Copiato: incollalo in un messaggio privato.');
+  else { $('#copyBox').value = all; $('#copySheet').hidden = false; $('#copyBox').focus(); $('#copyBox').select(); }
+}
+var svcIn = null;
+function openSvcImport(o) {
+  var sb = okWorker(o.sb), gk = cleanKey(o.gk), from = String(o.n || '').replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, 30);
+  if (!sb && !gk) throw new Error('formato');
+  svcIn = { sb: sb, gk: gk };
+  $('#svcInH').textContent = (from ? from + ' ti manda ' : 'Ti arrivano ') + (sb && gk ? 'chiave Google e worker SBN' : gk ? 'la chiave Google' : 'il worker SBN');
+  var rows = [];
+  if (sb) rows.push('Worker SBN: ' + svcShort('sbn', sb) + (settings.sbnUrl && settings.sbnUrl !== sb ? ' (al posto del tuo, che resta tra i salvati)' : settings.sbnUrl === sb ? ' (lo usi già)' : ''));
+  if (gk) rows.push('Chiave Google: ' + svcShort('key', gk) + (settings.gbKey && settings.gbKey !== gk ? ' (al posto della tua, che resta tra le salvate)' : settings.gbKey === gk ? ' (la usi già)' : ''));
+  $('#svcInList').innerHTML = rows.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('');
+  $('#svcInSheet').hidden = false;
+}
+function closeSvcImport() { $('#svcInSheet').hidden = true; svcIn = null; }
+$('#svcInUse').addEventListener('click', function () {
+  var x = svcIn; if (!x) return;
+  var before = { sbn: settings.sbnUrl, key: settings.gbKey };
+  if (x.sb) setSvc('sbn', x.sb);
+  if (x.gk) setSvc('key', x.gk);
+  closeSvcImport();
+  toast((x.sb && x.gk ? 'Worker e chiave in uso' : x.gk ? 'Chiave in uso' : 'Worker in uso') + '. Li trovi in Menu › Impostazioni › Ricerca dei libri.', { label: 'Annulla', fn: function () { setSvc('sbn', before.sbn); setSvc('key', before.key); } });
+});
+$('#svcInLater').addEventListener('click', function () {
+  var x = svcIn; if (!x) return;
+  if (x.sb) remember('sbn', x.sb); if (x.gk) remember('key', x.gk);
+  renderSvc(); closeSvcImport();
+  toast('Messi tra i salvati: li rimetti quando vuoi da Menu › Impostazioni › Ricerca dei libri.');
+});
+$('#svcInNo').addEventListener('click', closeSvcImport);
+$('#svcShareBtn').addEventListener('click', openSvcShare);
+$('#svcForm').addEventListener('submit', function (e) { e.preventDefault(); sendSvcShare(false); });
+$('#svcCopy').addEventListener('click', function () { sendSvcShare(true); });
+$('#svcClose').addEventListener('click', closeSvcShare);
+
+/* ---------- 7) unisci i doppioni ---------- */
+function mergeDups() {
+  var all = L.dupGroups(dupPool());
+  var groups = all.filter(function (g) { return !g.some(function (b) { return b.cp; }); });
+  var held = all.length - groups.length;
+  if (!groups.length) { toast(held ? 'Non ci sono doppioni da unire: i libri ripetuti sono segnati come copie diverse.' : 'Non ci sono doppioni.'); return; }
+  var snapshot = JSON.stringify(state.books), removed = 0;
+  groups.forEach(function (g) {
+    var m = L.mergeBooks(g), keep = cleanBook(m.keep);
+    var i = state.books.findIndex(function (b) { return b.id === keep.id; });
+    if (i >= 0) state.books[i] = keep;
+    m.removed.forEach(function (rid) {
+      if (!coverURL[keep.id] && coverURL[rid]) fetch(coverURL[rid]).then(function (r) { return r.blob(); }).then(function (bl) { return saveCover(keep.id, bl); }).catch(function () {});
+    });
+    state.books = state.books.filter(function (b) { return m.removed.indexOf(b.id) < 0; });
+    removed += m.removed.length;
+  });
+  renderList(); touch(); updateSummary();
+  toast('Uniti ' + removed + (removed === 1 ? ' doppione' : ' doppioni') + ' in ' + groups.length + (groups.length === 1 ? ' libro' : ' libri') + (held ? '; non toccati ' + held + ' con copie segnate.' : '.'), { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot).map(cleanBook).filter(Boolean); renderList(); touch(); updateSummary(); } });
+}
+
+/* ---------- 7) promemoria dei prestiti lunghi ---------- */
+function checkLoanNag() {
+  var DAY = 86400000, now = Date.now();
+  if (now - settings.loanSnooze < 7 * DAY || !$('#notice').hidden) return;
+  var old = state.books.filter(function (b) { return !b.w && b.p && b.pd && now - Date.parse(b.pd) > 30 * DAY; })
+    .sort(function (x, y) { return x.pd < y.pd ? -1 : 1; });
+  if (!old.length) return;
+  var b = old[0], ago = L.agoText(Date.parse(b.pd)).replace(/ fa$/, '');
+  var msg = b.p + ' ha «' + (b.t || b.i) + '» da ' + ago + '.' + (old.length > 1 ? ' Altri ' + (old.length - 1) + (old.length === 2 ? ' libro è' : ' libri sono') + ' in prestito da più di un mese.' : '');
+  function later() { settings.loanSnooze = Date.now(); saveSettings(); }
+  notice(msg, 'Vedi i prestiti', function () { later(); if (tab !== 'lib') setTab('lib'); flt = 'loan'; renderList(); updateSummary(); window.scrollTo({ top: 0 }); }, later, 'loan');
+}
+
+/* ---------- 7) catalogo stampabile / PDF ---------- */
+async function printCatalog() {
+  var books = visible().filter(hasData);
+  if (!books.length) { toast('Non ci sono libri da stampare con la ricerca e i filtri attuali.'); return; }
+  var covers = $('#printCovers').checked && books.some(function (b) { return !!smallImg(b); });
+  var has = function (k) { return books.some(function (b) { return b[k]; }); };
+  var cols = [['t', 'Titolo'], ['a', 'Autore'], ['e', 'Casa editrice'], ['y', 'Anno'], ['c', 'Prezzo']];
+  if (has('sh')) cols.push(['sh', 'Scaffale']);
+  if (has('rs')) cols.push(['rs', 'Lettura']);
+  if (has('p')) cols.push(['p', 'Prestato a']);
+  if (has('xs')) cols.push(['xs', 'Non più in libreria']);
+  var total = books.reduce(function (s, b) { return s + (b.xs ? 0 : b.c || 0); }, 0);
+  var filt = [q ? 'ricerca «' + q + '»' : '', flt === 'loan' ? 'solo libri in prestito' : '', flt === 'gone' ? 'solo venduti e regalati' : '', flt === 'guess' ? 'solo da verificare' : '', flt === 'dup' ? 'solo copie e doppioni' : '', readFlt ? 'lettura: ' + READ_TXT[readFlt].toLowerCase() : '', shFlt ? 'scaffale: ' + facetName('sh', shFlt) : '', genFlt ? 'genere: ' + facetName('gen', genFlt) : '', autFlt ? 'autore: ' + autName : '', edFlt ? 'casa editrice: ' + facetName('e', edFlt) : ''].filter(Boolean).join(', ');
+  function cell(b, k) {
+    if (k === 'c') return b.c == null ? '' : eur(b.c);
+    if (k === 'rs') return readLabel(b);
+    if (k === 'xs') return esc(goneText(b));
+    return esc(b[k] || '');
+  }
+  $('#printView').innerHTML = '<h1>Next Libris · ' + (tab === 'wish' ? 'Desideri' : 'Libreria') + '</h1>' +
+    '<p class="pv-sub">' + esc(L.itDate(today())) + ' · ' + books.length + (books.length === 1 ? ' libro' : ' libri') + (total ? ' · valore di copertina ' + esc(eur(total)) : '') + (filt ? ' · ' + esc(filt) : '') + '</p>' +
+    '<table><thead><tr>' + (covers ? '<th></th>' : '') + cols.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    books.map(function (b) {
+      var img = covers ? smallImg(b) : '';
+      return '<tr>' + (covers ? '<td class="pv-img">' + (img ? '<img src="' + esc(img) + '" alt="" referrerpolicy="no-referrer">' : '') + '</td>' : '') +
+        cols.map(function (c) { return '<td class="pv-' + c[0] + '">' + cell(b, c[0]) + '</td>'; }).join('') + '</tr>';
+    }).join('') + '</tbody></table>';
+  $('#exportSheet').hidden = true;
+  if (covers) {
+    var imgs = Array.prototype.slice.call(document.querySelectorAll('#printView img'));
+    await Promise.race([Promise.all(imgs.map(function (i) { return i.complete ? 1 : new Promise(function (r) { i.onload = i.onerror = r; }); })), new Promise(function (r) { setTimeout(r, 5000); })]);
+  }
+  window.print();
+}
+window.addEventListener('afterprint', function () { $('#printView').innerHTML = ''; });
+
+/* ---------- prestiti ---------- */
+var loanId = null;
+/* Una sola finestra per dire dov'e' il libro: prestato (a chi, dal giorno), venduto (il giorno, a chi se vuoi),
+   regalato (a chi, il giorno) o smarrito (dal giorno). Venduti, regalati e smarriti restano nell'elenco, in grigio,
+   ma non contano piu' nel numero dei libri ne' nel valore della libreria. */
+var loanKind = 'p';
+var KIND_TXT = {
+  p: { h: 'Presta, vendi o regala', who: 'A chi', date: 'Dal giorno', need: 'Scrivi a chi lo presti.', hint: 'Prestato: resta tuo, e quando torna tocchi «Restituito».' },
+  v: { h: 'Presta, vendi o regala', who: 'A chi (facoltativo)', date: 'Venduto il', hint: 'Venduto: non è più tuo; resta nell\'elenco, in grigio, come storico della libreria.' },
+  r: { h: 'Presta, vendi o regala', who: 'A chi', date: 'Regalato il', need: 'Scrivi a chi l\'hai regalato.', hint: 'Regalato: non è più tuo; resta nell\'elenco, in grigio, come storico della libreria.' },
+  s: { h: 'Libro smarrito', who: '', date: 'Smarrito dal' }
+};
+function setLoanKind(k) {
+  var b = get(loanId);
+  loanKind = KIND_TXT[k] ? k : 'p';
+  var t = KIND_TXT[loanKind];
+  Array.prototype.forEach.call($('#loanKind').querySelectorAll('button'), function (x) {
+    x.setAttribute('aria-pressed', x.dataset.k === loanKind ? 'true' : 'false');
+    if (x.dataset.k === 's') x.hidden = !(b && b.xs === 's');      // smarrito: solo per i libri segnati cosi' in passato
+  });
+  $('#loanHint').textContent = t.hint || '';
+  $('#loanH').textContent = b && loanKind === 'p' && b.p ? 'In prestito' : t.h;
+  $('#loanWhoF').hidden = !t.who;
+  $('#loanWhoL').textContent = t.who || 'A chi';
+  $('#loanDateL').textContent = t.date;
+  $('#loanErr').hidden = true;
+  var cur = b && (b.xs || (b.p ? 'p' : ''));
+  $('#loanBack').hidden = !b || !cur;
+  $('#loanBack').textContent = !b ? '' : b.xs === 's' ? 'Ritrovato' : b.xs ? 'È tornato in libreria' : 'Restituito';
+}
+function openLoan(id, kind) {
+  var b = get(id);
+  if (!b) return;
+  loanId = id;
+  var k = kind || b.xs || 'p';
+  $('#loanBook').textContent = b.t || b.i || 'Libro senza titolo';
+  $('#loanWho').value = (b.xs ? b.xa : b.p) || '';
+  $('#loanDate').value = (b.xs ? b.xd : b.pd) || today();
+  setLoanKind(k);
+  $('#loanSheet').hidden = false;
+  setTimeout(function () { var f = $('#loanSheet button'); if (f) f.focus({ preventScroll: true }); }, 50);   // niente tastiera all'apertura: si tocca «A chi» quando serve
+}
+function closeLoan() { $('#loanSheet').hidden = true; loanId = null; }
+function saveLoan() {
+  var b = get(loanId), who = $('#loanWho').value.replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (!b) { closeLoan(); return; }
+  var t = KIND_TXT[loanKind];
+  if (t.need && !who) { $('#loanErr').textContent = t.need; $('#loanErr').hidden = false; $('#loanWho').focus(); return; }
+  var date = /^\d{4}-\d\d-\d\d$/.test($('#loanDate').value) ? $('#loanDate').value : today();
+  var id = loanId, old = { p: b.p, pd: b.pd, xs: b.xs, xd: b.xd, xa: b.xa };
+  if (loanKind === 'p') { b.p = who; b.pd = date; b.xs = ''; b.xd = ''; b.xa = ''; }
+  else { b.xs = loanKind; b.xd = date; b.xa = loanKind === 's' ? '' : who; b.p = ''; b.pd = ''; }
+  closeLoan();
+  touch();
+  if (flt === 'loan' || flt === 'gone') renderList(); else refreshRow(id);
+  updateSummary();
+  var msg = loanKind === 'p' ? prestatoA(b.p) + '.' : goneText(b) + '.';
+  toast(msg, { label: 'Annulla', fn: function () { var x = get(id); if (x) { Object.assign(x, old); renderList(); touch(); updateSummary(); } } });
+  emit('loan', { id: id, kind: loanKind, who: who, old: old });   // il modulo amici: se e' un amico dell'app, lo vede anche lui
+}
+function returnLoan() {
+  var b = get(loanId);
+  if (!b) { closeLoan(); return; }
+  if (b.xs) {
+    var gid = loanId, gold = { xs: b.xs, xd: b.xd, xa: b.xa }, was = b.xs;
+    b.xs = ''; b.xd = ''; b.xa = '';
+    closeLoan();
+    if (flt === 'gone') renderList(); else refreshRow(gid);
+    touch(); updateSummary();
+    toast(was === 's' ? 'Ritrovato: di nuovo in libreria.' : 'Di nuovo in libreria.', { label: 'Annulla', fn: function () { var x = get(gid); if (x) { Object.assign(x, gold); renderList(); touch(); updateSummary(); } } });
+    emit('loanBack', { id: gid, old: gold });
+    return;
+  }
+  var id = loanId, old = { p: b.p, pd: b.pd };
+  b.p = ''; b.pd = '';
+  closeLoan();
+  if (flt === 'loan') renderList(); else refreshRow(id);
+  touch(); updateSummary();
+  toast('Segnato come restituito.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.p = old.p; x.pd = old.pd; renderList(); touch(); updateSummary(); } } });
+  emit('loanBack', { id: id, old: old });
+}
+/* ---------- desideri ---------- */
+function moveToLib(id, quiet) {
+  var b = get(id);
+  if (!b || !b.w) return;
+  var oldTs = b.ts;
+  var oldRs = b.rs, oldOpen = openState[id];
+  b.w = false; b.ts = Date.now();
+  if (!b.rs) b.rs = 'da';
+  openState[id] = false;                         // nell'altro elenco arriva chiuso, in vista compatta
+  touch();
+  if (!scanning) { renderList(); updateSummary(); }
+  if (!quiet) toast('Spostato in Libreria: ' + (b.t || b.i), { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.w = true; x.ts = oldTs; x.rs = oldRs; openState[id] = oldOpen; touch(); renderList(); updateSummary(); } } });
+}
+/* Dalla Libreria ai Desideri: il libro torna «da comprare»; prestito, stato e lettura non hanno piu' senso e si tolgono
+   (con «Annulla» torna tutto com'era). */
+function moveToWish(id) {
+  var b = get(id);
+  if (!b || b.w) return;
+  var keep = ['w', 'ts', 'p', 'pd', 'xs', 'xd', 'xa', 'rs', 'rt', 'rd', 'cp'], before = {};
+  keep.forEach(function (k) { before[k] = b[k]; });
+  var oldOpen = openState[id];
+  openState[id] = false;                         // nell'altro elenco arriva chiuso, in vista compatta
+  b.w = true; b.ts = Date.now();
+  b.p = ''; b.pd = ''; b.xs = ''; b.xd = ''; b.xa = ''; b.rs = ''; b.rt = 0; b.rd = ''; b.cp = false;
+  touch(); renderList(); updateSummary();
+  toast('Spostato nei Desideri: ' + (b.t || b.i), { label: 'Annulla', fn: function () { var x = get(id); if (x) { Object.assign(x, before); openState[id] = oldOpen; touch(); renderList(); updateSummary(); } } });
+}
+function setTab(t) {
+  gridRet = null;
+  if (selOn) endSel(false);
+  tab = t === 'wish' ? 'wish' : 'lib';
+  flt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = '';
+  $('#tipTxt').textContent = tab === 'wish'
+    ? 'Sei nei Desideri: Scansiona, Foto e Digita aggiungono qui i libri da comprare. Un amico ti consiglia un libro? Digita e scrivi il titolo.'
+    : 'Scansiona il codice a barre: è il modo più preciso. Dopo ogni libro puoi scrivere il prezzo (facoltativo). Digita per scrivere il titolo o l\'ISBN.';
+  document.body.classList.toggle('wishtab', tab === 'wish');
+  renderList(); updateSummary();
+}
+function setView(v) {
+  settings.view = v === 'grid' ? 'grid' : 'list';
+  saveSettings();
+  var b = $('#btnView');
+  b.innerHTML = settings.view === 'grid' ? icon('list') + 'Elenco' : icon('grid') + 'Copertine';
+  b.setAttribute('aria-label', settings.view === 'grid' ? 'Mostra come elenco' : 'Mostra le copertine');
+}
+/* Dalle copertine: la scheda si apre nell'elenco; chiudendola (freccetta o Indietro) si torna alle copertine, allo stesso punto */
+var gridRet = null;
+function openFromGrid(id) {
+  if (!settings.openAll) state.books.forEach(function (x) { if (x.id !== id) openState[x.id] = false; });   // solo la sua scheda aperta (anche i libri senza titolo restano chiusi)
+  gridRet = { id: id, y: window.scrollY };
+  openState[id] = true;
+  setView('list');
+  renderList();
+  try { if (cardPushed) history.replaceState({ card: id }, ''); else history.pushState({ card: id }, ''); cardPushed = id; } catch (e) {}   // Indietro chiude la scheda
+  var el = rowEl(id);
+  if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(function () { el.classList.remove('flash'); }, 1600); }
+}
+function backToGrid() {                          // chiamata quando l'ultima scheda aperta si chiude
+  var r = gridRet; gridRet = null;
+  if (!r || settings.view === 'grid') return false;
+  setView('grid'); renderList();
+  window.scrollTo(0, r.y);
+  requestAnimationFrame(function () {
+    window.scrollTo(0, r.y);
+    var c = document.querySelector('#list .cover[data-id="' + r.id + '"]');
+    if (c) { c.classList.add('flash'); setTimeout(function () { c.classList.remove('flash'); }, 1200); try { c.focus({ preventScroll: true }); } catch (e) {} }
+  });
+  return true;
+}
+function anyOpen() { return !settings.openAll && Object.keys(openState).some(function (k) { var x = get(k); return openState[k] && x && x.t; }); }
+/* ---------- statistiche ---------- */
+function barsHTML(title, items, filterable) {
+  if (!items.length) return '';
+  var max = items.reduce(function (m, x) { return Math.max(m, x.n); }, 1);
+  return '<section class="st-sec"><h3>' + esc(title) + '</h3><div class="bars">' + items.map(function (x) {
+    var inner = '<span class="bl">' + esc(x.k) + '</span><span class="bt"><span class="bf" style="width:' + Math.max(2, Math.round(x.n / max * 100)) + '%"></span></span><span class="bv">' + x.n + '</span>';
+    return filterable ? '<button class="bar-row" data-sf="' + filterable + '" data-sv="' + esc(x.k) + '" title="Mostra questi libri">' + inner + '</button>' : '<div class="bar-row">' + inner + '</div>';   // filterable: il campo (a, e, gen, sh)
+  }).join('') + '</div></section>';
+}
+/* obiettivo di lettura dell'anno: libri segnati «Letto» con la data in quest'anno */
+function goalHTML() {
+  var y = String(new Date().getFullYear()), g = Math.max(0, parseInt(settings.goal, 10) || 0);
+  var n = state.books.filter(function (b) { return !b.w && b.rs === 'ok' && L.str(b.rd).slice(0, 4) === y; }).length;
+  var head = '<section class="st-sec goal"><h3>Obiettivo di lettura ' + y + '</h3>';
+  var form = '<label class="goal-set"><span>' + (g ? 'Cambia obiettivo' : 'Quanti libri vuoi leggere quest\'anno?') + '</span><input id="goalIn" type="text" inputmode="numeric" enterkeyhint="done" maxlength="3" autocomplete="off" placeholder="es. 20" value="' + (g || '') + '"><button type="button" class="btn" id="goalSave">Salva</button></label>';
+  if (!g) return head + '<p class="msg">Finora ne hai ' + (n === 1 ? 'letto 1' : 'letti ' + n) + '.</p>' + form + '</section>';
+  var now = new Date(), start = new Date(now.getFullYear(), 0, 1), end = new Date(now.getFullYear() + 1, 0, 1);
+  var part = (now - start) / (end - start), due = Math.round(g * part), left = g - n;
+  var pace = n >= g ? 'Obiettivo raggiunto' + (n > g ? ': ' + (n - g) + ' in più' : '') + '.' :
+    n >= due ? 'Sei in linea: ne ' + (left === 1 ? 'manca 1' : 'mancano ' + left) + '.' :
+    'Sei indietro di ' + (due - n) + (due - n === 1 ? ' libro' : ' libri') + ' rispetto al ritmo: ne ' + (left === 1 ? 'manca 1' : 'mancano ' + left) + '.';
+  return head + '<p class="goal-n"><b>' + n + '</b> di ' + g + (g === 1 ? ' libro' : ' libri') + '</p>' +
+    '<div class="goal-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + g + '" aria-valuenow="' + Math.min(n, g) + '" aria-label="Libri letti quest\'anno"><span style="width:' + Math.min(100, Math.round(n / g * 100)) + '%"></span><i style="left:' + Math.round(part * 100) + '%" title="Oggi"></i></div>' +
+    '<p class="msg">' + pace + ' Contano i libri segnati «Letto» con la data in quest\'anno.</p>' +
+    '<details class="goal-more"><summary>Cambia obiettivo</summary>' + form.replace('<span>Cambia obiettivo</span>', '<span>Libri da leggere nel ' + y + ' (0 per toglierlo)</span>') + '</details></section>';
+}
+function saveGoal() {
+  var v = Math.min(999, parseInt($('#goalIn').value.replace(/\D/g, ''), 10) || 0);
+  settings.goal = v; saveSettings();
+  var box = $('#statsBody .goal'); if (box) box.outerHTML = goalHTML();
+  toast(v ? 'Obiettivo: ' + v + (v === 1 ? ' libro' : ' libri') + ' quest\'anno.' : 'Obiettivo tolto.');
+}
+function openStats() {
+  var books = tabBooks().filter(hasData);
+  if (!books.length) { toast('Aggiungi qualche libro per vedere le statistiche.'); return; }
+  var st = L.computeStats(books);
+  if (!st.n && !st.gone) { toast('Aggiungi qualche libro per vedere le statistiche.'); return; }
+  function tile(v, l, note) { return '<div class="tile"><b>' + esc(v) + '</b><span>' + esc(l) + '</span>' + (note ? '<small>' + esc(note) + '</small>' : '') + '</div>'; }
+  var nf = new Intl.NumberFormat('it-IT');
+  var tiles = tile(nf.format(st.n), tab === 'wish' ? 'da comprare' : 'libri') +
+    tile(eur(st.total), 'valore di copertina', st.noPrice ? 'senza prezzo: ' + st.noPrice : '') +
+    (st.priced ? tile(eur(st.avg), 'prezzo medio') : '') +
+    (st.paged ? tile(nf.format(st.pages), 'pagine', st.paged < st.n ? 'su ' + st.paged + (st.paged === 1 ? ' libro' : ' libri') + ' · senza pagine: ' + (st.n - st.paged) : '') : '') +
+    (tab === 'lib' ? tile(String(st.loans.length), 'in prestito') : '') +
+    (st.gone ? tile(String(st.gone), 'non più in libreria', [st.goneBy.v ? st.goneBy.v + (st.goneBy.v === 1 ? ' venduto' : ' venduti') : '', st.goneBy.r ? st.goneBy.r + (st.goneBy.r === 1 ? ' regalato' : ' regalati') : '', st.goneBy.s ? st.goneBy.s + (st.goneBy.s === 1 ? ' smarrito' : ' smarriti') : ''].filter(Boolean).join(' · ')) : '') +
+    (tab === 'lib' && (st.read || st.reading || st.toRead) ? tile(String(st.read), 'letti', [st.reading ? st.reading + ' in lettura' : '', st.toRead ? st.toRead + ' da leggere' : ''].filter(Boolean).join(' · ')) : '') +
+    (st.pagesRead ? tile(nf.format(st.pagesRead), 'pagine lette') : '') +
+    (st.rated ? tile(st.avgRating.toFixed(1).replace('.', ',') + ' su 5', 'voto medio: ' + L.rateWord(st.avgRating).toLowerCase(), 'su ' + st.rated + (st.rated === 1 ? ' libro' : ' libri')) : '') +
+    (st.guess ? tile(String(st.guess), 'da verificare') : '');
+  var loans = st.loans.length ? '<section class="st-sec"><h3>In prestito</h3><ul class="loans">' + st.loans.map(function (x) {
+    return '<li><b>' + esc(x.p) + '</b> · ' + esc(x.t) + (x.pd ? ' <small>dal ' + esc(L.itDate(x.pd)) + ', ' + esc(L.agoText(Date.parse(x.pd))) + '</small>' : '') + '</li>';
+  }).join('') + '</ul></section>' : '';
+  $('#statsH').textContent = 'Statistiche · ' + (tab === 'wish' ? 'Desideri' : 'Libreria');
+  $('#statsBody').innerHTML = '<div class="tiles">' + tiles + '</div>' + (tab === 'lib' ? goalHTML() : '') + loans + (tab === 'lib' ? seriesStatsHTML() : '') +
+    barsHTML('Autori più presenti', st.topAuthors, 'a') + barsHTML('Case editrici', st.topPublishers, 'e') +
+    barsHTML('Generi', st.topGenres, 'gen') + barsHTML('Scaffali', st.topShelves, 'sh') + barsHTML('Anno di pubblicazione, per decennio', st.byDecade, false) +
+    barsHTML('Libri letti, per anno', st.byReadYear, false) +
+    '<p class="msg">Tocca un nome per vedere quei libri.</p>';
+  $('#statsSheet').hidden = false;
+}
+/* ---------- case editrici: uniforma i nomi ---------- */
+var pubGroups = [];
+function openPubs() {
+  pubGroups = L.publisherGroups(state.books);
+  if (!pubGroups.length) { toast('Non ho trovato case editrici scritte in modi diversi.'); return; }
+  $('#pubList').innerHTML = pubGroups.map(function (g, gi) {
+    return '<fieldset class="pgrp"><legend>' + g.total + ' libri</legend>' + g.names.map(function (x, ni) {
+      var sel = x.name === g.suggested;
+      return '<div class="pname"><label class="pr"><input type="radio" name="pg' + gi + '" value="' + ni + '"' + (sel ? ' checked' : '') + '><span><b>' + esc(x.name) + '</b> <small>' + x.count + (x.count === 1 ? ' libro' : ' libri') + '</small></span></label>' +
+        '<label class="pc"><input type="checkbox" data-g="' + gi + '" data-n="' + ni + '" checked' + (sel ? ' disabled' : '') + '>cambia</label></div>';
+    }).join('') + '</fieldset>';
+  }).join('');
+  $('#pubSheet').hidden = false;
+}
+function applyPubs() {
+  var map = {};
+  pubGroups.forEach(function (g, gi) {
+    var r = document.querySelector('input[name="pg' + gi + '"]:checked');
+    if (!r) return;
+    var target = g.names[+r.value].name;
+    g.names.forEach(function (x, ni) {
+      var cb = document.querySelector('#pubList input[data-g="' + gi + '"][data-n="' + ni + '"]');
+      if (x.name !== target && cb && cb.checked) map[x.name] = target;
+    });
+  });
+  var snapshot = JSON.stringify(state.books), n = 0;
+  state.books.forEach(function (b) { var t = map[(b.e || '').trim()]; if (t && b.e !== t) { b.e = t; n++; } });
+  $('#pubSheet').hidden = true;
+  if (!n) { toast('Nessun nome cambiato.'); return; }
+  renderList(); touch(); updateSummary();
+  toast('Uniformata la casa editrice di ' + n + (n === 1 ? ' libro.' : ' libri.'), { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot); renderList(); touch(); updateSummary(); } });
+}
+/* ---------- completa i dati mancanti (genere, pagine, copertina…) dei libri gia' inseriti ---------- */
+var filling = false;
+async function fillMissing() {
+  if (filling) return;
+  if (navigator.onLine === false) { toast('Sei offline. Riprova quando c\'è connessione.'); return; }
+  var recent = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10), skipped = 0;
+  var todo = state.books.filter(function (b) {
+    if (!(L.toIsbn13(b.i) && !b.nf && !isBusy(b) && (!b.gen || !b.pg || !b.img || !b.e || !b.y || !b.a || !b.t))) return false;
+    if (b.ck && b.ck >= recent) { skipped++; return false; }     // gia' cercato di recente: le banche dati non hanno di piu'
+    return true;
+  });
+  if (!todo.length) { toast(skipped ? 'Questi libri sono già stati cercati negli ultimi 30 giorni: le banche dati non hanno altri dati.' : 'Non c\'è niente da completare.'); return; }
+  filling = true;
+  var btn = $('#btnFill'), done = 0, changed = 0, failed = 0;
+  btn.disabled = true;
+  toast('Cerco i dati mancanti di ' + todo.length + (todo.length === 1 ? ' libro…' : ' libri…'));
+  await Promise.all(todo.map(function (b0) {
+    return lookupPool(async function () {
+      try {
+        var r = await L.lookupIsbn(L.toIsbn13(b0.i), lookupOpts());
+        var b = get(b0.id);
+        if (b) b.ck = today();
+        if (r && b) {
+          var before = JSON.stringify(b);
+          ['t', 'a', 'e', 'y', 'gen', 'pg'].forEach(function (k) { if (!b[k] && r[k]) b[k] = r[k]; });
+          if (!b.img && r.img) b.img = r.img;
+          if (JSON.stringify(b) !== before) changed++;
+        }
+      } catch (e) { failed++; }
+      done++;
+      btn.textContent = 'Completo… ' + done + '/' + todo.length;
+    });
+  }));
+  filling = false;
+  btn.disabled = false; btn.textContent = 'Completa genere, pagine e copertine';
+  touch(); renderList(); updateSummary();
+  toast('Completati ' + changed + ' libri' + (failed ? '; ' + failed + ' non riusciti (rete o limite di Google): riprova più tardi.' : '.'));
+}
+
+/* ---------- eventi ---------- */
+var list = $('#list');
+list.addEventListener('input', function (e) {
+  var el = e.target, row = el.closest('.row');
+  if (!row || row.dataset.ex || !el.dataset.k) return;
+  var b = get(row.dataset.id);
+  if (!b) return;
+  var k = el.dataset.k;
+  if (k === 'y') { var v = el.value.replace(/\D/g, '').slice(0, 4); if (v !== el.value) el.value = v; b.y = v; }
+  else if (k === 'c') { b.c = L.parseNum(el.value); }
+  else if (k === 'i') { var w = el.value.replace(/[^\dXx]/g, '').toUpperCase(); if (w !== el.value) el.value = w; b.i = w; }
+  else if (k === 'pg') { var pv = el.value.replace(/\D/g, '').slice(0, 5); if (pv !== el.value) el.value = pv; b.pg = pv; }
+  else if (k === 'pp') {                                // segnalibro: solo cifre; la barra e la percentuale si aggiornano mentre scrivi
+    var qv = el.value.replace(/\D/g, '').slice(0, 5); if (qv !== el.value) el.value = qv; b.pp = qv; b.ppd = qv ? today() : '';
+    var qi = ppInfo(b), box = el.closest('.pp');
+    if (box) { var pc = box.querySelector('.pp-pct'), br = box.querySelector('.pp-bar i'); if (pc) pc.textContent = qi.pct != null ? qi.pct + '%' : ''; if (br) br.style.width = (qi.pct || 0) + '%'; }
+  }
+  else if (k === 'sn' || k === 'sq') { var sv = el.value.replace(/\D/g, '').slice(0, 3); if (sv !== el.value) el.value = sv; b[k] = sv; }
+  else { b[k] = el.value.replace(/\s*[\r\n]+\s*/g, ' '); if (el.tagName === 'TEXTAREA') autosize(el); }
+  if (b.g.indexOf(k) >= 0) {
+    b.g = b.g.filter(function (x) { return x !== k; });
+    var f = el.closest('.f');
+    if (f) { f.classList.remove('is-guess'); f.removeAttribute('title'); }
+    var fl = row.querySelector('.flags');
+    if (fl) fl.innerHTML = flagsHTML(b, computeDups());
+  }
+  touch(); updateSummary();
+});
+list.addEventListener('change', function (e) {
+  var el = e.target;
+  if (!el.dataset || !el.dataset.k) return;
+  var row = el.closest('.row'), b = row && get(row.dataset.id);
+  if (!b) return;
+  if (el.dataset.k === 'se' || el.dataset.k === 'sn' || el.dataset.k === 'sq') seriesChanged(b, row, el.dataset.k);
+  if (el.dataset.k === 'c') el.value = b.c == null ? '' : L.fmtNum(b.c);
+  if (el.dataset.k === 'i') {
+    var code = L.toIsbn13(b.i);
+    if (code) {
+      b.i = code; el.value = code; b.nf = false;
+      var other = findByIsbn(code);
+      touch();
+      if (!b.t && (!other || other.id === b.id)) { S[b.id] = Object.assign(S[b.id] || {}, { st: 'queued' }); refreshRow(b.id); lookupPool(function () { return doLookup(b.id); }); }
+      else refreshRow(b.id);
+    } else { refreshRow(b.id); }
+    updateSummary();
+  }
+});
+/* il riquadro Descrizione: ricorda se è aperto e alla prima apertura cerca il testo */
+list.addEventListener('toggle', function (e) {
+  var d = e.target;
+  if (!d.classList || !d.classList.contains('desc')) return;
+  if (d.classList.contains('quotes')) { quoteOpen[d.dataset.id] = d.open; return; }
+  descOpen[d.dataset.id] = d.open;
+  if (d.open) loadDesc(d.dataset.id, false);
+}, true);
+list.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && (((e.target.dataset.act === 'verify' || e.target.dataset.act === 'loan' || e.target.dataset.act === 'recv' || e.target.dataset.act === 'dup') && e.target.classList.contains('tag')) || (e.target.dataset.act === 'toggle' && e.target.classList.contains('sum')) || (e.target.dataset.act === 'zoom' && e.target.classList.contains('thumb')))) { e.preventDefault(); e.target.click(); return; }
+  if (e.key === 'Enter' && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')) { e.preventDefault(); e.target.blur(); }
+});
+list.addEventListener('click', function (e) {          // sezioni «In lettura» / «Gli altri libri»: si aprono e chiudono, e se lo ricorda
+  var sh = e.target.closest('.shelf-h'); if (!sh) return;
+  e.stopImmediatePropagation();
+  var k = sh.dataset.shelf, open = sh.getAttribute('aria-expanded') !== 'true';
+  sh.setAttribute('aria-expanded', open ? 'true' : 'false');
+  var body = document.getElementById('shelf-' + k); if (body) body.hidden = !open;
+  settings.shelfShut = settings.shelfShut || {}; if (open) delete settings.shelfShut[k]; else settings.shelfShut[k] = 1; saveSettings();
+}, true);
+list.addEventListener('click', function (e) {
+  var cov = e.target.closest('.cover');
+  if (cov) { openFromGrid(cov.dataset.id); return; }
+  var btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  if (btn.dataset.act === 'clearflt') { clearFilters(); return; }
+  if (btn.dataset.act === 'typeadd') { openIsbnSheet(); return; }
+  if (btn.dataset.act === 'way-scan') { $('#btnScan').click(); return; }
+  if (btn.dataset.act === 'way-photo') { $('#btnPhoto').click(); return; }
+  if (btn.dataset.act === 'way-type') { $('#btnType').click(); return; }
+  if (btn.dataset.act === 'restore') { $('#fileBackup').click(); return; }
+  var row = btn.closest('.row');
+  if (!row) return;
+  var id = row.dataset.id, act = btn.dataset.act;
+  if (act === 'del') {                                       // prima chiedo conferma (non per una riga vuota appena aggiunta)
+    var db0 = get(id);
+    if (db0 && hasData(db0)) askConfirm('Eliminare il libro?', '«' + (db0.t || db0.i || 'Senza titolo') + '»' + (db0.a ? ' di ' + db0.a : '') + '. Subito dopo puoi ancora annullare.', 'Elimina', function () { delBook(id); });
+    else delBook(id);
+  }
+  else if (act === 'retry') retryRow(id);
+  else if (act === 'choose') openPick(id);
+  else if (act === 'manual') openManual(id);
+  else if (act === 'ocrtext') applyOcrText(id);
+  else if (act === 'loan') openLoan(id);
+  else if (act === 'returned') { loanId = id; returnLoan(); }
+  else if (act === 'recv') emit('recv', id);      // «Prestato da …»: lo gestisce il modulo amici
+  else if (act === 'toggle') toggleRow(id);
+  else if (act === 'dup') openDup(id);
+  else if (act === 'facet') applyFacet(btn.dataset.f, btn.dataset.v, btn.dataset.name);
+  else if (act === 'towish') moveToWish(id);
+  else if (act === 'fav') toggleFav(id);
+  else if (act === 'share') { var sb = get(id); if (sb) openShare([sb], { kind: 'book' }); }
+  else if (act === 'tolib') moveToLib(id);
+  else if (act === 'addcopy') addCopy(id);
+  else if (act === 'serall') seriesAll(id);
+  else if (act === 'sermiss') seriesMissing(id);
+  else if (act === 'quoteadd') openQuote(id, null);
+  else if (act === 'quoteshareall') shareAllQuotes(id);
+  else if (act === 'quoteshare') shareQuote(id, +btn.dataset.i);
+  else if (act === 'quotedel') { var qb = get(id), qi = +btn.dataset.i; if (qb && qb.qs && qb.qs[qi]) { var qold = qb.qs.splice(qi, 1)[0]; touch(); paintQuotes(id); toast('Citazione eliminata.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.qs.splice(Math.min(qi, x.qs.length), 0, qold); touch(); paintQuotes(id); } } }); } }
+  else if (act === 'quoteedit') openQuote(id, +btn.dataset.i);
+  else if (act === 'descretry') { var db = get(id); if (db) { db.dsn = 0; loadDesc(id, true); } }
+  else if (act === 'descmore') { descFull[id] = true; paintDesc(id); }
+  else if (act === 'descdel') { var dd = get(id); if (dd) { dd.ds = ''; dd.dsf = ''; dd.dsl = ''; dd.dsn = Date.now(); touch(); paintDesc(id); toast('Descrizione rimossa'); } }
+  else if (act === 'rs' || act === 'rt') setRead(id, act, btn.dataset.v);
+  else if (act === 'auinfo') openAuthor(id, btn.dataset.n);
+  else if (act === 'auedit') editAuthor(id);
+  else if (act === 'author') { q = btn.dataset.q; $('#q').value = q; flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; renderList(); updateSummary(); window.scrollTo({ top: 0 }); toast('Libri di ' + q + '. Svuota la ricerca per vederli tutti.'); }
+  else if (act === 'zoom') openCover(id);
+  else if (act === 'coverphoto') coverTap(id);
+  else if (act === 'kdpphoto') photoForBook(id);
+  else if (act === 'bought') moveToLib(id);
+  else if (act === 'priceweb') {
+    var pw = get(id);
+    if (pw) window.open('https://www.google.com/search?q=' + encodeURIComponent((L.toIsbn13(pw.i) || [pw.t, pw.a].filter(Boolean).join(' ')) + ' prezzo di copertina libro'), '_blank', 'noopener');
+  }
+  else if (act === 'verify') {
+    var vb = get(id);
+    if (vb && vb.g.length) {
+      var snap = vb.g.slice();
+      vb.g = []; refreshRow(id); touch(); updateSummary();
+      toast('Segnato come verificato.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.g = snap; refreshRow(id); touch(); updateSummary(); } } });
+    }
+  }
+  else if (act === 'web' || act === 'websearch') {
+    var wb = get(id);
+    if (wb) window.open('https://www.google.com/search?q=' + encodeURIComponent(wb.t ? [wb.t, L.str(wb.a).split(/[,;]/)[0], 'libro'].filter(Boolean).join(' ') : (L.toIsbn13(wb.i) || wb.i) + ' libro'), '_blank', 'noopener');
+  }
+  else if (act === 'lookup') {
+    var b = get(id);
+    if (b) { b.nf = false; S[id] = Object.assign(S[id] || {}, { st: 'queued' }); refreshRow(id); lookupPool(function () { return doLookup(id); }); }
+  }
+});
+
+function bindFile(sel, fn) {
+  $(sel).addEventListener('change', function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = '';
+    if (files.length) fn(files);
+  });
+}
+var priceId = null;
+/* apre la scheda e mette il cursore nel campo Costo (dal tocco su «Scrivilo»: la tastiera si apre) */
+function typeCost(id) {
+  var b = get(id);
+  if (!b) return;
+  if (!isOpen(b)) { openState[id] = true; refreshRow(id); }
+  var inp = document.getElementById('c-' + id);
+  if (!inp) return;
+  try { inp.focus({ preventScroll: true }); } catch (e) { inp.focus(); }
+  inp.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+bindFile('#filePrice', async function (f) {   // non piu' usato dall'interfaccia (v62): resta per i backup di prova
+  var id = priceId; priceId = null;
+  var b = id && bookFor(id);
+  if (!b) return;
+  toast('Leggo il prezzo…');
+  try {
+    var canvas = await loadCanvas(f[0], 1280);
+    var got = await readPrice(canvas, 3), pr = got ? got.v : null;
+    b = bookFor(id);
+    if (!b) return;
+    id = b.id;
+    if (pr == null) { toast('Non trovo il prezzo in questa foto: avvicinati al «€» stampato, oppure scrivilo.', { label: 'Scrivilo', fn: function () { typeCost(id); } }); return; }
+    var old = b.c;
+    b.c = pr; touch(); refreshRow(id); updateSummary();
+    toast('Prezzo letto: ' + eur(pr) + '. Controllalo.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.c = old; touch(); refreshRow(id); updateSummary(); } } });
+  } catch (e) { toast('Non riesco a leggere la foto.', { label: 'Scrivilo', fn: function () { typeCost(id); } }); }
+});
+bindFile('#fileCam', function (f) { addPhotos(f, true); });
+bindFile('#fileGal', function (f) {
+  var n = Array.prototype.filter.call(f || [], function (x) { return !x.type || x.type.indexOf('image/') === 0; }).length;
+  addPhotos(f, n === 1);                       // una foto sola: chiede anche il prezzo, come dalla fotocamera
+  if (n > 1) toast((n > 60 ? 'Ne ho prese 60 su ' + n : 'Aggiunte ' + n + ' foto') + ': le riconosco una alla volta, intanto puoi continuare.');
+});
+$('#priceSkip').addEventListener('click', closePriceAsk);
+$('#priceUndo').addEventListener('click', function () {
+  var id = askId, b = bookFor(id); closePriceAsk();
+  if (b) { state.books = state.books.filter(function (x) { return x.id !== b.id; }); delete S[b.id]; } else if (id) { state.books = state.books.filter(function (x) { return x.id !== id; }); delete S[id]; }
+  touch(); renderList(); updateSummary(); toast('Libro tolto.');
+});
+$('#priceAskIn').addEventListener('input', function () { $('#priceAskErr').hidden = true; });
+bindFile('#fileBackup', function (f) { restore(f[0]); });
+$('#btnScan').addEventListener('click', startScan);
+$('#btnPhoto').addEventListener('click', function () { $('#photoSheet').hidden = false; });
+$('#photoCam').addEventListener('click', function () { $('#photoSheet').hidden = true; snapPhoto('Foto del libro', '#fileCam').then(function (f) { if (f) addPhotos([f], true); }); });
+$('#photoGal').addEventListener('click', function () { $('#photoSheet').hidden = true; $('#fileGal').click(); });
+$('#photoClose').addEventListener('click', function () { $('#photoSheet').hidden = true; });
+$('#btnType').addEventListener('click', openIsbnSheet);
+$('#scanClose').addEventListener('click', function () { stopScan(false); });
+$('#scanDone').addEventListener('click', function () { stopScan(false); });
+$('#scanTorch').addEventListener('click', toggleTorch);
+$('#scanFlash').addEventListener('click', toggleScanFlash);
+window.addEventListener('popstate', function () { if (scanning) { pushed = false; stopScan(true); } });
+$('#isbnCancel').addEventListener('click', function () { $('#isbnSheet').hidden = true; });
+$('#isbnGo').addEventListener('click', submitIsbn);
+$('#pickClose').addEventListener('click', function () { if (flow.id === pickId) flow.id = null; closePick(); });
+$('#pickText').addEventListener('click', function () { var id = pickId; closePick(); if (id) { applyOcrText(id); flowAfterPick(id); } });
+$('#pickMan').addEventListener('click', function () { var id = pickId, inFlow = flow.id === id; closePick(); if (id) { if (inFlow) flow.id = null; openManual(id, inFlow); } });
+$('#pickList').addEventListener('click', function (e) {
+  var b = e.target.closest('.cand');
+  if (!b || pickId == null) return;
+  var s = S[pickId], c = s && s.cands && s.cands[+b.dataset.i];
+  var id = pickId;
+  closePick();
+  if (c) { applyCandidate(id, c); flowAfterPick(id); }
+});
+$('#copyClose').addEventListener('click', function () { $('#copySheet').hidden = true; });
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  if (drawerOpen) { closeDrawer(); return; }
+  if (optOpen) { closeOptions(); return; }
+  if (!$('#lightbox').hidden) { closeCover(false); return; }
+  if (!$('#instSheet').hidden) { closeInstallHelp(); return; }
+  if (!$('#covSheet').hidden) { closeCovAsk(); return; }
+  if (!$('#svcSheet').hidden) { closeSvcShare(); return; }
+  if (!$('#svcInSheet').hidden) { closeSvcImport(); return; }
+  if (!$('#shareSheet').hidden) { closeShare(); return; }
+  if (!$('#importSheet').hidden) { closeImport(); return; }
+  if (!$('#quoteSheet').hidden) { closeQuote(); return; }
+  if (!$('#ped').hidden) { closePed(null); return; }
+  if (!$('#snap').hidden) { closeSnap(null); return; }
+  if (!$('#phView').hidden) { closePh(false); return; }
+  if (!$('#logSheet').hidden) { closeLog(); return; }
+  if (!$('#auSheet').hidden) { closeAuthor(); return; }
+  if (!$('#confirmSheet').hidden) { $('#confirmSheet').hidden = true; confirmFn = null; return; }
+  if (!$('#bulkSheet').hidden) { $('#bulkSheet').hidden = true; return; }
+  if (selOn) { endSel(false); return; }
+  if (!$('#donSheet').hidden) { closeDon(); return; }
+  if (!$('#manSheet').hidden) { closeManual(); return; }
+  if (!$('#recSheet').hidden) { flowLater(); return; }
+  if (!$('#allqSheet').hidden) { closeAllQuotes(); return; }
+  if (!$('#newsSheet').hidden) { $('#newsSheet').hidden = true; return; }
+  if (!$('#suggSheet').hidden) { closeSugg(); return; }
+  if (!$('#wnSheet').hidden) { closeWhatsNew(); return; }
+  if (!$('#priceAsk').hidden) closePriceAsk();
+  if (!$('#bkFailSheet').hidden) { $('#bkFailSheet').hidden = true; return; }
+  ['#statsSheet', '#exportSheet', '#pubSheet', '#dupSheet', '#photoSheet'].forEach(function (k) { $(k).hidden = true; });
+  if (!$('#loanSheet').hidden) closeLoan();
+});
+/* ---- Finestre dal basso: si chiudono anche trascinandole verso il basso (se il contenuto e' gia' in cima).
+   La finestra segue il dito; oltre una certa distanza, o con un gesto veloce, si chiude come con la sua X. ---- */
+var sdrag = null;
+function closeSheetEl(sh) {
+  function hide() { sh.hidden = true; }
+  var map = {
+    covSheet: closeCovAsk, svcSheet: closeSvcShare, svcInSheet: closeSvcImport, shareSheet: closeShare, importSheet: closeImport,
+    quoteSheet: closeQuote, suggSheet: closeSugg, wnSheet: closeWhatsNew, logSheet: function () { closeLog(); }, auSheet: closeAuthor, donSheet: function () { closeDon(); }, manSheet: closeManual,
+    recSheet: flowLater, allqSheet: closeAllQuotes, priceAsk: closePriceAsk, loanSheet: closeLoan, instSheet: closeInstallHelp,
+    confirmSheet: function () { hide(); confirmFn = null; },
+    pickSheet: function () { $('#pickClose').click(); }, isbnSheet: function () { $('#isbnCancel').click(); }, copySheet: function () { $('#copyClose').click(); }
+  };
+  try { (map[sh.id] || hide)(); } catch (e) {}
+  if (!sh.hidden) hide();
+}
+function scrolledInside(el, top) { for (; el && el !== top.parentNode; el = el.parentElement) if (el.scrollTop > 0) return true; return false; }
+document.addEventListener('touchstart', function (e) {
+  sdrag = null;
+  if (e.touches.length !== 1) return;
+  var t = e.target, sh = t.closest && t.closest('.sheet');
+  if (!sh || sh.hidden) return;
+  var inn = sh.querySelector('.sheet-in');
+  if (!inn || !inn.contains(t) || t.closest('input, textarea, select, canvas, #bkPrev, [data-nodrag]') || scrolledInside(t, inn)) return;
+  sdrag = { sh: sh, inn: inn, y0: e.touches[0].clientY, x0: e.touches[0].clientX, t0: Date.now(), dy: 0, on: false };
+}, { passive: true });
+document.addEventListener('touchmove', function (e) {
+  if (!sdrag) return;
+  var p = e.touches[0], dy = p.clientY - sdrag.y0, dx = p.clientX - sdrag.x0;
+  if (!sdrag.on) {
+    if (Math.abs(dy) < 8 && Math.abs(dx) < 8) return;
+    if (dy <= 0 || Math.abs(dx) > dy) { sdrag = null; return; }       // verso l'alto o di lato: si scorre come sempre
+    sdrag.on = true; sdrag.t0 = Date.now(); sdrag.y0 = p.clientY - 1;
+    sdrag.inn.style.transition = 'none'; sdrag.sh.style.transition = 'none';
+  }
+  sdrag.dy = Math.max(0, p.clientY - sdrag.y0);
+  sdrag.inn.style.transform = 'translateY(' + sdrag.dy + 'px)';
+  sdrag.sh.style.backgroundColor = 'rgba(0,0,0,' + (0.5 * Math.max(0.2, 1 - sdrag.dy / 600)).toFixed(3) + ')';
+  if (e.cancelable) e.preventDefault();
+}, { passive: false });
+function endSheetDrag() {
+  var d = sdrag; sdrag = null;
+  if (!d || !d.on) return;
+  var h = d.inn.getBoundingClientRect().height, v = d.dy / Math.max(1, Date.now() - d.t0);
+  var close = d.dy > Math.min(140, h * 0.35) || (v > 0.6 && d.dy > 40);
+  d.inn.style.transition = 'transform .2s ease';
+  function reset() { d.inn.style.transform = ''; d.inn.style.transition = ''; d.sh.style.backgroundColor = ''; d.sh.style.transition = ''; }
+  if (close) { d.inn.style.transform = 'translateY(' + Math.round(h + 40) + 'px)'; setTimeout(function () { closeSheetEl(d.sh); reset(); }, 190); }
+  else { d.inn.style.transform = ''; d.sh.style.backgroundColor = ''; setTimeout(reset, 220); }
+}
+document.addEventListener('touchend', endSheetDrag);
+document.addEventListener('touchcancel', endSheetDrag);
+$('#q').addEventListener('input', function (e) { q = e.target.value; collapseCards(); renderList(); });
+$('#sort').addEventListener('change', function (e) { sortBy = e.target.value; renderList(); });
+$('#fltGuess').addEventListener('click', function () { flt = flt === 'guess' ? '' : 'guess'; collapseCards(); updateSummary(); renderList(); });
+$('#fltLoan').addEventListener('click', function () {
+  collapseCards();
+  var on = !(flt === 'loan' && tab === 'lib');
+  if (tab !== 'lib') setTab('lib');
+  flt = on ? 'loan' : '';
+  updateSummary(); renderList();
+  if (on) toast(allLoansText());
+});
+function allLoansText() {
+  var n = state.books.filter(function (b) { return !b.w && b.p; }).length;
+  return n ? (n === 1 ? '1 libro in prestito.' : n + ' libri in prestito, dai più vecchi.') + (document.querySelector('#fltLoan') && document.querySelector('#fltLoan').offsetParent ? ' Tocca di nuovo «Prestati» per vederli tutti.' : ' Tocca di nuovo «in prestito» per vederli tutti.') : 'Nessun libro in prestito.';
+}
+$('#tabLib').addEventListener('click', function () { setTab('lib'); });
+$('#tabWish').addEventListener('click', function () { setTab('wish'); });
+$('#btnView').addEventListener('click', function () {
+  gridRet = null;
+  setView(settings.view === 'grid' ? 'list' : 'grid'); renderList();
+});
+$('#btnCheck').addEventListener('click', function () { startScan('check'); });
+$('#btnStats').addEventListener('click', openStats);
+$('#statsClose').addEventListener('click', function () { $('#statsSheet').hidden = true; });
+$('#statsBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'goalIn') { e.preventDefault(); saveGoal(); } });
+$('#statsBody').addEventListener('click', function (e) {
+  if (e.target.closest('#goalSave')) { saveGoal(); return; }
+  var sq = e.target.closest('[data-q]');               // serie e collane: come «Vedi i libri della serie», con la ricerca
+  if (sq) { flt = ''; readFlt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = ''; q = sq.dataset.q; $('#q').value = q; $('#statsSheet').hidden = true; collapseCards(); renderList(); updateSummary(); window.scrollTo({ top: 0 }); return; }
+  var r = e.target.closest('[data-sf]');
+  if (!r) return;
+  /* un vero filtro (autore, casa editrice, genere, scaffale), non una ricerca: si vede e si toglie dai filtri del menu (Piero, 16/11/2026) */
+  var f = r.dataset.sf, v = r.dataset.sv;
+  $('#statsSheet').hidden = true;
+  applyFacet(f, facetKey(v), v);
+});
+function openExport() {
+  var n = exportBooks().length;
+  $('#exportMsg').textContent = n ? 'Esporto i ' + n + (n === 1 ? ' libro' : ' libri') + ' della scheda ' + (tab === 'wish' ? 'Desideri' : 'Libreria') + ', con le colonne che hanno dei dati.' : 'La scheda ' + (tab === 'wish' ? 'Desideri' : 'Libreria') + ' è vuota.';
+  updateBackupInfo();
+  $('#backupNote').textContent = '';
+  prepBackup();
+  $('#exportSheet').hidden = false;
+}
+$('#btnExport').addEventListener('click', openExport);
+$('#exportClose').addEventListener('click', function () { $('#exportSheet').hidden = true; });
+$('#btnXlsx').addEventListener('click', saveXLSX);
+$('#btnShareBackup').addEventListener('click', shareBackup);
+$('#loanCancel').addEventListener('click', closeLoan);
+$('#loanSave').addEventListener('click', saveLoan);
+$('#loanBack').addEventListener('click', returnLoan);
+$('#loanKind').addEventListener('click', function (e) { var x = e.target.closest('[data-k]'); if (x) setLoanKind(x.dataset.k); });
+$('#loanWho').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); saveLoan(); } });
+$('#btnPubs').addEventListener('click', openPubs);
+$('#pubCancel').addEventListener('click', function () { $('#pubSheet').hidden = true; });
+$('#pubApply').addEventListener('click', applyPubs);
+$('#pubList').addEventListener('change', function (e) {
+  if (e.target.type !== 'radio') return;
+  var gi = e.target.name.slice(2);
+  document.querySelectorAll('#pubList input[data-g="' + gi + '"]').forEach(function (cb) { var me = cb.dataset.n === e.target.value; cb.disabled = me; if (me) cb.checked = true; });
+});
+$('#btnFill').addEventListener('click', fillMissing);
+$('#btnDescAll').addEventListener('click', allDescs);
+$('#btnMergeDups').addEventListener('click', mergeDups);
+$('#dupCopies').addEventListener('click', dupCopies);
+$('#dupMerge').addEventListener('click', dupMerge);
+$('#dupUnmark').addEventListener('click', dupUnmark);
+$('#dupClose').addEventListener('click', closeDup);
+$('#btnShareWish').addEventListener('click', shareWish);
+$('#btnPrint').addEventListener('click', printCatalog);
+$('#sort').addEventListener('change', function () { if (drawerOpen) updateDrawerFoot(); });
+$('#btnVerifyAll').addEventListener('click', function () {
+  var snapshot = JSON.stringify(state.books), n = 0;
+  state.books.forEach(function (b) { if (b.g.length) { b.g = []; n++; } });
+  if (!n) { toast('Non ci sono libri da verificare.'); return; }
+  if (flt === 'guess') flt = '';
+  renderList(); touch(); updateSummary();
+  toast(n + (n === 1 ? ' libro segnato come verificato.' : ' libri segnati come verificati.'), { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot); renderList(); touch(); updateSummary(); } });
+});
+$('#btnTodo').addEventListener('click', runTodo);
+$('#btnCopy').addEventListener('click', copyTSV);
+$('#btnCsv').addEventListener('click', saveCSV);
+$('#btnBackup').addEventListener('click', backup);
+$('#btnRestore').addEventListener('click', function () { $('#fileBackup').click(); });
+$('#btnDiag').addEventListener('click', async function () {
+  var out = $('#diagOut'), btn = $('#btnDiag');
+  btn.disabled = true; out.hidden = false; out.textContent = 'Provo le banche dati…';
+  try {
+    var res = await L.diagnose(lookupOpts());
+    out.innerHTML = res.map(function (r) { return '<div class="' + (r.ok ? 'diag-ok' : 'diag-bad') + '"><b>' + (r.ok ? '✓ ' : '✗ ') + r.name + '</b>: ' + esc(r.msg) + '</div>'; }).join('');
+  } catch (e) { out.textContent = 'Prova non riuscita.'; }
+  btn.disabled = false;
+});
+$('#btnGuessPub').addEventListener('click', function () {
+  var snapshot = JSON.stringify(state.books), n = 0, sure = 0, missing = 0;
+  state.books.forEach(function (b) {
+    if (b.e || !L.toIsbn13(b.i)) return;
+    var r = guessEditor(b);
+    if (r) { n++; if (r === 'sure') sure++; } else missing++;
+  });
+  if (!n) { toast(missing ? 'Non riesco a dedurre le case editrici: servono altri libri dello stesso editore già completi.' : 'Tutti i libri hanno già la casa editrice.'); return; }
+  renderList(); touch(); updateSummary();
+  var unsure = n - sure;
+  toast('Dedotte ' + n + (n === 1 ? ' casa editrice' : ' case editrici') + ' dall\'ISBN' + (sure ? ': ' + sure + (sure === 1 ? ' confermata' : ' confermate') + ' dai tuoi libri' : '') + (unsure ? (sure ? ', ' : ': ') + unsure + ' «Da verificare»' : '') + '.', { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot); renderList(); touch(); updateSummary(); } });
+});
+$('#btnInstDiag').addEventListener('click', async function () {
+  var out = $('#instOut'), btn = $('#btnInstDiag');
+  btn.disabled = true; out.hidden = false; out.textContent = 'Controllo…';
+  var rows = [];
+  function add(ok, name, msg) { rows.push('<div class="' + (ok ? 'diag-ok' : 'diag-bad') + '"><b>' + (ok ? '✓ ' : '✗ ') + esc(name) + '</b>: ' + esc(msg) + '</div>'); }
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  if (standalone) rows.push('<div class="diag-ok"><b>✓ Stai già usando l\'app installata.</b></div>');
+  var secureOk = location.protocol === 'https:' || location.hostname === 'localhost';
+  add(secureOk, 'Indirizzo sicuro (https)',
+    secureOk ? 'ok' : 'l\'indirizzo inizia con «' + location.protocol + '»: Chrome installa solo da indirizzi https (per esempio https://nome.netlify.app). Apri la versione pubblicata, non il file sul telefono o sul computer.');
+  var ua = navigator.userAgent || '';
+  var inApp = /; wv\)|FBAN|FBAV|Instagram|Line\/|Telegram|WhatsApp|GSA\/|Snapchat/i.test(ua);
+  var other = /SamsungBrowser|OPR\/|Firefox|EdgA|Edg\/|DuckDuckGo|Brave/i.test(ua);
+  add(/Chrome\//.test(ua) && !inApp && !other, 'Aperta in Google Chrome',
+    inApp ? 'sembra aperta dentro un\'altra app (WhatsApp, Gmail, Telegram…): copia l\'indirizzo e aprilo direttamente in Chrome.'
+      : (other || !/Chrome\//.test(ua)) ? 'non sembra Chrome: apri l\'indirizzo con Google Chrome.' : 'ok');
+  var siteOk = secureOk;
+  try {
+    var reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    var swErr = '';
+    if (!(reg && reg.active) && 'serviceWorker' in navigator) {
+      try {
+        reg = await navigator.serviceWorker.register('sw.js');
+        await Promise.race([navigator.serviceWorker.ready, new Promise(function (_, no) { setTimeout(function () { no(new Error('non si attiva entro 6 secondi: probabilmente manca qualche file')); }, 6000); })]);
+      } catch (e5) { swErr = (e5 && e5.message) || String(e5); }
+      reg = await navigator.serviceWorker.getRegistration();
+    }
+    var swOk = !!(reg && reg.active);
+    siteOk = siteOk && swOk;
+    add(swOk, 'Funzionamento offline (service worker)', swOk ? 'attivo' : 'non parte' + (swErr ? ': ' + swErr : '') + '. Chiudi e riapri la pagina e ricontrolla; se resta cosi\' ricarica la cartella su Netlify (manca qualche file).');
+  } catch (e) { siteOk = false; add(false, 'Funzionamento offline (service worker)', 'non disponibile in questo browser.'); }
+  try {
+    var mlink = document.querySelector('link[rel="manifest"]').href;
+    var mr = await fetch(mlink, { cache: 'no-store' });
+    var ct = mr.headers.get('content-type') || '';
+    var mj = mr.ok ? await mr.json() : null;
+    var icons = (mj && mj.icons) || [];
+    var has = function (sz) { return icons.some(function (ic) { return (ic.sizes || '').split(/\s+/).indexOf(sz) >= 0; }); };
+    var mOk = !!(mj && mj.name && mj.start_url && has('192x192') && has('512x512'));
+    siteOk = siteOk && mOk;
+    add(mOk, 'Scheda dell\'app (manifest)', mr.ok ? (mOk ? 'ok (' + (ct.split(';')[0] || 'tipo non indicato') + ')' : 'incompleta: mancano nome, start_url o icone 192 e 512 px')
+      : (mr.status === 401 || mr.status === 403) ? 'errore ' + mr.status + ': il server rifiuta l\'accesso a questo file. Il sito sembra protetto (password o accesso riservato) oppure e\' un sito temporaneo non ancora collegato a un account: nelle impostazioni del sito su Netlify cerca la protezione con password / accesso riservato e disattivala, poi ricontrolla.'
+      : 'errore ' + mr.status + ' nel caricarla: ricarica la cartella su Netlify.');
+    var bad = [];
+    for (var ii = 0; ii < icons.length; ii++) {
+      try {
+        var ir = await fetch(new URL(icons[ii].src, mlink).href, { cache: 'no-store' });
+        var ict = ir.headers.get('content-type') || '';
+        if (!ir.ok) bad.push(icons[ii].src + ' (errore ' + ir.status + ')');
+        else if (!/image\//.test(ict)) bad.push(icons[ii].src + ' (non e\' un\'immagine: ' + (ict || 'tipo ignoto') + ')');
+      } catch (e6) { bad.push(icons[ii].src + ' (non raggiungibile)'); }
+    }
+    siteOk = siteOk && !bad.length;
+    add(!bad.length && icons.length > 0, 'Icone dell\'app', !icons.length ? 'nessuna icona nella scheda dell\'app.' : bad.length ? 'non si caricano: ' + bad.join(', ') + '. Ricarica la cartella intera su Netlify, cartella «icons» compresa.' : 'ok (' + icons.length + ')');
+  } catch (e) { siteOk = false; add(false, 'Scheda dell\'app (manifest)', 'non riesco a leggerla.'); }
+  try {
+    var probes = ['manifest.json', 'style.css', 'sw.js', 'icons/next-libris-192.png'], res = [], odd = false;
+    for (var pk = 0; pk < probes.length; pk++) {
+      var st;
+      try { st = (await fetch(probes[pk] + '?t=' + Date.now(), { cache: 'no-store' })).status; } catch (e7) { st = 'rete'; }
+      if (st !== 200) odd = true;
+      res.push(probes[pk].split('/').pop() + ' ' + st);
+    }
+    add(!odd, 'Accesso ai file del sito', res.join(', ') + (odd ? '. Se un file risponde 401 o 403 e gli altri 200, quel file e\' bloccato dal server: manda questo risultato.' : ''));
+    if (odd) siteOk = false;
+  } catch (e) {}
+  var cv = (ua.match(/Chrome\/(\d+)/) || [])[1];
+  add(!!deferred, 'Chrome ha offerto l\'installazione', deferred ? 'sì: ora puoi premere «Installa l\'app» qui sopra.'
+    : (standalone ? 'non serve, è già installata.' : siteOk
+      ? 'no, anche se la pagina è a posto. In questo caso il problema è nel telefono: Chrome crea l\'app tramite Google Play, quindi servono Play Store e «Google Play Services» aggiornati, con la connessione attiva' + (cv ? ' (Chrome ' + cv + ')' : '') + '. Aggiorna Chrome e Play Store, riavvia il telefono, riapri l\'indirizzo in Chrome e controlla di nuovo il menu (⋮).'
+      : 'no: correggi prima le voci con ✗ qui sopra, poi ricarica la pagina.'));
+  out.innerHTML = rows.join('');
+  btn.disabled = false;
+});
+$('#gbKey').value = '';
+$('#optPrice').addEventListener('change', function (e) { settings.price = e.target.checked; saveSettings(); toast(settings.price ? 'Dopo ogni libro ti chiederò il prezzo (puoi sempre saltarlo).' : 'Non chiederò più il prezzo: puoi scriverlo quando vuoi nel campo «Costo» della scheda.'); });
+/* l'indirizzo del worker si puo' incollare anche senza https:// o con ?isbn=... della prova a mano */
+function cleanWorker(v) {
+  v = String(v || '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
+  if (v && !/^[a-z][a-z0-9+.-]*:\/\//i.test(v) && /^[^\s/]+\.[a-z]{2,}(\/|$)/i.test(v)) v = 'https://' + v;
+  return v;
+}
+$('#sbnUrl').addEventListener('change', function (e) {
+  var v = cleanWorker(e.target.value), before = settings.sbnUrl;
+  if (v && !/^https:\/\/[^\s/]+\.[^\s]+$/.test(v)) { toast('L\'indirizzo deve iniziare con https:// (es. https://sbn-libri.tuonome.workers.dev).'); return; }
+  if (v === before) { e.target.value = v; return; }
+  e.target.value = v; setSvc('sbn', v);
+  if (v) toast('Worker SBN in uso. Premi «Prova la ricerca ISBN» per controllare.');
+  else toast('Worker tolto: ora cerco senza il catalogo SBN.', { label: 'Annulla', fn: function () { setSvc('sbn', before); } });
+});
+$('#gbKey').addEventListener('change', function (e) {
+  var v = e.target.value.replace(/\s+/g, ''), before = settings.gbKey;
+  if (v === before) { e.target.value = v; return; }
+  e.target.value = v; setSvc('key', v);
+  if (!v) toast('Chiave tolta: ora cerco su Google senza chiave.', { label: 'Annulla', fn: function () { setSvc('key', before); } });
+  else toast(/^AIza[\w-]{30,}$/.test(v) ? 'Chiave in uso. Premi «Prova la ricerca ISBN» per controllare.' : 'Chiave in uso, ma non sembra una chiave Google (di solito inizia con AIza e ha 39 caratteri): controlla.');
+});
+function clearSvc(k) {
+  var before = svcVal(k);
+  if (!before) return;
+  setSvc(k, '');
+  toast(k === 'sbn' ? 'Worker tolto. Resta tra i salvati.' : 'Chiave tolta. Resta tra le salvate.',
+    { label: 'Annulla', fn: function () { setSvc(k, before); } });
+}
+$('#sbnClear').addEventListener('click', function () { clearSvc('sbn'); });
+$('#gbClear').addEventListener('click', function () { clearSvc('key'); });
+$('#svcRestore').addEventListener('click', function () {
+  var did = [];
+  if (!settings.sbnUrl && saved.sbn[0]) { setSvc('sbn', saved.sbn[0]); did.push('sbn'); }
+  if (!settings.gbKey && saved.key[0]) { setSvc('key', saved.key[0]); did.push('key'); }
+  if (!did.length) return;
+  toast(did.length === 2 ? 'Chiave e worker rimessi.' : did[0] === 'sbn' ? 'Worker rimesso.' : 'Chiave rimessa.',
+    { label: 'Annulla', fn: function () { did.forEach(function (k) { setSvc(k, ''); }); } });
+});
+$('#svcSbn').parentNode.addEventListener('click', function (e) {
+  var u = e.target.closest('.schip-use'), x = e.target.closest('.schip-x');
+  if (u) {
+    var k = u.dataset.k, v = saved[k][+u.dataset.i], before = svcVal(k);
+    if (!v) return;
+    setSvc(k, v);
+    toast(k === 'sbn' ? 'Worker rimesso: ' + svcShort(k, v) + '.' : 'Chiave rimessa: ' + svcShort(k, v) + '.', { label: 'Annulla', fn: function () { setSvc(k, before); } });
+  } else if (x) {
+    var k2 = x.dataset.k, i2 = +x.dataset.forget, v2 = saved[k2][i2];
+    if (!v2) return;
+    saved[k2].splice(i2, 1); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc();
+    toast((k2 === 'sbn' ? 'Worker tolto dai salvati.' : 'Chiave tolta dalle salvate.'), { label: 'Annulla', fn: function () { saved[k2].splice(i2, 0, v2); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc(); } });
+  }
+});
+$('#btnClearGuess').addEventListener('click', function () {
+  var snapshot = JSON.stringify(state.books), n = 0;
+  state.books.forEach(function (b) {
+    if (b.g.length) { b.g.forEach(function (k) { if (k !== 'i') b[k] = ''; n++; }); b.g = []; }
+  });
+  if (!n) { toast('Non ci sono ipotesi da svuotare.'); return; }
+  renderList(); touch(); updateSummary();
+  toast('Svuotate ' + n + ' ipotesi', { label: 'Annulla', fn: function () { state.books = JSON.parse(snapshot); renderList(); touch(); updateSummary(); } });
+});
+/* ---------- installazione e condivisione dell'app ---------- */
+/* Finche' l'app si usa dal browser, in alto c'e' la scheda «Installa»: un tocco apre la richiesta di Chrome
+   (quando Chrome la offre), altrimenti spiega i passi giusti per quel telefono e browser. */
+/* indirizzo dell'app: quello da cui gira (cosi' link e condivisioni seguono un eventuale cambio di nome); di riserva quello pubblicato */
+var APP_URL = /\.github\.io$/.test(location.hostname) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://nextlibris.github.io/';
+var APP_SCOPE = location.pathname.replace(/[^/]*$/, '');      // es. /next-libris/: l'app installata e' legata a questa cartella
+var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. Aprilo con Chrome e premi «Installa».';
+var deferred = null;
+function isStandalone() {
+  try {
+    if (window.matchMedia && ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some(function (m) { return matchMedia('(display-mode: ' + m + ')').matches; })) return true;
+  } catch (e) {}
+  return navigator.standalone === true || /^android-app:\/\//.test(document.referrer || '');
+}
+function browserKind() {
+  var ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/; wv\)|FBAN|FBAV|Instagram|Line\/|Telegram|WhatsApp|GSA\/|Snapchat/i.test(ua)) return 'inapp';
+  if (/SamsungBrowser/i.test(ua)) return 'samsung';
+  if (/Firefox/i.test(ua)) return 'firefox';
+  if (/Android/i.test(ua)) return 'android';
+  return 'desktop';
+}
+function updateInstallUi() {
+  var inst = isStandalone();
+  if (inst && (!settings.installed || settings.instScope !== APP_SCOPE)) { settings.installed = true; settings.instScope = APP_SCOPE; saveSettings(); }   // l'app installata e Chrome condividono i dati: da qui in poi niente scheda
+  var kind = browserKind();
+  var show = !inst && !settings.installed && Date.now() - settings.instSnooze > 14 * 86400000;
+  $('#instCard').hidden = !show;
+  $('#instGo').textContent = kind === 'inapp' && !deferred ? 'Apri in Chrome' : 'Installa';
+  $('#instMsg').textContent = kind === 'inapp' && !deferred
+    ? 'Sei dentro un\'altra app: aprila in Chrome per averla tra le app del telefono, a schermo intero e anche senza rete.'
+    : 'Avrai l\'icona tra le app del telefono: si apre a schermo intero e funziona anche senza rete.';
+  $('#btnInstall').hidden = inst;
+  $('#instOkTxt').hidden = !inst;
+}
+var INST_STEPS = {
+  android: { lead: 'Chrome non ha ancora proposto l\'installazione: si fa dal suo menu.',
+    steps: ['Tocca <b>⋮</b> in alto a destra.', 'Scegli <b>Installa app</b> (su alcuni telefoni <b>Aggiungi a schermata Home</b>, poi <b>Installa</b>).', 'Conferma: l\'icona di Next Libris compare tra le app.'],
+    note: 'Se nel menu c\'è <b>Apri in Chrome</b>, sei dentro un\'altra app (Gmail, Telegram…): toccalo e poi premi «Installa» qui in alto. Se nel menu c\'è <b>Apri app</b>, è già installata.' },
+  inapp: { lead: 'Il link si è aperto dentro un\'altra app, che non può installarla. Serve Chrome.',
+    steps: ['Tocca <b>⋮</b> (i tre puntini) in alto a destra.', 'Scegli <b>Apri in Chrome</b> o <b>Apri nel browser</b>.', 'In Chrome premi <b>Installa</b> nella scheda in alto.'],
+    note: 'Se non trovi la voce, copia il link e incollalo nella barra degli indirizzi di Chrome.', copy: true, chrome: true },
+  ios: { lead: 'Su iPhone e iPad si aggiunge alla schermata Home da Safari.',
+    steps: ['Tocca <b>Condividi</b> (il quadrato con la freccia in su).', 'Scorri e scegli <b>Aggiungi alla schermata Home</b>.', 'Tocca <b>Aggiungi</b>.'],
+    note: 'Se la voce non c\'è, copia il link e aprilo in Safari.', copy: true },
+  samsung: { lead: 'In Samsung Internet si fa dal menu in basso.',
+    steps: ['Tocca il menu <b>≡</b> in basso a destra.', 'Scegli <b>Aggiungi pagina a</b>, poi <b>Schermata Home</b>.', 'Conferma con <b>Aggiungi</b>.'],
+    note: 'In alternativa apri il link in Chrome: lì basta premere «Installa».', copy: true },
+  firefox: { lead: 'In Firefox si fa dal menu.',
+    steps: ['Tocca <b>⋮</b>.', 'Scegli <b>Installa</b> o <b>Aggiungi alla schermata principale</b>.', 'Conferma.'],
+    note: 'In alternativa apri il link in Chrome: lì basta premere «Installa».', copy: true },
+  desktop: { lead: 'Sul computer si installa da Chrome o Edge.',
+    steps: ['Nella barra dell\'indirizzo, a destra, clicca l\'icona <b>Installa</b>.', 'Se non c\'è: menu <b>⋮</b> › <b>Trasmetti, salva e condividi</b> › <b>Installa pagina come app</b>.', 'Conferma con <b>Installa</b>.'],
+    note: 'Sul telefono è più comoda: apri Menu › Impostazioni › Condivisione e inquadra il QR code.' }
+};
+var instPushed = false;
+function openInstallHelp() {
+  var k = browserKind(), h = INST_STEPS[k], reuse = false;
+  if (optOpen) { reuse = optPushed; optPushed = false; $('#optSheet').hidden = true; optOpen = false; }   // dalle Opzioni: il foglio prende il loro posto
+  $('#instLead').textContent = h.lead;
+  $('#instSteps').innerHTML = h.steps.map(function (x) { return '<li><span>' + x + '</span></li>'; }).join('');
+  $('#instNote').innerHTML = h.note;
+  $('#instCopy').hidden = !h.copy;
+  var ch = $('#instChrome');
+  ch.hidden = !(h.chrome && /Android/i.test(navigator.userAgent || ''));
+  ch.href = 'intent://' + APP_URL.replace(/^https:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(APP_URL) + ';end';
+  $('#instWhy').hidden = k !== 'android' && k !== 'desktop';
+  $('#instSheet').hidden = false;
+  if (reuse) { try { history.replaceState({ inst: 1 }, ''); instPushed = true; } catch (e) {} }
+  else if (!instPushed) { try { history.pushState({ inst: 1 }, ''); instPushed = true; } catch (e) {} }
+  $('#instOk').focus({ preventScroll: true });
+}
+function closeInstallHelp(fromPop) {
+  if ($('#instSheet').hidden) return;
+  $('#instSheet').hidden = true;
+  if (instPushed && !fromPop) { instPushed = false; try { history.back(); } catch (e) {} }
+  else instPushed = false;
+}
+window.addEventListener('popstate', function () { if (!$('#instSheet').hidden) { instPushed = false; closeInstallHelp(true); } });
+async function doInstall() {
+  if (!deferred) { openInstallHelp(); return; }
+  var d = deferred, out = null;
+  d.prompt();
+  try { out = await d.userChoice; } catch (e) {}
+  deferred = null;
+  if (out && out.outcome === 'dismissed') toast('Va bene. Quando vuoi: Menu › Impostazioni › Installazione sul telefono.');
+  updateInstallUi();
+}
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; updateInstallUi(); });
+window.addEventListener('appinstalled', function () {
+  deferred = null; settings.installed = true; settings.instScope = APP_SCOPE; saveSettings(); updateInstallUi();
+  toast('Next Libris è installata: la trovi tra le app del telefono.');
+});
+$('#btnInstall').addEventListener('click', doInstall);
+$('#instGo').addEventListener('click', doInstall);
+$('#instLater').addEventListener('click', function () {
+  settings.instSnooze = Date.now(); saveSettings(); updateInstallUi();
+  toast('Quando vuoi: Menu › Impostazioni › Installazione sul telefono.', { label: 'Annulla', fn: function () { settings.instSnooze = 0; saveSettings(); updateInstallUi(); } });
+});
+$('#instOk').addEventListener('click', function () { closeInstallHelp(); });
+$('#instSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeInstallHelp(); });
+$('#instCopy').addEventListener('click', copyAppLink);
+$('#instWhy').addEventListener('click', function () {
+  var had = instPushed; instPushed = false; $('#instSheet').hidden = true;
+  openOptions('app', had);
+  setTimeout(function () { $('#btnInstDiag').click(); }, 60);
+});
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = t; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    var ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch (e) { return false; }
+}
+async function copyAppLink() {
+  toast(await copyText(APP_URL) ? 'Link copiato: incollalo in WhatsApp, in un messaggio o in una mail.' : 'Non riesco a copiarlo. Il link è ' + APP_URL);
+}
+async function shareApp() {
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Next Libris', text: SHARE_TXT, url: APP_URL }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  copyAppLink();
+}
+$('#shareApp').addEventListener('click', shareApp);
+$('#copyApp').addEventListener('click', copyAppLink);
+if (window.matchMedia) { try { var smq = matchMedia('(display-mode: standalone)'); var onSm = function () { updateInstallUi(); }; if (smq.addEventListener) smq.addEventListener('change', onSm); else if (smq.addListener) smq.addListener(onSm); } catch (e) {} }
+function resumeLookups(silent) {
+  var waiting = state.books.filter(function (b) { var s = S[b.id]; return s && s.st === 'wait'; });
+  waiting.forEach(function (b) { var s = S[b.id]; clearTimeout(s.timer); s.st = 'queued'; refreshRow(b.id); lookupPool(function () { return doLookup(b.id); }); });
+  var n = waiting.length + todoRows().length;
+  if (todoRows().length) runTodo();
+  if (n && !silent) toast('Di nuovo online: cerco ' + n + (n === 1 ? ' libro rimasto in attesa.' : ' libri rimasti in attesa.'));
+  return n;
+}
+window.addEventListener('online', function () { persist(); offlineNoted = false; resumeLookups(false); });
+window.addEventListener('offline', persist);
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') { clearTimeout(tSave); persist(); } });
+var rz = null;
+window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(function () { autosizeAll(list); }, 150); });
+
+/* ---------- avvio ---------- */
+if (COPIA) {                                       // copia parallela (prova, social…): si vede subito, per non confonderla con quella vera
+  document.documentElement.classList.add('prova', 'copia-' + COPIA);
+  document.title = 'Next Libris (' + COPIA + ')';
+  var h1 = document.querySelector('h1');
+  if (h1) h1.insertAdjacentHTML('beforeend', ' <span class="prova-tag" title="Copia ' + esc(COPIA) + ': dati separati da quelli della versione vera">' + esc(COPIA.toUpperCase()) + '</span>');
+}
+loadAll();
+settings.donOpens = Math.min(9999, settings.donOpens + 1);   // un accesso in piu' (per la riga «Sostieni»)
+saveSettings();                                  // salva subito eventuali scelte aggiornate (es. palette predefinita)
+if (settings.donGo) {                            // l'app e' stata riaperta mentre si era su PayPal (il telefono l'aveva chiusa)
+  if (Date.now() - settings.donGo < 2 * DON_DAY) setTimeout(donBack, 1200);
+  else { settings.donGo = 0; settings.donHid = false; saveSettings(); }
+}
+loadSaved();
+renderSvc();
+$('#optName').value = settings.name || '';
+renderOwner();
+$('#optPrice').checked = settings.price;
+paintSound();
+$('#optCamNative').checked = !!settings.camNative;
+paintLensState();
+$('#lensRun').addEventListener('click', runLensCheck);
+$('#lightRun').addEventListener('click', runLightTest);
+$('#lightYes').addEventListener('click', function () { lightAnswer(true); });
+$('#lightNo').addEventListener('click', function () { lightAnswer(false); });
+$('#optCamNative').addEventListener('change', function (e) { settings.camNative = e.target.checked; saveSettings(); toast(settings.camNative ? 'Foto con la fotocamera del telefono.' : 'Foto con la fotocamera dell\'app.'); });
+$('#optSound').addEventListener('change', function (e) { setSound(e.target.checked, true); });
+/* Avvisi chiusi ma ancora validi (prestiti lunghi, backup, «Hai finito…», e quelli dei moduli): un triangolino nel riepilogo li riapre */
+function closedNotices() {
+  var out = [], DAY = 864e5, now = Date.now();
+  var showing = $('#notice').hidden ? '' : noticeKind;
+  var longLoans = state.books.some(function (b) { return !b.w && b.p && b.pd && now - Date.parse(b.pd) > 30 * DAY; });
+  if (longLoans && showing !== 'loan' && now - settings.loanSnooze < 7 * DAY) out.push({ k: 'loan', reopen: function () { settings.loanSnooze = 0; saveSettings(); if (!$('#notice').hidden && noticeKind !== 'loan') $('#notice').hidden = true; noticeKind = ''; checkLoanNag(); } });
+  var n = storable().length;
+  if (n >= 10 && state.updated > settings.lastBackup && now - settings.lastBackup > 14 * DAY && now - settings.snooze <= 14 * DAY && showing !== 'backup')
+    out.push({ k: 'backup', reopen: function () { settings.snooze = 0; saveSettings(); if ($('#notice').hidden) checkBackupNag(); } });
+  var last = nxJustRead();
+  if (last && settings.nxSeen === last.id && !state.books.some(function (b) { return !b.w && b.rs === 'in'; }) && nextList().length)
+    out.push({ k: 'next', reopen: function () { settings.nxSeen = ''; saveSettings(); nxBoxPaint(); } });
+  emit('closed', out);                            // i moduli aggiungono i loro
+  return out;
+}
+/* avvisi aperti in cima (prestiti, backup, «Hai finito…», trimestre, installazione, sostieni, avvisi dei moduli) */
+var OPEN_NOTES = '#notice, #nxBox, #wrapAsk, #donAsk, #instCard, #donRow, .lay-note';
+function openNotices() { return Array.prototype.filter.call(document.querySelectorAll(OPEN_NOTES), function (e) { return !e.hidden && e.isConnected && !e.closest('[hidden]'); }); }
+function alertBtn() {                             // il triangolino c'e' quando ci sono avvisi, aperti o chiusi (Piero, 16/11/2026)
+  if (tab !== 'lib') return '';
+  var c = closedNotices().length, o = openNotices().length, n = c + o;
+  var lbl = c ? (c === 1 ? 'Riapri l\'avviso chiuso' : 'Riapri i ' + c + ' avvisi chiusi') : (o === 1 ? 'Vai all\'avviso' : 'Vai ai ' + o + ' avvisi');
+  return n ? ' <button type="button" class="sum-alert" data-sum="alert" aria-label="' + lbl + '" title="' + (c ? 'Riapri gli avvisi' : 'Vai agli avvisi') + '">' +
+    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4.5M12 17.2v.01"/></svg></button>' : '';
+}
+function reopenNotices() {
+  closedNotices().forEach(function (x) { try { x.reopen(); } catch (e) {} });
+  emit('reopen');
+  updateSummary(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(function () {                        // l'avviso in vista lampeggia un attimo, per far vedere dove sono
+    var e = openNotices().filter(function (x) { return !x.classList.contains('lay-later'); })[0];
+    if (e) { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); setTimeout(function () { e.classList.remove('flash'); }, 1400); }
+  }, 350);
+}
+(function () {                                   // un avviso compare o sparisce: il triangolino si aggiorna
+  var t = null, last = -1;
+  new MutationObserver(function () {
+    clearTimeout(t);
+    t = setTimeout(function () { var n = openNotices().length; if (n !== last) { last = n; updateSummary(); } }, 120);
+  }).observe(document.querySelector('main') || document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+})();
+/* riepilogo in alto: cosa mostrare (valore e «non più in libreria» spenti di predefinito) */
+function paintSumOpts() {
+  [['#optSumEur', 'sumEur'], ['#optSumLoan', 'sumLoan'], ['#optSumGone', 'sumGone'], ['#optShowSync', 'showSync']].forEach(function (x) { var e = $(x[0]); if (e) e.checked = settings[x[1]] !== false && (x[1] === 'sumLoan' || x[1] === 'showSync' || settings[x[1]] === true); });
+}
+[['#optSumEur', 'sumEur'], ['#optSumLoan', 'sumLoan'], ['#optSumGone', 'sumGone'], ['#optShowSync', 'showSync']].forEach(function (x) {
+  var e = $(x[0]); if (!e) return;
+  e.addEventListener('change', function () { settings[x[1]] = e.checked; saveSettings(); updateSummary(); persist(); emit('list'); });
+});
+$('#summary').addEventListener('click', function (e) { if (e.target.closest('[data-sum="loan"]')) $('#fltLoan').click(); else if (e.target.closest('[data-sum="alert"]')) reopenNotices(); });
+$('#scanSound').addEventListener('click', function () { setSound(settings.sound === false, true); });
+(function () {                                   // ?vista=elenco / ?vista=copertine nell'indirizzo: quella vista per questa apertura (comodo per i link e per le prove)
+  var m = /[?&]vista=(elenco|copertine)\b/.exec(location.search);
+  if (m) settings.view = m[1] === 'elenco' ? 'list' : 'grid';
+})();
+setView(settings.view);
+loadQuota();
+applyLook(false);
+updateInstallUi();
+setTimeout(function () {
+  checkVersion().then(function (j) {
+    if (j && j.v > APP_VERSION.v) notice('È disponibile la versione ' + j.v + ' dell\'app (stai usando la ' + APP_VERSION.v + ').', 'Aggiorna adesso', updateNow);
+    else if (verNewer(j)) notice('C\'è un aggiornamento ' + (PROVA ? 'della copia di prova' : 'della copia ' + COPIA) + ((j.copia || j.prova) ? ' (' + (j.copia || j.prova) + ', del ' : ' (del ') + buildText(j.build) + ').', 'Aggiorna adesso', updateNow);
+  });
+}, 2500);
+confirmLearnedPublishers();
+if (state.books.filter(markKdp).length) touch();      // libri 979-8 gia' «non trovati»: casa editrice «Amazon (pubblicazione in proprio)»
+if (!settings.swiped) setTimeout(function () { var t = $('#edgeTab'); t.classList.add('nudge'); setTimeout(function () { t.classList.remove('nudge'); }, 3000); }, 1500);
+setTab('lib');
+updateBackupInfo();
+loadCovers();
+setTimeout(function () { if (navigator.onLine !== false) { var n = resumeLookups(true); if (n) toast('Cerco ' + n + (n === 1 ? ' libro rimasto in attesa.' : ' libri rimasti in attesa.')); } }, 1200);
+setTimeout(checkLoanNag, 2500);
+try { if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then(function (p) { if (!p && state.books.length >= 5) askPersist(); }); } catch (e) {}
+updateSummary();
+persist();
+checkIncoming();
+setTimeout(checkWhatsNew, 900);
+loadNews(); loadSugg(); setTimeout(autoNews, 12000); setTimeout(autoSugg, 20000); setTimeout(runDescQueue, 6000);
+/* schermata d'apertura (solo app installata): resta almeno ~0,7 s dall'avvio, poi sfuma */
+(function () {
+  var el = document.getElementById('splash');
+  if (!el || !document.documentElement.hasAttribute('data-splash')) { if (el) el.remove(); return; }
+  if (settings.name) $('#splashWho').textContent = 'Libreria di ' + settings.name;
+  // tempo fisso da quando l'app e' pronta: la schermata di Android copre la pagina finche' non e' caricata
+  setTimeout(function () {
+    document.documentElement.classList.add('splash-out'); el.classList.add('out');
+    setTimeout(function () { el.remove(); document.documentElement.removeAttribute('data-splash'); document.documentElement.classList.remove('splash-out'); applyLook(false); }, 380);
+  }, 600);
+})();
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+/* ---- Moduli aggiuntivi: file a parte (per esempio wrap.js) che si agganciano qui. Se il file non c'e', l'app funziona uguale.
+   Un modulo si toglie cancellando i suoi file e le sue righe in index.html e sw.js (vedi togli_modulo.py nel ramo prove). ---- */
+window.NL = {
+  on: function (name, fn) { (hooks[name] || (hooks[name] = [])).push(fn); },
+  L: L, esc: esc, $: $, ls: ls, toast: toast, eur: eur, hue: hue, bigImg: bigImg, authorsOf: authorsOf, coll: coll, PROVA: PROVA, COPIA: COPIA,
+  books: function () { return state.books; }, quotes: allQuotes, tab: function () { return tab; }, settings: settings, saveSettings: saveSettings,
+  name: function () { return settings.name || ''; }, setName: function (v) { saveName(v); }, newId: newId, today: today,
+  guest: function () { return guest ? guest.name : null; }, showBook: showBook, guestEnter: guestEnter, guestExit: function () { guestExit(); }, myBooks: myBooks, addMine: addMine, isMine: isMine,
+  setFlt: function (v) { flt = v; collapseCards(); renderList(); updateSummary(); if (typeof updateActiveFilters === 'function') updateActiveFilters(); }, flt: function () { return flt; }, goal: function () { return settings.goal || 0; },
+  closeDrawer: function () { closeDrawer(); }, refresh: function () { renderList(); updateSummary(); },
+  icon: icon, setTab: function (t) { setTab(t); }, openMenu: function () { openDrawer('opt'); }, openSugg: function (t) { openSugg(t); },
+  openQuotes: function () { openAllQuotes(); }, openStats: function () { openStats(); }, openExport: function () { openExport(); }, nQuotes: function () { return allQuotes().length; },
+  updateStick: function () { updateStick(); }, summary: function () { updateSummary(); }, autosize: function (el) { autosizeAll(el); },
+  rdLong: function (v) { return rdLong(v); }, get: function (id) { return get(id); }, itDate: function (d) { return L.itDate(d); }, refreshRow: function (id) { refreshRow(id); },
+  fields: FIELDS, clean: function (x) { return cleanBook(x); }, stored: function () { return storable(); }, save: function () { touch(); }   // per la sincronizzazione (modulo social)
+};
+window.__ped = { st: function () { return ped; }, handles: function (o) { return pedHandles(o); }, stickers: function () { return pedStickers(); } };
+window.__app = { openLoan: openLoan, openShare: openShare, sugg: function () { return sugg; }, suggRank: function () { return { a: suggAuthors().map(function (x) { return x.name + ':' + x.n + '/' + x.books; }), g: suggGenres().map(function (x) { return x.name + ':' + x.n + '/' + x.books; }) }; }, autoSugg: autoSugg, openSugg: openSugg, nextList: nextList, sounds: function () { return { beep: beep.n || 0, chime: chime.n || 0, fail: failSound.n || 0 }; }, snapInfo: function () { return { lum: snap.lum, dark: !!snap.dark, taps: snap.taps || 0, msg: $('#snapMsg').textContent }; }, flow: function () { return flow.id; }, chimes: function () { return chime.n || 0; }, openManual: openManual, processPhoto: processPhoto, donAway: function (ms) { donHiddenAt = Date.now() - ms; }, donPaint: donPaint, donBack: donBack, openDon: openDon, buildBackup: buildBackup, readPrice: function (c, r) { return readPrice(c, r); }, filtersAll: function () { return { frFlt: frFlt, autFlt: autFlt, edFlt: edFlt, genFlt: genFlt, shFlt: shFlt, q: q }; }, openDrawer: openDrawer, closeDrawer: closeDrawer, openOptions: function (s) { openOptions(s || 'search'); }, closeOptions: function () { closeOptions(); }, filters: function () { return { flt: flt, readFlt: readFlt, shFlt: shFlt, genFlt: genFlt, sortBy: sortBy }; }, state: state, S: S, openState: function () { return openState; }, addIsbn: addIsbn, addPhotos: addPhotos, settings: settings, setTab: setTab, onScanned: onScanned, startScan: startScan,
+  get scanning() { return scanning; }, setScanMode: function (m) { scanMode = m; }, setScanKind: setScanKind, get scanKind() { return scanKind; } };
+})();

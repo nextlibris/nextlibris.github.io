@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+<title>Next Libris</title>
+<meta name="application-name" content="Next Libris">
+<meta name="apple-mobile-web-app-title" content="Next Libris">
+<meta name="description" content="Il catalogo della tua libreria di casa: inquadri il codice a barre e il libro si compila da solo.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Next Libris">
+<meta property="og:description" content="Il catalogo della tua libreria di casa: inquadri il codice a barre e il libro si compila da solo.">
+<meta property="og:url" content="https://nextlibris.github.io/">
+<meta property="og:image" content="https://nextlibris.github.io/icons/next-libris-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Icona di Next Libris: libri sullo scaffale, l'ultimo inclinato">
+<meta name="theme-color" content="#EEF1EE">
+<link rel="manifest" href="manifest.json?v=36" crossorigin="use-credentials">
+<link rel="icon" type="image/png" href="icons/next-libris-192.png">
+<link rel="apple-touch-icon" href="icons/next-libris-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<script src="indirizzo.js"></script><!-- vecchio indirizzo: solo la pagina del trasloco -->
+<script>/* aspetto e tema prima di disegnare la pagina, senza lampi; app aperta dall'icona: schermata d'apertura con il nome */try{if((window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true){document.documentElement.setAttribute('data-splash','');var tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.setAttribute('content','#24563F');}}catch(e){}try{var c0=(location.pathname.match(/\/next-libris-([a-z]+)(\/|$)/)||[])[1];var s0=JSON.parse(localStorage.getItem((c0?c0+':':'')+'catalogo-libri-set')||'{}');document.documentElement.setAttribute('data-look','nuovo');var th0=s0.themeV2?s0.theme:(s0.theme==='dark'?'dark':'light');if(th0==='light'||th0==='dark')document.documentElement.setAttribute('data-theme',th0);document.documentElement.setAttribute('data-pal',s0.palV2&&s0.pal?s0.pal:'bosco');if(s0.ft)document.documentElement.setAttribute('data-ft',s0.ft);if(s0.fb)document.documentElement.setAttribute('data-fb',s0.fb);}catch(e){document.documentElement.setAttribute('data-look','nuovo');document.documentElement.setAttribute('data-theme','light');}</script>
+<link rel="preload" href="vendor/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>/* schermata d'apertura: qui e non nel CSS, cosi' e' la primissima cosa disegnata */
+#splash{display:none}
+html[data-splash]:not(.splash-out),html[data-splash]:not(.splash-out) body{background:#24563F}
+html[data-splash]:not(.splash-out) body>:not(#splash){visibility:hidden}
+html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height:100lvh;min-height:100%;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#24563F;transition:opacity .35s ease}
+#splash img{width:168px;height:168px;margin-bottom:6px}
+#splash b{font:600 38px/1.1 "Literata",Georgia,serif;color:#F4F1E8;letter-spacing:-.005em}
+#splashWho{font:400 17px/1.3 system-ui,sans-serif;color:#CFE0D6}
+#splashWho:empty{display:none}
+#splash.out{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){html[data-splash] #splash{transition:none}}
+</style>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="wrap.css"><!-- modulo: riepilogo di ogni stagione -->
+<link rel="stylesheet" href="layout.css"><!-- modulo: disposizione dello schermo -->
+<link rel="stylesheet" href="schede.css"><!-- modulo: aspetto della scheda aperta -->
+<link rel="stylesheet" href="social.css"><!-- modulo: account e sincronizzazione -->
+<link rel="stylesheet" href="amici.css"><!-- modulo: amici -->
+</head>
+<body>
+<div id="splash" aria-hidden="true"><img src="icons/next-libris-192.png" alt="" width="168" height="168"><b>Next Libris</b><span id="splashWho"></span></div>
+<main>
+  <header class="top">
+    <div>
+      <h1>Next Libris</h1>
+      <p class="owner" id="owner"></p>
+      <p class="summary" id="summary" aria-live="polite"></p>
+    </div>
+    <div class="sync" id="sync" role="status"><span class="dot"></span><span id="syncTxt">Salvato su questo telefono</span></div>
+    <button class="ico gear" id="btnOpts" aria-label="Opzioni" title="Opzioni"></button>
+  </header>
+
+  <div class="notice" id="notice" hidden><span id="noticeTxt"></span><button id="noticeBtn" hidden></button><button class="x" id="noticeX" aria-label="Chiudi l'avviso">×</button></div>
+
+  <section class="inst-card" id="instCard" hidden aria-labelledby="instH">
+    <img src="icons/next-libris-192.png" alt="" width="56" height="56">
+    <div class="inst-txt">
+      <h2 id="instH">Installa Next Libris</h2>
+      <p id="instMsg">Avrai l'icona tra le app del telefono: si apre a schermo intero e funziona anche senza rete.</p>
+    </div>
+    <div class="inst-acts">
+      <button class="btn primary" id="instGo" type="button">Installa</button>
+      <button class="btn quiet" id="instLater" type="button">Non ora</button>
+    </div>
+  </section>
+
+  <div class="stick-sentinel" id="stickSentinel" aria-hidden="true"></div>
+  <div class="stick" id="stick">
+  <div class="tabbar">
+    <nav class="tabs" role="tablist" aria-label="Elenchi">
+      <button role="tab" id="tabLib" aria-selected="true">Libreria <span class="cnt" id="cntLib"></span></button>
+      <button role="tab" id="tabWish" aria-selected="false">Desideri <span class="cnt" id="cntWish"></span></button>
+    </nav>
+    <button class="quick loan" id="fltLoan" aria-pressed="false" title="Mostra solo i libri in prestito"><span id="icoLoan" aria-hidden="true"></span>Prestati <span class="cnt" id="cntLoan">0</span></button>
+  </div>
+
+  <section class="tools" aria-label="Strumenti">
+    <button class="btn filt" id="btnFilters" aria-expanded="false" aria-controls="drawer"><span id="icoFilt" aria-hidden="true"></span>Filtri<span class="badge" id="fltBadge" hidden></span></button>
+    <input id="q" type="search" placeholder="Cerca nell'elenco" aria-label="Cerca nell'elenco" autocomplete="off">
+    <div class="acts">
+      <button class="btn sm" id="btnView"></button>
+      <button class="btn sm" id="btnCheck"></button>
+      <button class="btn sm" id="btnStats"></button>
+      <button class="btn sm" id="btnExport"></button>
+    </div>
+  </section>
+  <div class="chips">
+    <button class="chip todo" id="btnTodo" hidden>Completa con l'ISBN</button>
+    <button class="chip" id="fltGuess" aria-pressed="false" hidden>Da verificare</button>
+    <span class="active-flt" id="activeFlt"></span>
+    <button class="chip" id="btnNews" hidden>Novità dei tuoi autori</button>
+    <button class="chip share" id="btnShareWish" hidden>Condividi la lista</button>
+  </div>
+  </div>
+
+
+  <section class="nx-box" id="nxBox" hidden aria-labelledby="nxBoxH">
+    <button type="button" class="ico nx-x" id="nxBoxX" aria-label="Chiudi">×</button>
+    <h3 id="nxBoxH">Hai finito un libro. E adesso?</h3>
+    <div id="nxBoxCard"></div>
+    <div class="nx-acts"><button class="btn primary" type="button" id="nxBoxGo">Inizio questo</button><button class="btn" type="button" id="nxBoxNext">Un altro</button><button class="link" type="button" id="nxBoxAll">Tutti i suggerimenti</button></div>
+  </section>
+  <section class="don-ask" id="donAsk" hidden aria-labelledby="donAskT">
+    <h3 id="donAskT">50 libri catalogati</h3>
+    <p>Next Libris è gratis e senza pubblicità. Se ti è utile, una piccola donazione aiuta a farlo crescere.</p>
+    <button class="btn primary" type="button" id="donAskGo">Sostieni l'app</button>
+    <div class="don-ask-more"><button class="link" type="button" id="donAskLater">Più tardi</button><button class="link" type="button" id="donAskNever">Non chiedere più</button></div>
+  </section>
+  <div class="don-row" id="donRow" hidden>
+    <button type="button" class="don-open" id="donRowOpen"><span class="don-ico" aria-hidden="true">♥</span><span>Next Libris è gratis. Se ti è utile, puoi sostenerlo con una donazione.</span></button>
+    <button type="button" class="ico" id="donRowX" aria-label="Nascondi per 10 giorni">×</button>
+  </div>
+  <div class="thead" id="thead" aria-hidden="true"><span></span><span>Titolo</span><span>Autore</span><span>Casa editrice</span><span>Anno</span><span>Costo €</span><span>ISBN</span><span></span></div>
+  <div id="list"></div>
+</main>
+
+<div class="dock">
+  <div class="dock-in">
+    <button class="btn primary" id="btnScan"></button>
+    <button class="btn" id="btnPhoto"></button>
+    <button class="btn" id="btnType"></button>
+  </div>
+  <p class="tip" id="tipTxt">Scansiona il codice a barre: è il modo più preciso. Dopo ogni libro puoi scrivere il prezzo (facoltativo). Digita per scrivere il titolo o l'ISBN.</p>
+</div>
+
+<div class="scan" id="scan" hidden>
+  <video id="scanVideo" playsinline muted></video>
+  <div class="scan-top">
+    <button class="btn" id="scanClose" aria-label="Chiudi la fotocamera">× Chiudi</button>
+    <span class="scan-count" id="scanCount">0 aggiunti</span>
+    <span class="scan-tr">
+      <button class="btn scan-snd" type="button" id="scanSound" aria-pressed="true" aria-label="Suoni accesi: tocca per spegnerli">🔊</button>
+      <button class="btn scan-ico" type="button" id="scanFlash" hidden aria-pressed="false" aria-label="Flash per la foto della copertina: spento">⚡</button>
+      <button class="btn scan-ico" type="button" id="scanTorch" hidden aria-pressed="false" aria-label="Torcia: spenta">🔦</button>
+    </span>
+  </div>
+  <div class="scan-mid"><div class="scan-guide" id="scanGuide"></div></div>
+  <div class="scan-res" id="scanRes" hidden aria-live="polite"></div>
+  <div class="scan-price" id="scanPrice" hidden>
+    <div class="sp-book"><b id="scanPriceT"></b><span id="scanPriceA"></span></div>
+    <span id="scanPriceTxt" aria-live="polite"></span>
+    <!-- il campo è sempre visibile: toccandolo Android apre subito la tastiera (un focus dato dal codice a volte non la apre) -->
+    <form class="sp-row" id="scanPriceForm">
+      <label class="sp-field" id="scanPriceType"><span class="sp-ico" id="scanPriceIco" aria-hidden="true"></span><input id="scanPriceIn" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="Prezzo (facoltativo)" aria-label="Prezzo in euro, facoltativo"><span class="eur" aria-hidden="true">€</span></label>
+      <button class="btn primary" id="scanPriceOk" type="submit">Salva</button>
+      <button class="btn" type="button" id="scanPriceCancel" aria-label="Annulla">×</button>
+    </form>
+  </div>
+  <div class="scan-shoot" id="scanShootBox" hidden><button class="shutter" id="scanShoot" aria-label="Scatta la copertina"></button></div>
+  <div class="scan-kinds" id="scanKinds" role="radiogroup" aria-label="Cosa inquadri">
+    <button type="button" role="radio" data-k="bar" aria-checked="true">Codice a barre</button><button type="button" role="radio" data-k="text" aria-checked="false">ISBN scritto</button><button type="button" role="radio" data-k="cover" aria-checked="false">Copertina</button>
+  </div>
+  <button class="btn scan-native" id="scanNative" type="button">📷 Usa la fotocamera del telefono (con il flash)</button>
+  <button class="btn scan-done" id="scanDone" type="button">Chiudi la fotocamera</button>
+  <p class="scan-msg" id="scanMsg" role="status">Inquadra il codice a barre, di solito sul retro. Ogni libro viene aggiunto da solo.</p>
+</div>
+
+<div class="sheet" id="isbnSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="isbnH">
+    <h2 id="isbnH">Titolo o ISBN</h2>
+    <p class="msg" id="isbnIntro">Scrivi il <b>titolo</b> (con l'autore, se lo sai): ti propongo i libri trovati. Oppure uno o più codici <b>ISBN</b>, uno per riga.</p>
+    <textarea class="big" id="isbnText" inputmode="text" autocomplete="off" enterkeyhint="search" aria-label="Titolo o codici ISBN" placeholder="Il nome della rosa Eco"></textarea>
+    <p class="msg bad" id="isbnErr" hidden></p>
+    <div class="tres" id="isbnResBox" hidden>
+      <p class="msg" id="isbnResMsg" aria-live="polite"></p>
+      <ul class="cands" id="isbnRes"></ul>
+      <button class="btn" id="isbnAsIs" type="button" hidden></button>
+    </div>
+    <div class="row-btns">
+      <button class="btn" id="isbnCancel">Annulla</button>
+      <button class="btn primary" id="isbnGo">Cerca</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="pickSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="pickH">
+    <h2 id="pickH">Quale libro è?</h2>
+    <p class="msg" id="pickMsg">Ho letto il testo della copertina. Tocca il libro giusto: editore e anno dipendono dall'edizione, controllali dopo.</p>
+    <ul class="cands" id="pickList"></ul>
+    <div class="row-btns">
+      <button class="btn" id="pickMan">Nessuno: scrivo io titolo e autore</button>
+      <button class="btn" id="pickText">Nessuno: tieni il testo letto</button>
+      <button class="btn" id="pickClose">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="bkFailSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="bkFailH">
+    <h2 id="bkFailH">Il backup non è partito</h2>
+    <p class="msg" id="bkFailMsg">Il telefono non ha aperto la condivisione.</p>
+    <div class="menu">
+      <button class="btn primary" type="button" id="bkFailRetry">Riprova a inviarlo</button>
+      <button class="btn" type="button" id="bkFailDl">Salvalo nei Download</button>
+      <button class="btn" type="button" id="bkFailClose">Chiudi</button>
+    </div>
+    <p class="hint">Dai Download puoi metterlo su Drive dopo: apri l'app Drive, tocca «+» e poi «Carica».</p>
+  </div>
+</div>
+
+<div class="sheet" id="recSheet" hidden>
+  <div class="sheet-in rec-in" role="dialog" aria-modal="true" aria-labelledby="recH">
+    <h2 id="recH">Riconosco il libro</h2>
+    <div class="rec-top">
+      <span class="man-img" id="recImg" aria-hidden="true"></span>
+      <div class="rec-txt">
+        <p class="msg" id="recMsg" aria-live="polite">Leggo la foto…</p>
+        <div class="rec-bar" id="recBar" role="progressbar" aria-label="Avanzamento" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="recFill"></span></div>
+        <b class="rec-pct" id="recPct">0%</b>
+      </div>
+    </div>
+    <p class="hint">Dalla copertina il riconoscimento sbaglia spesso, soprattutto con poca luce: il codice a barre sul retro è più preciso. Puoi anche scrivere tu titolo e autore.</p>
+    <div class="row-btns">
+      <button class="btn" type="button" id="recMan">Scrivi a mano</button>
+      <button class="btn" type="button" id="recBg">Continua dopo</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="manSheet" hidden>
+  <div class="sheet-in man-in" role="dialog" aria-modal="true" aria-labelledby="manH">
+    <h2 id="manH">Scrivi titolo e autore</h2>
+    <div class="man-top"><span class="man-img" id="manImg" aria-hidden="true"></span><p class="msg" id="manMsg">Non ho trovato questo libro online. Scrivilo tu: la foto diventa la copertina.</p></div>
+    <form class="man-form" id="manForm" autocomplete="off">
+      <label for="manT">Titolo</label>
+      <input id="manT" type="text" enterkeyhint="next" spellcheck="false" placeholder="Il nome della rosa">
+      <label for="manA">Autore <span class="opt">(facoltativo)</span></label>
+      <input id="manA" type="text" enterkeyhint="done" spellcheck="false" placeholder="Umberto Eco">
+      <label for="manP" class="man-p">Prezzo di copertina <span class="opt">(facoltativo)</span></label>
+      <span class="man-p man-pw"><input id="manP" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="es. 14,50"><span class="eur" aria-hidden="true">€</span></span>
+    </form>
+    <p class="msg bad" id="manErr" hidden>Scrivi almeno il titolo.</p>
+    <div class="row-btns">
+      <button class="btn primary" type="submit" form="manForm" id="manSave">Salva</button>
+      <button class="btn" type="button" id="manCancel">Più tardi</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="instSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="instSheetH">
+    <h2 id="instSheetH">Come installarla</h2>
+    <p class="msg" id="instLead"></p>
+    <ol class="inst-steps" id="instSteps"></ol>
+    <p class="hint" id="instNote"></p>
+    <div class="row-btns">
+      <a class="btn" id="instChrome" hidden>Apri in Chrome</a>
+      <button class="btn" id="instCopy" type="button" hidden>Copia il link</button>
+      <button class="btn primary" id="instOk" type="button">Ho capito</button>
+    </div>
+    <button class="link" id="instWhy" type="button">Non trovi la voce? Controlla il telefono</button>
+  </div>
+</div>
+
+<div class="sheet" id="shareSheet" hidden>
+  <form class="sheet-in" id="shareForm" role="dialog" aria-modal="true" aria-labelledby="shareH">
+    <h2 id="shareH">Condividi</h2>
+    <p class="msg" id="shareWhat"></p>
+    <label class="field" id="shareTitleBox"><span>Nome della lista</span>
+      <input type="text" id="shareTitle" maxlength="40" autocomplete="off" placeholder="es. Gialli da leggere"></label>
+    <label class="field"><span>Il tuo nome, così chi riceve vede da chi arriva</span>
+      <input type="text" id="shareName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
+    <p class="share-prev" id="sharePrev" aria-live="polite"></p>
+    <div class="row-btns">
+      <button class="btn primary" type="submit" id="shareSend">Manda</button>
+      <button class="btn" type="button" id="shareCopy">Copia</button>
+      <button class="btn" type="button" id="shareClose">Annulla</button>
+    </div>
+    <p class="hint">Mando titolo, autore, casa editrice, anno, ISBN, prezzo, copertina, genere e pagine. Note, voti, prestiti e scaffali restano a te; le copertine fotografate da te restano sul telefono. Chi ha Next Libris apre il link e aggiunge i libri; gli altri leggono l'elenco nel messaggio.</p>
+  </form>
+</div>
+
+<div class="sheet" id="importSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="importH">
+    <h2 id="importH"></h2>
+    <p class="msg" id="importMsg"></p>
+    <ul class="imp" id="importList"></ul>
+    <div class="row-btns">
+      <button class="btn primary" type="button" id="importWish">Aggiungi ai Desideri</button>
+      <button class="btn" type="button" id="importLib">Aggiungi alla Libreria</button>
+      <button class="btn" type="button" id="importClose">Non ora</button>
+    </div>
+    <p class="hint" id="importHint"></p>
+  </div>
+</div>
+
+<div class="sheet" id="covSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="covH">
+    <h2 id="covH">Copertina non trovata</h2>
+    <p class="msg" id="covMsg"></p>
+    <div class="row-btns">
+      <button class="btn primary" type="button" id="covShot">Scatta una foto</button>
+      <button class="btn" type="button" id="covLater">Non ora</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="newsSheet" hidden>
+  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="newsH">
+    <h2 id="newsH">Novità dei tuoi autori</h2>
+    <p class="msg" id="newsMsg" aria-live="polite"></p>
+    <ul class="news" id="newsList"></ul>
+    <label class="check small"><input type="checkbox" id="newsAuto"><span>Controlla da solo ogni due settimane (serve la chiave Google)</span></label>
+    <div class="row-btns">
+      <button class="btn" type="button" id="newsAgain">Cerca di nuovo</button>
+      <button class="btn" type="button" id="newsClose">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="suggSheet" hidden>
+  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="suggH">
+    <h2 id="suggH">Suggerimenti</h2>
+    <div class="seg kinds sg-tabs" role="tablist" aria-label="Tipo di suggerimento">
+      <button type="button" role="tab" id="sgTabNext" aria-controls="sgNext" aria-pressed="true" aria-selected="true">Cosa leggere dopo</button>
+      <button type="button" role="tab" id="sgTabDisc" aria-controls="sgDisc" aria-pressed="false" aria-selected="false">Da scoprire</button>
+    </div>
+    <div id="sgNext" role="tabpanel" aria-labelledby="sgTabNext">
+      <p class="msg" id="sgNextMsg" aria-live="polite"></p>
+      <div id="sgNextCard"></div>
+    </div>
+    <div id="sgDisc" role="tabpanel" aria-labelledby="sgTabDisc" hidden>
+      <p class="msg" id="sgDiscMsg" aria-live="polite"></p>
+      <ul class="news sg-list" id="sgList"></ul>
+      <label class="check small"><input type="checkbox" id="sgAuto"><span>Cerca da solo una volta a settimana</span></label>
+      <label class="check small"><input type="checkbox" id="sgLang"><span>Anche libri in altre lingue (non solo in italiano)</span></label>
+    </div>
+    <div class="row-btns">
+      <button class="btn" type="button" id="sgAgain" hidden>Cerca di nuovo</button>
+      <button class="btn" type="button" id="sgClose">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="selbar" id="selBar" hidden role="toolbar" aria-label="Libri selezionati">
+  <div class="selbar-in">
+    <button type="button" class="ico sel-x" id="selExit" aria-label="Esci dalla selezione">×</button>
+    <span class="sel-n" id="selN" aria-live="polite"></span>
+    <button type="button" class="btn" id="selAll">Tutti</button>
+    <button type="button" class="btn danger" id="selDel">Elimina</button>
+    <button type="button" class="btn primary" id="selEdit">Modifica</button>
+  </div>
+</div>
+
+<div class="sheet" id="auSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="auH">
+    <div class="au-head">
+      <button type="button" class="au-pic" id="auPic" hidden aria-label="Ingrandisci la foto"><img alt="" referrerpolicy="no-referrer"></button>
+      <div><h2 id="auH"></h2>
+      <p class="au-desc" id="auDesc"></p></div>
+    </div>
+    <div class="au-txt" id="auTxt" aria-live="polite"></div>
+    <p class="au-src" id="auSrc" hidden>Da Wikipedia, l'enciclopedia libera.</p>
+    <div class="au-acts">
+      <button class="btn" type="button" id="auMine"></button>
+      <button class="btn" type="button" id="auWeb">Cerca sul web</button>
+      <a class="btn" id="auWiki" target="_blank" rel="noopener" hidden>Apri su Wikipedia</a>
+      <button class="btn" type="button" id="auEdit">Modifica il nome</button>
+      <button class="btn" type="button" id="auClose">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="donSheet" hidden>
+  <div class="sheet-in don-in" role="dialog" aria-modal="true" aria-labelledby="donH">
+    <h2 id="donH">Sostieni Next Libris</h2>
+    <p class="msg">Next Libris è gratis, senza pubblicità, e i tuoi libri restano sul tuo telefono. Se ti è utile, puoi fare una donazione con PayPal.</p>
+    <div class="don-amts" role="radiogroup" aria-label="Importo">
+      <button type="button" class="don-amt" role="radio" aria-checked="false" data-amt="2">2 €</button>
+      <button type="button" class="don-amt" role="radio" aria-checked="true" data-amt="3">3 €</button>
+      <button type="button" class="don-amt" role="radio" aria-checked="false" data-amt="5">5 €</button>
+      <button type="button" class="don-amt" role="radio" aria-checked="false" data-amt="">Altro</button>
+    </div>
+    <button class="btn primary" type="button" id="donGo">Dona 3 € con PayPal</button>
+    <button class="btn" type="button" id="donClose">Chiudi</button>
+    <p class="hint">Si apre PayPal. La donazione è libera: l'app resta gratis e completa per tutti.</p>
+  </div>
+</div>
+
+<div class="sheet" id="logSheet" hidden>
+  <div class="sheet-in wide log-in" role="dialog" aria-modal="true" aria-labelledby="logH">
+    <h2 id="logH">Novità delle versioni</h2>
+    <p class="hint">Dalla più recente. Quella che stai usando è evidenziata.</p>
+    <div class="log-body" id="logBody" aria-live="polite"></div>
+    <button class="btn" type="button" id="logClose">Chiudi</button>
+  </div>
+</div>
+
+<div class="sheet" id="wnSheet" hidden>
+  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="wnH">
+    <h2 id="wnH">Cosa c'è di nuovo</h2>
+    <p class="hint" id="wnSub"></p>
+    <ul class="wn-list" id="wnList"></ul>
+    <div class="row-btns">
+      <button class="btn" type="button" id="wnAll">Tutti i dettagli</button>
+      <button class="btn primary" type="button" id="wnClose">Ho capito</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="confirmSheet" hidden>
+  <div class="sheet-in" role="alertdialog" aria-modal="true" aria-labelledby="confirmH" aria-describedby="confirmMsg">
+    <h2 id="confirmH">Conferma</h2>
+    <p class="msg" id="confirmMsg"></p>
+    <div class="row-btns">
+      <button class="btn danger-fill" type="button" id="confirmOk">Elimina</button>
+      <button class="btn" type="button" id="confirmNo">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="bulkSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="bulkH">
+    <h2 id="bulkH">Modifica i libri selezionati</h2>
+    <p class="msg" id="bulkMsg"></p>
+    <div class="bulk" id="bulkBody">
+      <section class="bk-sec"><h3>Serie o collana</h3>
+        <div class="bk-row"><input id="bkSe" type="text" list="seriesList" maxlength="80" autocomplete="off" placeholder="Nome della serie o collana"><button class="btn" type="button" data-bk="se">Applica</button></div>
+        <label class="check small"><input type="checkbox" id="bkSeNum"><span>Numera anche i volumi</span></label>
+        <div class="bk-num" id="bkNumBox" hidden>
+          <div class="bk-ord" role="radiogroup" aria-label="Ordine dei volumi">
+            <label><input type="radio" name="bkOrd" value="sel" checked><span>Nell'ordine in cui li hai selezionati</span></label>
+            <label><input type="radio" name="bkOrd" value="year"><span>Per anno di pubblicazione</span></label>
+            <label><input type="radio" name="bkOrd" value="list"><span>Come nell'elenco</span></label>
+            <label><input type="radio" name="bkOrd" value="custom"><span>Personalizzato: sposti i libri o scrivi i numeri</span></label>
+          </div>
+          <p class="hint bk-cust-hint" id="bkCustHint" hidden>Trascina la maniglia ≡ o usa le frecce per cambiare l'ordine (i numeri si rifanno di seguito); tocca un numero per scriverlo a mano.</p>
+          <label class="bk-from">Primo numero <input id="bkFrom" type="text" enterkeyhint="done" inputmode="numeric" maxlength="3" value="1" autocomplete="off"></label>
+          <ol class="bk-prev" id="bkPrev" aria-label="Anteprima della numerazione"></ol>
+        </div>
+      </section>
+      <section class="bk-sec"><h3>Scaffale</h3>
+        <div class="bk-row"><input id="bkSh" type="text" list="shelfList" maxlength="80" autocomplete="off" placeholder="Es. Studio, sala"><button class="btn" type="button" data-bk="sh">Applica</button></div>
+      </section>
+      <section class="bk-sec"><h3>Genere</h3>
+        <div class="bk-row"><input id="bkGen" type="text" list="genreList" maxlength="80" autocomplete="off" placeholder="Es. Romanzo"><button class="btn" type="button" data-bk="gen">Applica</button></div>
+      </section>
+      <section class="bk-sec bk-lib"><h3>Lettura</h3>
+        <div class="bk-btns"><button class="btn" type="button" data-bk="rs" data-v="da">Da leggere</button><button class="btn" type="button" data-bk="rs" data-v="in">In lettura</button><button class="btn" type="button" data-bk="rs" data-v="ok">Letto</button></div>
+      </section>
+      <section class="bk-sec"><h3>Altro</h3>
+        <div class="bk-btns">
+          <button class="btn bk-lib" type="button" data-bk="fav" data-v="1">Metti tra i preferiti</button>
+          <button class="btn bk-lib" type="button" data-bk="fav" data-v="0">Togli dai preferiti</button>
+          <button class="btn" type="button" data-bk="move">Sposta nei Desideri</button>
+          <button class="btn" type="button" data-bk="verify">Segna come verificati</button>
+          <button class="btn" type="button" data-bk="share">Condividi questi libri</button>
+        </div>
+      </section>
+    </div>
+    <button class="btn" type="button" id="bulkClose">Chiudi</button>
+  </div>
+</div>
+
+<div class="sheet" id="allqSheet" hidden>
+  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="allqH">
+    <h2 id="allqH">Citazioni</h2>
+    <label class="field"><span>Cerca tra le citazioni</span><input id="allqQ" type="search" autocomplete="off" placeholder="Parole, titolo o autore"></label>
+    <p class="msg" id="allqMsg" aria-live="polite"></p>
+    <ul class="allq" id="allqList"></ul>
+    <button class="btn" type="button" id="allqClose">Chiudi</button>
+  </div>
+</div>
+
+<div class="sheet" id="quoteSheet" hidden>
+  <form class="sheet-in" id="quoteForm" role="dialog" aria-modal="true" aria-labelledby="quoteH">
+    <h2 id="quoteH">Citazione o appunto</h2>
+    <p class="msg" id="quoteBook"></p>
+    <label class="field"><span>Testo</span><textarea id="quoteText" rows="6" maxlength="1500" placeholder="Scrivi il passaggio, oppure aggiungi una o più foto della pagina"></textarea></label>
+    <div class="q-ph" id="quotePh" hidden>
+      <ul class="q-thumbs" id="quoteThumbs" aria-label="Foto della citazione"></ul>
+      <button type="button" class="link q-ocr" id="quoteOcr">Leggi il testo</button>
+    </div>
+    <button class="btn" type="button" id="quotePhoto">Aggiungi una foto della pagina</button>
+    <p class="msg" id="quoteMsg" aria-live="polite"></p>
+    <label class="field q-pg"><span>Pagina (se vuoi)</span><input id="quotePage" type="text" enterkeyhint="done" inputmode="numeric" maxlength="5" autocomplete="off"></label>
+    <div class="row-btns">
+      <button class="btn primary" type="submit" id="quoteSave">Salva</button>
+      <button class="btn" type="button" id="quoteShare">Condividi</button>
+      <button class="btn" type="button" id="quoteDel" hidden>Elimina</button>
+      <button class="btn" type="button" id="quoteCancel">Annulla</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet" id="svcSheet" hidden>
+  <form class="sheet-in" id="svcForm" role="dialog" aria-modal="true" aria-labelledby="svcH">
+    <h2 id="svcH">Condividi chiave e worker</h2>
+    <p class="msg" id="svcWhat"></p>
+    <label class="check"><input type="checkbox" id="svcSbnOn"><span>Worker SBN (catalogo delle biblioteche)</span></label>
+    <label class="check"><input type="checkbox" id="svcKeyOn"><span>Chiave Google Libri</span></label>
+    <label class="field"><span>Il tuo nome</span><input type="text" id="svcSendName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
+    <div class="svc-warn">
+      <p><b>Mandalo solo a persone di fiducia, in un messaggio privato.</b> Chi ha il link usa la tua quota: Google 1.000 ricerche al giorno, Cloudflare 100.000, divise tra chi le usa. Non costa nulla, ma se finisce la quota le ricerche rallentano per tutti fino al giorno dopo.</p>
+      <p>Consigliato: in Google Cloud › Credenziali limita la chiave alla sola «Books API» e al sito https://nextlibris.github.io/*. Il worker risponde già solo a Next Libris.</p>
+    </div>
+    <div class="row-btns">
+      <button class="btn primary" type="submit">Manda</button>
+      <button class="btn" type="button" id="svcCopy">Copia</button>
+      <button class="btn" type="button" id="svcClose">Annulla</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet" id="svcInSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="svcInH">
+    <h2 id="svcInH"></h2>
+    <ul class="svc-in" id="svcInList"></ul>
+    <p class="msg">Servono a rendere la ricerca dei libri più completa. Usali solo se ti fidi di chi te li manda.</p>
+    <div class="row-btns">
+      <button class="btn primary" type="button" id="svcInUse">Usali</button>
+      <button class="btn" type="button" id="svcInLater">Mettili tra i salvati</button>
+      <button class="btn" type="button" id="svcInNo">No, grazie</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="copySheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="copyH">
+    <h2 id="copyH">Copia l'elenco</h2>
+    <p class="msg">Il telefono non ha permesso la copia automatica. Seleziona il testo, copialo e incollalo in Excel o Fogli Google.</p>
+    <textarea class="big" id="copyBox" readonly aria-label="Elenco da copiare" style="height:180px"></textarea>
+    <button class="btn primary" id="copyClose">Chiudi</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Copertina ingrandita">
+  <button class="lb-x" id="lbClose" aria-label="Chiudi">×</button>
+  <img id="lbImg" alt="Copertina" referrerpolicy="no-referrer">
+  <p class="lb-cap" id="lbCap"></p>
+  <p class="lb-note" id="lbNote" aria-live="polite"></p>
+  <div class="lb-acts"><button class="btn" id="lbPhoto">Usa una mia foto</button><button class="btn" id="lbReset" hidden>Togli la mia foto</button></div>
+</div>
+
+<div class="sheet opts-sheet" id="optSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="optH">
+    <div class="opt-head">
+      <button class="ico" id="optBack" aria-label="Torna al menu"></button>
+      <h2 id="optH">Opzioni</h2>
+      <button class="ico" id="optClose" aria-label="Chiudi">×</button>
+    </div>
+    <section class="opt-sec" data-sec="look" data-title="Aspetto">
+      <fieldset class="choice">
+        <legend>Tema</legend>
+        <div class="seg seg-theme">
+          <label><input type="radio" name="theme" value="light"><span>Chiaro</span></label><label><input type="radio" name="theme" value="dark"><span>Scuro</span></label><label><input type="radio" name="theme" value="auto"><span>Automatico</span></label>
+        </div>
+        <p class="hint">Chiaro è il predefinito. Automatico segue il tema del telefono (chiaro di giorno, scuro di sera se l'hai impostato così).</p>
+      </fieldset>
+      <div id="lookNew">
+        <fieldset class="choice">
+          <legend>Colori</legend>
+          <div class="pal-row">
+            <label class="pal"><input type="radio" name="pal" value="bosco"><span class="sw sw-bos" aria-hidden="true"><i></i><i></i><i></i></span><b>Bosco</b><small>Verde (predefinito)</small></label>
+            <label class="pal"><input type="radio" name="pal" value="inchiostro"><span class="sw sw-ink" aria-hidden="true"><i></i><i></i><i></i></span><b>Inchiostro</b><small>Blu</small></label>
+            <label class="pal"><input type="radio" name="pal" value="bordeaux"><span class="sw sw-bor" aria-hidden="true"><i></i><i></i><i></i></span><b>Bordeaux</b><small>Rosso vino</small></label>
+          </div>
+        </fieldset>
+        <fieldset class="choice">
+          <legend>Carattere dei titoli</legend>
+          <div class="font-list"><label class="fopt"><input type="radio" name="ft" value="literata"><span class="fs ft-literata">Il nome della rosa</span><span class="fn"><b>Literata</b><small>Pensato per leggere libri (predefinito)</small></span></label><label class="fopt"><input type="radio" name="ft" value="garamond"><span class="fs ft-garamond">Il nome della rosa</span><span class="fn"><b>EB Garamond</b><small>Il classico dei libri stampati</small></span></label><label class="fopt"><input type="radio" name="ft" value="playfair"><span class="fs ft-playfair">Il nome della rosa</span><span class="fn"><b>Playfair Display</b><small>Elegante, da copertina</small></span></label><label class="fopt"><input type="radio" name="ft" value="lora"><span class="fs ft-lora">Il nome della rosa</span><span class="fn"><b>Lora</b><small>Morbido e caldo</small></span></label><label class="fopt"><input type="radio" name="ft" value="merriweather"><span class="fs ft-merriweather">Il nome della rosa</span><span class="fn"><b>Merriweather</b><small>Robusto, si legge bene in piccolo</small></span></label><label class="fopt"><input type="radio" name="ft" value="montserrat"><span class="fs ft-montserrat">Il nome della rosa</span><span class="fn"><b>Montserrat</b><small>Senza grazie, moderno</small></span></label><label class="fopt"><input type="radio" name="ft" value="roboto"><span class="fs ft-roboto">Il nome della rosa</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label></div>
+        </fieldset>
+        <fieldset class="choice">
+          <legend>Carattere del testo</legend>
+          <div class="font-list"><label class="fopt"><input type="radio" name="fb" value="plex"><span class="fs fb-plex">Umberto Eco, Bompiani 1980</span><span class="fn"><b>IBM Plex Sans</b><small>Predefinito</small></span></label><label class="fopt"><input type="radio" name="fb" value="roboto"><span class="fs fb-roboto">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label><label class="fopt"><input type="radio" name="fb" value="lato"><span class="fs fb-lato">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Lato</b><small>Morbido e arioso</small></span></label><label class="fopt"><input type="radio" name="fb" value="atkinson"><span class="fs fb-atkinson">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Atkinson Hyperlegible</b><small>Disegnato per essere leggibilissimo</small></span></label><label class="fopt"><input type="radio" name="fb" value="lora"><span class="fs fb-lora">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Lora</b><small>Con le grazie, come un libro</small></span></label></div>
+        </fieldset>
+        <button class="btn" id="lookReset" type="button">Torna all'aspetto predefinito</button>
+      </div>
+      <fieldset class="choice">
+        <legend>All'apertura mostra</legend>
+        <div class="seg seg-view">
+          <label><input type="radio" name="viewDef" value="grid"><span>Copertine</span></label><label><input type="radio" name="viewDef" value="list"><span>Elenco</span></label>
+        </div>
+        <p class="hint">Copertine è il predefinito. Il pulsante «Elenco» / «Copertine» sopra i libri cambia la vista solo fino alla prossima apertura.</p>
+      </fieldset>
+      <fieldset class="choice sum-opts">
+        <legend>Riepilogo in alto</legend>
+        <p class="hint">Sotto il nome compare sempre il numero dei libri. Puoi aggiungere:</p>
+        <label class="check"><input type="checkbox" id="optSumEur"><span>Valore in euro<small>La somma dei prezzi dei libri in libreria.</small></span></label>
+        <label class="check"><input type="checkbox" id="optSumLoan"><span>Libri in prestito<small>«4 in prestito»: toccandolo vedi solo quelli.</small></span></label>
+        <label class="check"><input type="checkbox" id="optSumGone"><span>Libri non più in libreria<small>Venduti, regalati o smarriti.</small></span></label>
+        <label class="check"><input type="checkbox" id="optShowSync"><span>Conferma del salvataggio<small>Mostra «Salvato su questo telefono» sotto il riepilogo: vuol dire che ogni modifica è già salvata. Se il salvataggio non riesce o sei senza rete, l'avviso compare comunque.</small></span></label>
+      </fieldset>
+    </section>
+    <section class="opt-sec" data-sec="search" data-title="Ricerca dei libri">
+      <p class="hint">Senza worker e senza chiave l'app cerca lo stesso (Google Libri e Open Library): servono a fare più ricerche e ad avere dati più precisi.</p>
+      <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti chiave e worker salvati</button>
+
+      <div class="svc" id="svcSbn">
+        <div class="svc-h">
+          <h3>Catalogo SBN<small>Worker Cloudflare</small></h3>
+          <span class="svc-st" id="sbnSt"></span>
+        </div>
+        <p class="svc-count" id="sbnCount" aria-live="polite"></p>
+        <div class="svc-row">
+          <label class="sr" for="sbnUrl">Indirizzo del worker Cloudflare</label>
+          <input type="url" id="sbnUrl" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla l'indirizzo del worker">
+        </div>
+        <div class="svc-acts">
+          <button class="btn svc-clear" id="sbnClear" type="button" hidden>Cancella</button>
+          <div class="svc-saved" id="sbnSaved" hidden></div>
+        </div>
+        <p class="hint">Il catalogo delle biblioteche italiane ha i dati più precisi su editore, anno e pagine. Il worker è un piccolo intermediario gratuito su Cloudflare: le istruzioni sono nel LEGGIMI, sezione «Catalogo SBN».</p>
+      </div>
+
+      <div class="svc" id="svcKey">
+        <div class="svc-h">
+          <h3>Google Libri<small>Chiave API</small></h3>
+          <span class="svc-st" id="gbSt"></span>
+        </div>
+        <p class="svc-count" id="gbCount" aria-live="polite"></p>
+        <div class="svc-row">
+          <label class="sr" for="gbKey">Chiave API di Google Libri</label>
+          <input type="text" id="gbKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla la chiave (inizia con AIza)">
+        </div>
+        <div class="svc-acts">
+          <button class="btn svc-clear" id="gbClear" type="button" hidden>Cancella</button>
+          <div class="svc-saved" id="gbSaved" hidden></div>
+        </div>
+        <details class="svc-how">
+          <summary>Come si crea la chiave (gratis, una volta sola)</summary>
+          <ol class="hint keysteps">
+          <li>Apri <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> con il tuo account Google e crea un progetto.</li>
+          <li>Apri <a href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">Books API</a> e premi «Abilita».</li>
+          <li>Vai in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>
+          <li>Copia la chiave e incollala qui sopra.</li>
+        </ol>
+        </details>
+      </div>
+
+      <div class="opts-row"><button class="btn" id="btnDiag">Prova la ricerca ISBN</button></div>
+      <div class="diag" id="diagOut" hidden aria-live="polite"></div>
+    </section>
+    <section class="opt-sec" data-sec="cards" data-title="Aggiunta dei libri">
+      <label class="check">
+        <input type="checkbox" id="optPrice" checked>
+        <span>Chiedi il prezzo dopo ogni libro<small>Dopo ogni libro aggiunto (scansione, foto o ISBN scritto) compare un riquadro con titolo e autore dove scrivere il prezzo, facoltativo. Spegni se il prezzo non ti interessa.</small></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="optSound">
+        <span>Suoni<small>Il bip quando legge un codice e il «fatto» quando salvi il prezzo. Si accendono e spengono anche dalla fotocamera, con 🔊 in alto. La vibrazione resta.</small></span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="optCamNative">
+        <span>Per le foto usa la fotocamera del telefono<small>Con il suo flash e la sua messa a fuoco: utile se nella fotocamera dell'app la luce non si accende. Vale per Foto, copertine e citazioni; la scansione del codice resta nell'app. Se si apre in modalità selfie, girala una volta: di solito il telefono se lo ricorda.</small></span>
+      </label>
+      <h3>Fotocamera e luce</h3>
+      <p class="hint" id="lensState"></p>
+      <div class="menu">
+        <button class="btn" type="button" id="lightRun">Prova la luce</button>
+        <button class="btn" type="button" id="lensRun">Prova gli obiettivi</button>
+      </div>
+      <p class="msg" id="lensMsg" aria-live="polite"></p>
+      <div class="row-btns" id="lightAsk" hidden>
+        <button class="btn primary" type="button" id="lightYes">Sì, si è accesa</button>
+        <button class="btn" type="button" id="lightNo">No, è rimasta spenta</button>
+      </div>
+      <ul class="lens-list" id="lensList"></ul>
+    </section>
+    <section class="opt-sec" data-sec="fix" data-title="Sistema l'elenco">
+      <div class="menu fixlist">
+        <button class="btn mitem" id="btnVerifyAll"><b>Segna tutto come verificato</b><small>Toglie «Da verificare» da tutti i libri.</small></button>
+        <button class="btn mitem" id="btnPubs"><b>Uniforma le case editrici</b><small>Stesso editore scritto in modi diversi: scegli il nome da usare.</small></button>
+        <button class="btn mitem" id="btnGuessPub"><b>Deduci le case editrici mancanti</b><small>Dal codice dell'editore contenuto nell'ISBN.</small></button>
+        <button class="btn mitem" id="btnFill"><b>Completa genere, pagine e copertine</b><small>Cerca di nuovo i dati che mancano.</small></button>
+        <button class="btn mitem" id="btnDescAll"><b>Scarica tutte le descrizioni</b><small>Le cerca per i libri che non l'hanno, così le leggi anche senza rete.</small></button>
+        <button class="btn mitem" id="btnCovers"><b>Cerca copertine più grandi</b><small>Per vederle meglio quando le ingrandisci.</small></button>
+        <button class="btn mitem" id="btnMergeDups"><b>Unisci i doppioni</b><small>Stesso libro inserito più volte; non tocca le copie segnate.</small></button>
+        <button class="btn mitem" id="btnClearGuess"><b>Svuota le ipotesi</b><small>Cancella i dati segnati «Da verificare».</small></button>
+      </div>
+      <p class="hint">Dopo ognuna c'è «Annulla».</p>
+    </section>
+    <section class="opt-sec" data-sec="share" data-title="Condivisione">
+      <label class="field"><span>Il tuo nome</span>
+        <input type="text" id="optName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
+      <p class="hint">Compare quando condividi un libro o una lista: «I preferiti di Piero», «Piero ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l'elenco, oppure Esporta.</p>
+      <h3 class="opt-h3">Chiave Google e worker</h3>
+      <p class="hint">Puoi mandarli a un familiare o a un amico che usa Next Libris: la sua ricerca diventa completa come la tua.</p>
+      <button class="btn" id="svcShareBtn" type="button">Condividi chiave e worker</button>
+      <p class="hint" id="svcShareNone" hidden>Non ne hai ancora: si impostano in Menu › Impostazioni › Ricerca dei libri.</p>
+      <h3 class="opt-h3">Fai conoscere l'app</h3>
+      <p class="share-lead">Fai inquadrare il codice con la fotocamera del telefono, oppure manda il link.</p>
+      <figure class="qr-box">
+        <svg class="qr" viewBox="0 0 45 45" shape-rendering="crispEdges" role="img" aria-label="QR code dell'indirizzo di Next Libris"><rect width="45" height="45" fill="#fff"/><path stroke="#172420" d="M4 4.5h7m1 0h3m2 0h4m1 0h2m2 0h2m2 0h2m2 0h7m-37 1h1m5 0h1m2 0h2m2 0h2m2 0h2m1 0h1m3 0h5m1 0h1m5 0h1m-37 1h1m1 0h3m1 0h1m3 0h2m1 0h3m3 0h1m1 0h2m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h2m1 0h1m5 0h3m4 0h1m1 0h2m2 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m2 0h2m2 0h1m1 0h3m1 0h2m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m3 0h1m1 0h3m2 0h1m1 0h1m3 0h1m2 0h3m1 0h1m5 0h1m-37 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-26 1h1m2 0h2m3 0h1m1 0h1m2 0h1m3 0h1m-27 1h1m1 0h3m1 0h2m1 0h1m4 0h1m2 0h1m1 0h2m1 0h1m2 0h3m3 0h1m2 0h1m-36 1h2m4 0h1m2 0h3m1 0h3m1 0h2m1 0h2m1 0h1m2 0h1m2 0h1m2 0h4m-37 1h2m1 0h1m1 0h2m4 0h3m1 0h1m5 0h1m2 0h2m2 0h1m1 0h7m-33 1h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h3m1 0h5m1 0h1m1 0h2m-33 1h1m1 0h2m1 0h5m2 0h1m5 0h1m1 0h3m2 0h1m2 0h3m4 0h2m-36 1h3m3 0h1m1 0h1m2 0h1m1 0h2m1 0h1m3 0h1m1 0h1m2 0h1m1 0h1m1 0h1m2 0h2m1 0h1m-37 1h2m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m3 0h1m5 0h1m1 0h1m1 0h3m1 0h3m-36 1h1m1 0h1m4 0h1m2 0h1m4 0h1m2 0h8m1 0h2m1 0h2m-33 1h2m1 0h1m1 0h2m3 0h1m1 0h1m2 0h1m2 0h4m1 0h3m1 0h2m1 0h2m1 0h1m1 0h2m-37 1h1m2 0h1m3 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m1 0h2m-36 1h1m1 0h1m2 0h2m1 0h1m2 0h1m1 0h2m1 0h1m2 0h1m2 0h1m2 0h1m1 0h2m1 0h2m2 0h2m-37 1h1m1 0h2m4 0h1m1 0h1m4 0h1m1 0h1m2 0h2m1 0h3m2 0h1m1 0h3m3 0h1m-36 1h1m4 0h1m2 0h4m1 0h1m4 0h1m3 0h3m1 0h2m1 0h2m3 0h2m-34 1h1m4 0h2m1 0h1m3 0h4m3 0h2m1 0h2m2 0h2m2 0h1m1 0h2m-37 1h3m1 0h1m1 0h1m2 0h1m5 0h2m1 0h4m1 0h2m1 0h1m1 0h1m1 0h1m1 0h1m2 0h2m-35 1h2m3 0h1m2 0h1m1 0h3m2 0h1m1 0h1m2 0h1m1 0h3m3 0h1m2 0h1m1 0h1m-36 1h2m3 0h2m1 0h1m1 0h2m2 0h1m1 0h1m2 0h1m2 0h1m3 0h3m1 0h1m4 0h1m-35 1h1m5 0h2m1 0h1m2 0h1m1 0h2m2 0h3m1 0h1m1 0h3m1 0h2m2 0h1m2 0h1m-37 1h1m3 0h5m2 0h4m1 0h3m1 0h1m5 0h1m3 0h1m4 0h2m-36 1h4m2 0h3m1 0h3m2 0h2m3 0h1m1 0h1m1 0h1m2 0h1m1 0h2m3 0h1m-36 1h1m1 0h1m1 0h1m1 0h1m1 0h1m3 0h2m5 0h1m1 0h1m2 0h2m1 0h7m-26 1h3m1 0h3m1 0h1m3 0h1m3 0h2m1 0h2m3 0h1m2 0h2m-37 1h7m8 0h6m6 0h2m1 0h1m1 0h1m1 0h3m-37 1h1m5 0h1m1 0h1m1 0h2m8 0h2m1 0h3m2 0h1m3 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m1 0h2m3 0h2m1 0h3m1 0h3m2 0h6m-34 1h1m1 0h3m1 0h1m3 0h2m1 0h1m1 0h1m3 0h7m2 0h2m1 0h2m1 0h3m-37 1h1m1 0h3m1 0h1m1 0h2m5 0h2m1 0h1m3 0h3m2 0h1m1 0h1m1 0h3m2 0h1m-37 1h1m5 0h1m2 0h1m1 0h3m6 0h1m1 0h1m1 0h2m1 0h2m2 0h3m1 0h1m-36 1h7m2 0h2m3 0h2m5 0h6m1 0h2m1 0h1m1 0h1m1 0h2"/><rect x="17.5" y="17.5" width="10" height="10" rx="1.6" fill="#fff"/><image href="icons/next-libris-192.png" x="18.1" y="18.1" width="8.8" height="8.8"/></svg>
+        <figcaption id="shareUrl">nextlibris.github.io</figcaption>
+      </figure>
+      <div class="share-btns">
+        <button class="btn primary" id="shareApp" type="button">Manda il link</button>
+        <button class="btn" id="copyApp" type="button">Copia il link</button>
+      </div>
+      <p class="hint">Chi apre il link in Chrome trova in alto il pulsante «Installa». Ognuno ha il proprio catalogo: i tuoi libri restano sul tuo telefono.</p>
+    </section>
+    <section class="opt-sec" data-sec="app" data-title="Installazione sul telefono">
+      <p class="hint">Installata, Next Libris ha la sua icona tra le app del telefono, si apre a schermo intero e funziona anche senza rete. I libri restano gli stessi.</p>
+      <p class="inst-ok" id="instOkTxt" hidden>✓ Stai usando l'app installata.</p>
+      <div class="menu">
+        <button class="btn primary" id="btnInstall" hidden>Installa l'app</button>
+        <button class="btn" id="btnInstDiag">Perché non si installa?</button>
+        <button class="btn don-opt" type="button" id="donOpt"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span>Sostieni Next Libris</span></button>
+      </div>
+      <div class="diag" id="instOut" hidden aria-live="polite"></div>
+      <p class="hint" id="verApp"></p>
+      <p class="hint">I libri sono salvati solo su questo telefono: fai ogni tanto un backup (Menu › Backup ed esportazione) e tienilo su Drive o nella mail.</p>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="photoSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="photoH">
+    <h2 id="photoH">Foto del libro</h2>
+    <p class="msg">Una foto della copertina, o del retro con il codice a barre: l'app legge il testo e cerca il libro.</p>
+    <div class="menu">
+      <button class="btn primary" id="photoCam"></button>
+      <button class="btn" id="photoGal"></button>
+      <button class="btn" id="photoClose">Annulla</button>
+    </div>
+    <p class="hint">Dalla galleria puoi sceglierne anche più di una (fino a 60): ogni foto diventa un libro e le riconosco una alla volta.</p>
+  </div>
+</div>
+
+<div class="sheet" id="priceAsk" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="priceAskH">
+    <h2 id="priceAskH">Libro aggiunto</h2>
+    <div class="pa-book" aria-live="polite"><b id="priceAskT"></b><span id="priceAskA"></span></div>
+    <form class="price-type" id="priceAskForm">
+      <label for="priceAskIn">Prezzo di copertina <span class="opt">(facoltativo)</span></label>
+      <input id="priceAskIn" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" placeholder="es. 14,50">
+      <span class="eur" aria-hidden="true">€</span>
+    </form>
+    <p class="msg bad" id="priceAskErr" hidden>Scrivi un prezzo, per esempio 14,50, oppure tocca «Salta».</p>
+    <div class="row-btns">
+      <button class="btn primary" type="submit" form="priceAskForm" id="priceSave">Salva</button>
+      <button class="btn" type="button" id="priceSkip">Salta</button>
+    </div>
+    <button class="link quiet pa-undo" type="button" id="priceUndo">Non volevo aggiungerlo: togli il libro</button>
+    <p class="hint">Puoi non farti più chiedere il prezzo: Menu › Impostazioni › Aggiunta dei libri.</p>
+  </div>
+</div>
+
+<button class="edge-tab" id="edgeTab" aria-label="Apri i filtri" aria-controls="drawer"></button>
+<div class="drawer-scrim" id="drawerScrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerH" hidden inert>
+  <div class="drawer-head">
+    <button type="button" class="ico dback" id="drawerBack" aria-label="Torna al menu" hidden>‹</button>
+    <h2 id="drawerH">Menu</h2>
+    <button class="ico" id="drawerX" aria-label="Chiudi il menu">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div id="drawerOpts" hidden>
+      <div class="dlist dmenu dmain">
+        <button type="button" class="dopt dgo" id="goFilters"><span><b>Filtri e ordine</b><small id="goFltTxt">Tutti i libri, dai più recenti</small></span><span class="dbadge" id="goFltN" hidden></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo" id="goSugg"><span><b>Suggerimenti</b><small>Cosa leggere dopo e libri da scoprire</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo dq-all" id="goQuotes" hidden><span><b>Tutte le citazioni</b><small id="goQTxt"></small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo" id="goStats"><span><b>Statistiche</b><small>Libri, valore, pagine e letture</small></span><span class="n" aria-hidden="true">›</span></button>
+      </div>
+      <h3>La tua libreria</h3>
+      <div class="dlist dmenu">
+      <button type="button" class="dopt" data-sec="fix"><span><b>Sistema l'elenco</b><small>Doppioni, case editrici, copertine</small></span><span class="n" aria-hidden="true">›</span></button>
+      <button type="button" class="dopt" data-sec="export"><span><b>Backup ed esportazione</b><small>Backup, Excel, PDF</small><small class="dbk" id="optBackupHint"></small></span><span class="n" aria-hidden="true">›</span></button>
+      </div>
+      <div class="dlist dmenu dset">
+        <button type="button" class="dopt dset-t" id="goSettings" aria-expanded="false" aria-controls="setList"><span class="dset-i" aria-hidden="true"></span><span><b>Impostazioni</b><small>Aspetto, ricerca e aggiunta dei libri, condivisione, installazione</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
+        <div class="dsub" id="setList" hidden>
+        <button type="button" class="dopt" data-sec="look"><span><b>Aspetto</b><small>Tema, colori e caratteri; riepilogo in alto</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>Chiave Google, catalogo SBN, richieste di oggi</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="cards"><span><b>Aggiunta dei libri</b><small>Prezzo, suoni, fotocamera e luce</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="share"><span><b>Condivisione</b><small>Il tuo nome; link e QR code dell'app</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="app"><span><b>Installazione sul telefono</b><small>Next Libris tra le app, a schermo intero e senza rete</small></span><span class="n" aria-hidden="true">›</span></button>
+        </div>
+      </div>
+      <div class="dlist dmenu">
+        <button type="button" class="dopt don-menu" id="donMenu"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span><b>Sostieni Next Libris</b><small>Niente pubblicità, niente abbonamenti. Se ti piace, offrimi una birra!</small></span><span class="n" aria-hidden="true">♥</span></button>
+      </div>
+      <div class="ver" id="verBox">
+        <p class="ver-h"><b id="verNum"></b> <span id="verDate"></span></p>
+        <p class="ver-note" id="verNote"></p>
+        <p class="ver-state" id="verState" aria-live="polite"></p>
+        <button class="btn primary" id="verUpdate" type="button" hidden>Aggiorna adesso</button>
+        <button type="button" class="link" id="verLog">Novità delle versioni</button>
+      </div>
+    </div>
+    <div id="drawerFilters" hidden>
+    <p class="dq" id="drawerQ" hidden><span id="drawerQTxt"></span><button type="button" class="ico" id="drawerQX" aria-label="Cancella la ricerca">×</button></p>
+    <h3 id="hSort">Ordina per</h3>
+    <select id="sort" class="dsel" aria-labelledby="hSort">
+      <option value="recent">Più recenti</option>
+      <option value="titolo">Titolo A–Z</option>
+      <option value="autore">Autore A–Z</option>
+      <option value="editore">Casa editrice</option>
+      <option value="anno">Anno</option>
+      <option value="scaffale">Scaffale</option>
+      <option value="voto">Voto</option>
+      <option value="letti">Letti di recente</option>
+    </select>
+    <div id="drawerFlt"></div>
+    <p class="dhint" id="drawerHint" hidden>Si apre anche trascinando il pollice dal bordo sinistro verso destra.</p>
+    </div>
+  </div>
+  <div class="drawer-foot" id="drawerFoot">
+    <button class="btn" id="drawerReset">Azzera</button>
+    <button class="btn primary" id="drawerShow">Mostra</button>
+  </div>
+</aside>
+
+<div class="sheet" id="dupSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="dupH">
+    <h2 id="dupH">Stesso libro più volte</h2>
+    <p class="msg" id="dupMsg"></p>
+    <div class="menu">
+      <button class="btn primary" id="dupCopies">Sono copie diverse: tienile tutte</button>
+      <button class="btn" id="dupMerge">È lo stesso libro: uniscili in uno</button>
+      <button class="btn" id="dupUnmark" hidden>Non sono copie: è lo stesso libro inserito due volte</button>
+      <button class="btn" id="dupClose">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="loanSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="loanH">
+    <h2 id="loanH">Presta, vendi o regala</h2>
+    <p class="msg" id="loanBook"></p>
+    <div class="seg kinds" id="loanKind" role="group" aria-label="Presta, vendi o regala">
+      <button type="button" data-k="p" aria-pressed="true">Prestato</button><button type="button" data-k="v" aria-pressed="false">Venduto</button><button type="button" data-k="r" aria-pressed="false">Regalato</button><button type="button" data-k="s" aria-pressed="false" hidden>Smarrito</button>
+    </div>
+    <p class="hint" id="loanHint"></p>
+    <label class="field" id="loanWhoF"><span id="loanWhoL">A chi</span><input id="loanWho" type="text" enterkeyhint="done" autocomplete="off" placeholder="Nome" role="combobox" aria-expanded="false"></label>
+    <label class="field"><span id="loanDateL">Dal giorno</span><input id="loanDate" type="date"></label>
+    <p class="msg bad" id="loanErr" hidden></p>
+    <div class="row-btns">
+      <button class="btn" id="loanCancel">Annulla</button>
+      <button class="btn" id="loanBack" hidden>Restituito</button>
+      <button class="btn primary" id="loanSave">Salva</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="statsSheet" hidden>
+  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="statsH">
+    <h2 id="statsH">Statistiche</h2>
+    <div id="statsBody"></div>
+    <button class="btn" id="statsClose">Chiudi</button>
+  </div>
+</div>
+
+<div class="sheet" id="pubSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="pubH">
+    <h2 id="pubH">Uniforma le case editrici</h2>
+    <p class="msg">Questi nomi sembrano la stessa casa editrice. Per ogni gruppo scegli il nome da usare; togli la spunta «cambia» ai nomi da lasciare come sono.</p>
+    <div id="pubList"></div>
+    <div class="row-btns">
+      <button class="btn" id="pubCancel">Annulla</button>
+      <button class="btn primary" id="pubApply">Applica</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="exportSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="exportH">
+    <h2 id="exportH">Esporta</h2>
+    <p class="msg" id="exportMsg"></p>
+    <div class="menu">
+      <button class="btn" id="btnXlsx">Scarica Excel (.xlsx)</button>
+      <button class="btn" id="btnCopy">Copia per Excel o Fogli Google</button>
+      <button class="btn" id="btnCsv">Scarica CSV</button>
+      <button class="btn" id="btnPrint">Stampa o salva in PDF</button>
+      <button class="btn" id="btnShareList2">Condividi questi libri con un amico</button>
+      <label class="check small"><input type="checkbox" id="printCovers"><span>Nel PDF metti anche le copertine</span></label>
+    </div>
+    <p class="msg">La stampa comprende i libri che vedi ora nell'elenco: per stampare un solo scaffale, cercalo prima.</p>
+    <h3>Backup</h3>
+    <p class="msg" id="backupInfo"></p>
+    <p class="msg" id="backupNote"></p>
+    <div class="menu">
+      <button class="btn primary" id="btnShareBackup">Fai il backup e mandalo su Drive, email…</button>
+      <button class="btn" id="btnBackup">Fai il backup sul telefono (Download)</button>
+      <button class="btn" id="btnRestore">Ripristina da backup o apri una lista ricevuta</button>
+    </div>
+    <p class="msg">Il più sicuro è il primo: salvato su Google Drive o mandato per email a te stesso, il backup resta anche se perdi o rompi il telefono. Quello nei Download, invece, sparisce con il telefono.</p>
+    <p class="msg">Il backup contiene entrambe le liste, con prestiti, scaffali, note, citazioni e le tue foto. «Ripristina» aggiunge i libri che mancano, senza cancellare quelli che hai.</p>
+    <button class="btn" id="exportClose">Chiudi</button>
+  </div>
+</div>
+
+<datalist id="shelfList"></datalist>
+<datalist id="genreList"></datalist>
+<datalist id="loanNames"></datalist>
+<datalist id="seriesList"></datalist>
+
+<div class="snap" id="snap" hidden role="dialog" aria-modal="true" aria-labelledby="snapH">
+  <!-- stesso schema della scansione: inquadratura a tutto schermo; in alto Chiudi, titolo, luce; in basso scatto, fotocamera del telefono, messaggio -->
+  <video id="snapVideo" playsinline muted autoplay></video>
+  <div class="snap-top">
+    <button type="button" class="btn snap-x" id="snapClose">× Chiudi</button>
+    <b id="snapH">Foto</b>
+    <span class="scan-tr"><button type="button" class="btn scan-ico snap-torch" id="snapTorch" hidden aria-pressed="false" aria-label="Luce">🔦</button></span>
+  </div>
+  <span class="snap-focus" id="snapFocus" hidden aria-hidden="true"></span>
+  <div class="snap-mid" aria-hidden="true"></div>
+  <div class="snap-bar">
+    <button type="button" class="btn snap-gal" id="snapGal">Galleria</button>
+    <button type="button" class="shutter" id="snapShoot" aria-label="Scatta"></button>
+    <span aria-hidden="true"></span>
+  </div>
+  <button type="button" class="btn snap-native" id="snapNative">📷 Usa la fotocamera del telefono (con il flash)</button>
+  <p class="snap-msg" id="snapMsg" aria-live="polite"></p>
+</div>
+<div class="ped" id="ped" hidden role="dialog" aria-modal="true" aria-labelledby="pedH">
+  <div class="ped-top">
+    <button type="button" class="btn" id="pedSkip">Senza segni</button>
+    <b id="pedH">Evidenzia o scrivi</b>
+    <button type="button" class="btn primary" id="pedDone">Fatto</button>
+  </div>
+  <div class="ped-area" id="pedArea"><div class="ped-stage" id="pedStage"><canvas id="pedCanvas" aria-label="Foto da evidenziare: un dito disegna, due dita ingrandiscono e spostano"></canvas><canvas id="pedLive" aria-hidden="true"></canvas></div></div>
+  <div class="ped-bar">
+    <div class="ped-tools" role="radiogroup" aria-label="Strumento">
+      <button type="button" role="radio" class="ped-t hl" data-tool="hl" data-color="#FFE14D" aria-checked="true" aria-label="Evidenziatore giallo"><span style="background:#FFE14D"></span></button>
+      <button type="button" role="radio" class="ped-t hl" data-tool="hl" data-color="#7CF29A" aria-checked="false" aria-label="Evidenziatore verde"><span style="background:#7CF29A"></span></button>
+      <button type="button" role="radio" class="ped-t hl" data-tool="hl" data-color="#FF8FC8" aria-checked="false" aria-label="Evidenziatore rosa"><span style="background:#FF8FC8"></span></button>
+      <i class="ped-sep" aria-hidden="true"></i>
+      <button type="button" role="radio" class="ped-t pen" data-tool="pen" data-color="#E5322D" aria-checked="false" aria-label="Penna rossa"><span style="background:#E5322D"></span></button>
+      <button type="button" role="radio" class="ped-t pen" data-tool="pen" data-color="#2457D6" aria-checked="false" aria-label="Penna blu"><span style="background:#2457D6"></span></button>
+      <button type="button" role="radio" class="ped-t pen" data-tool="pen" data-color="#111111" aria-checked="false" aria-label="Penna nera"><span style="background:#111111"></span></button>
+      <i class="ped-sep" aria-hidden="true"></i>
+      <button type="button" role="radio" class="ped-t er" data-tool="er" aria-checked="false" aria-label="Gomma"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 21h10"/><path d="M5.5 14.5l8-8a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 18H9l-3.5-3.5z"/><path d="M9.5 10.5l4.5 4.5"/></svg></button>
+      <button type="button" role="radio" class="ped-t stk" data-tool="stk" aria-checked="false" aria-label="Adesivi ed emoticon"><b aria-hidden="true">😊</b></button>
+    </div>
+    <div class="ped-stk" id="pedStk" hidden>
+      <div class="ped-emo" role="radiogroup" aria-label="Emoticon">
+        <button type="button" data-s="⭐" aria-pressed="true">⭐</button><button type="button" data-s="❤️">❤️</button><button type="button" data-s="👍">👍</button><button type="button" data-s="👎">👎</button><button type="button" data-s="😍">😍</button><button type="button" data-s="😂">😂</button><button type="button" data-s="😮">😮</button><button type="button" data-s="😢">😢</button><button type="button" data-s="🤔">🤔</button><button type="button" data-s="💡">💡</button><button type="button" data-s="🔥">🔥</button><button type="button" data-s="👀">👀</button><button type="button" data-s="📌">📌</button><button type="button" data-s="✅">✅</button><button type="button" data-s="❗">❗</button><button type="button" data-s="❓">❓</button>
+      </div>
+      <div class="ped-labs" role="radiogroup" aria-label="Adesivi">
+        <button type="button" data-l="Importante" data-c="#D7263D" style="background:#D7263D">Importante</button><button type="button" data-l="Da rileggere" data-c="#2457D6" style="background:#2457D6">Da rileggere</button><button type="button" data-l="Bellissima" data-c="#1B8A5A" style="background:#1B8A5A">Bellissima</button><button type="button" data-l="Da ricordare" data-c="#6D28D9" style="background:#6D28D9">Da ricordare</button><button type="button" data-l="Non sono d'accordo" data-c="#C2410C" style="background:#C2410C">Non sono d'accordo</button>
+      </div>
+      <div class="ped-size"><span>Grandezza</span><button type="button" class="btn" id="pedSmaller" aria-label="Più piccolo">−</button><button type="button" class="btn" id="pedBigger" aria-label="Più grande">+</button></div>
+    </div>
+    <div class="ped-acts">
+      <span class="ped-hint" id="pedHint">Evidenziatore: un dito passa sulle righe, due dita ingrandiscono</span>
+      <button type="button" class="btn" id="pedFit" hidden>Adatta</button>
+      <button type="button" class="btn" id="pedUndo" aria-label="Togli l'ultimo segno" disabled>↶</button>
+      <button type="button" class="btn" id="pedClear" disabled>Cancella tutto</button>
+    </div>
+  </div>
+</div>
+<input class="sr" id="fileSnapGal" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+<input class="sr" id="fileCam" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<input class="sr" id="fileQuote" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<div class="lightbox phview" id="phView" hidden role="dialog" aria-modal="true" aria-label="Foto della pagina">
+  <button class="lb-x" id="phClose" aria-label="Chiudi">×</button>
+  <div class="ph-scroll" id="phScroll"><img id="phImg" alt="Foto della pagina"></div>
+  <div class="ph-nav" id="phNav" hidden><button type="button" class="btn" id="phPrev" aria-label="Foto precedente">‹</button><span id="phPos"></span><button type="button" class="btn" id="phNext" aria-label="Foto successiva">›</button></div>
+  <p class="lb-cap" id="phCap"></p>
+</div>
+<input class="sr" id="fileCover" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<input class="sr" id="filePrice" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<input class="sr" id="fileGal" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+<input class="sr" id="fileNative" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<input class="sr" id="fileBackup" type="file" accept="application/json,.json,text/plain,.txt" tabindex="-1" aria-hidden="true">
+
+<div class="toast" id="toast" role="status" hidden><span id="toastTxt"></span><button id="toastBtn" hidden></button></div>
+
+<script src="vendor/zxing.min.js" defer></script>
+<script src="vendor/tesseract.min.js" defer></script>
+<script src="lib.js" defer></script>
+<script src="app.js" defer></script>
+<script src="wrap.js" defer></script><!-- modulo: riepilogo di ogni stagione -->
+<script src="layout.js" defer></script><!-- modulo: disposizione dello schermo -->
+<script src="schede.js" defer></script><!-- modulo: aspetto della scheda aperta -->
+<script src="social.js" defer></script><!-- modulo: account e sincronizzazione -->
+<script src="amici.js" defer></script><!-- modulo: amici -->
+<div id="printView" aria-hidden="true"></div>
+</body>
+</html>
