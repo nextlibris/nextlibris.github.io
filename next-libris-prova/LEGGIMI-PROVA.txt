@@ -1,0 +1,2 @@
+Copia di PROVA di Next Libris, per provare le novita' prima di portarle nella versione vera
+(https://piero907.github.io/next-libris/). Ha dati tutti suoi: i libri messi qui non compaiono nella versione vera.

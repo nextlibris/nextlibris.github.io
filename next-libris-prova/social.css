@@ -1,0 +1,25 @@
+/* Next Libris · modulo «Account e sincronizzazione» (copia social) */
+#accBody{display:grid;gap:12px}
+.acc #accBody p{margin:0}
+.acc #accBody .btn{width:100%}
+.acc .msg{line-height:1.45}
+.acc .acc-small{font-size:13px;color:var(--muted);line-height:1.45}
+.acc .acc-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface2);display:grid;gap:4px}
+.acc .acc-who{font-size:15px;overflow-wrap:anywhere}
+.acc .acc-st{font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:baseline}
+.acc .acc-st.ok::before{content:'';flex:none;width:8px;height:8px;border-radius:50%;background:#3B8A5A;transform:translateY(-1px)}
+.acc .acc-st.bad{color:#B4472A}
+.acc .acc-links{font-size:14px;color:var(--muted)}
+.acc form{display:grid;gap:10px}
+.acc .acc-more{border-top:1px solid var(--line);padding-top:4px}
+.acc .acc-more summary{list-style:none;cursor:pointer;color:var(--ink);font-weight:600;font-size:15px;padding:10px 2px;display:flex;justify-content:space-between;align-items:center}
+.acc .acc-more summary::-webkit-details-marker{display:none}
+.acc .acc-more summary::after{content:'›';font-size:22px;line-height:1;color:var(--muted);transition:transform .15s}
+.acc .acc-more[open] summary::after{transform:rotate(90deg)}
+.acc .acc-acts{display:grid;gap:8px;padding-bottom:4px}
+.acc .acc-conf{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface2);display:grid;gap:10px}
+.acc .acc-conf p{font-size:15px}
+.acc .acc-conf .row-btns .btn{width:auto}
+#goAcc.acc-on b::after{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#3B8A5A;margin-left:8px;vertical-align:middle}
+.acc .acc-or{text-align:center;font-size:13px;color:var(--muted)}
+.acc .acc-g{display:flex;justify-content:center;min-height:44px}
