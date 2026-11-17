@@ -3,6 +3,10 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 101 · 17/11/2026
+> **Trasloco corretto** Al vecchio indirizzo, nell'app installata, la pagina del trasloco ora si apre (prima restava una pagina vuota).
+- **Trasloco:** al vecchio indirizzo l'app non si fermava più su una pagina vuota prima di arrivare al trasloco; la pagina del trasloco ora è anche nella copia sul telefono, così si apre pure con l'app installata, e al nuovo indirizzo riceve i libri anche se lì l'app è già stata aperta.
+
 ## Versione 100 · 17/11/2026
 > **Nuovo indirizzo** Next Libris ora sta su nextlibris.github.io: un indirizzo tutto suo.
 > **Trasloco dei libri** Aprendo il vecchio indirizzo, «Porta i miei libri» passa al nuovo libri, foto, impostazioni e account; al vecchio restano come riserva.

@@ -86,7 +86,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 /* ---------- stato ---------- */
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 100, date: '2026-11-17', note: 'Nuovo indirizzo nextlibris.github.io e trasloco dei libri' };
+var APP_VERSION = { v: 101, date: '2026-11-17', note: 'Corretto il trasloco dal vecchio indirizzo' };
 var state = { books: [], updated: 0 };
 var hooks = {};                              // moduli aggiuntivi (vedi window.NL in fondo): si agganciano dopo l'avvio
 function emit(name, arg) { (hooks[name] || []).forEach(function (fn) { try { fn(arg); } catch (e) { if (window.console) console.warn('modulo', name, e); } }); }

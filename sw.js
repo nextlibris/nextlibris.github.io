@@ -2,7 +2,7 @@
 // le copie parallele (…/next-libris-prova/, …/next-libris-social/…) stanno allo stesso indirizzo di base: copie offline con un prefisso
 // loro, e ognuna cancella solo le proprie (la versione vera non tocca quelle che cominciano con «nome-catalogo-libri-»)
 const COPIA = (self.registration.scope.match(/\/next-libris-([a-z]+)\//) || [])[1] || '';
-const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v100';
+const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v101';
 const MINE = (k) => (COPIA ? k.startsWith(COPIA + '-') : !/^[a-z]+-catalogo-libri-/.test(k));
 const SHELL = ['./', 'index.html', 'indirizzo.js', 'style.css', 'app.js', 'lib.js', 'manifest.json',
   'icons/next-libris-192.png', 'icons/next-libris-512.png', 'vendor/zxing.min.js', 'vendor/fonts/literata-latin.woff2', 'vendor/tesseract.min.js', 'vendor/worker.min.js', 'REGISTRO_MODIFICHE.md',
@@ -10,7 +10,8 @@ const SHELL = ['./', 'index.html', 'indirizzo.js', 'style.css', 'app.js', 'lib.j
   'layout.js', 'layout.css',   // modulo: disposizione dello schermo
   'schede.js', 'schede.css',   // modulo: aspetto della scheda aperta
   'social.js', 'social.css',   // modulo: account e sincronizzazione
-  'amici.js', 'amici.css'];   // modulo: amici
+  'amici.js', 'amici.css',   // modulo: amici
+  'trasloco.html', 'trasloco.js'];   // trasloco da piero907.github.io (senza, la pagina arriverebbe come index.html)
 
 self.addEventListener('install', (e) => {
   // un file mancante non deve impedire al service worker di partire (addAll fallirebbe per intero)
