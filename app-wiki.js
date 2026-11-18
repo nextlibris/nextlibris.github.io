@@ -367,17 +367,21 @@ function filmsMine() {
   myBooks().forEach(function (b) { if (b.xs) return; wdFilms(b).forEach(function (f) { out.push({ f: f, b: b }); }); });
   return out.sort(function (x, y) { return coll.compare(L.sortKeyTitle(x.b.t) || '~', L.sortKeyTitle(y.b.t) || '~') || (x.f.y || 9999) - (y.f.y || 9999); });
 }
-function openFilms() {
+var FM_BOOKS = 6, FM_FILMS = 2;                          // riquadri regolari (Piero, 18/11/2026): 6 libri e 2 film per libro, poi «Mostra tutti»
+function openFilms(all0) {
   if (guest) guestExit(true);                            // «Per te» parla sempre della tua libreria
-  var all = filmsMine(), left = wdLeft(), by = {}, order = [];
+  var all = filmsMine(), left = wdLeft(), by = {}, order = [], showAll = all0 === true;
   all.forEach(function (x) { if (!by[x.b.id]) { by[x.b.id] = { b: x.b, fs: [] }; order.push(x.b.id); } by[x.b.id].fs.push(x.f); });
-  $('#filmBody').innerHTML = (order.length ? '<ul class="fm-list">' + order.map(function (id) {
-    var g = by[id], b = g.b, img = smallImg(b);
+  var vis = showAll ? order : order.slice(0, FM_BOOKS);
+  $('#filmBody').innerHTML = (order.length ? '<ul class="fm-list">' + vis.map(function (id) {
+    var g = by[id], b = g.b, img = smallImg(b), more = g.fs.length - FM_FILMS;
     return '<li class="fm-row"><button type="button" class="fm-book" data-fb="' + esc(b.id) + '" aria-label="Apri il libro ' + esc(b.t) + '">' +
       (img ? '<span class="sum-img"><img src="' + esc(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-rm></span>' : '<span class="sum-img ph" style="--h:' + hue(b.t + b.a) + '" aria-hidden="true">' + esc(L.str(b.t).charAt(0).toUpperCase()) + '</span>') + '</button>' +
       '<div class="fm-in"><button type="button" class="fm-bt" data-fb="' + esc(b.id) + '"><b>' + esc(b.t) + '</b><small>' + esc([b.a, b.w ? 'nei Desideri' : ''].filter(Boolean).join(' · ')) + '</small></button>' +
-      '<ul class="fm-films">' + g.fs.map(function (f) { return '<li><span class="tag">' + (f.s ? 'Serie TV' : 'Film') + '</span> ' + filmOne(f) + '</li>'; }).join('') + '</ul></div></li>';
-  }).join('') + '</ul>' : '<p class="msg">' + (left ? 'Non ho ancora trovato film tratti dai tuoi libri.' : 'Non ho trovato film o serie TV tratti dai tuoi libri.') + ' Wikidata conosce bene i classici e i libri famosi, meno le edizioni minori.</p>') +
+      '<ul class="fm-films">' + g.fs.map(function (f, i) { return '<li' + (i >= FM_FILMS ? ' class="fm-hid" hidden' : '') + '><span class="tag">' + (f.s ? 'Serie TV' : 'Film') + '</span> ' + filmOne(f) + '</li>'; }).join('') + '</ul>' +
+      (more > 0 ? '<button type="button" class="link fm-more" data-fmore>' + (more === 1 ? 'Un altro' : 'Altri ' + more) + ' ›</button>' : '') + '</div></li>';
+  }).join('') + '</ul>' + (order.length > vis.length ? '<button type="button" class="btn fm-all" data-fall>Mostra tutti (' + order.length + ')</button>' : '') :
+    '<p class="msg">' + (left ? 'Non ho ancora trovato film tratti dai tuoi libri.' : 'Non ho trovato film o serie TV tratti dai tuoi libri.') + ' Wikidata conosce bene i classici e i libri famosi, meno le edizioni minori.</p>') +
     (left ? '<p class="msg st-pa-wait"><span class="spin" aria-hidden="true"></span>Sto ancora cercando per ' + (left === 1 ? 'un autore' : left + ' autori') + ': riapri tra poco.</p>' : '');
   $('#filmSheet').hidden = false;
   wdKick(0);
@@ -385,6 +389,9 @@ function openFilms() {
 function closeFilms() { $('#filmSheet').hidden = true; }
 $('#filmClose').addEventListener('click', closeFilms);
 $('#filmBody').addEventListener('click', function (e) {
+  var m = e.target.closest('[data-fmore]');
+  if (m) { Array.prototype.forEach.call(m.parentNode.querySelectorAll('.fm-hid'), function (x) { x.hidden = false; }); m.remove(); return; }
+  if (e.target.closest('[data-fall]')) { var si = $('#filmSheet .sheet-in'), y = si ? si.scrollTop : 0; openFilms(true); if (si) si.scrollTop = y; return; }
   var b = e.target.closest('[data-fb]'); if (!b) return;
   closeFilms(); showBook(b.dataset.fb);
 });

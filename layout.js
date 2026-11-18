@@ -67,7 +67,7 @@ function youItems() {
   var nf = NL.films ? NL.films().length : 0;        // film e serie TV tratti dai tuoi libri (giro 2, 18/11/2026)
   if (nf) out.push({ l: 'films', i: I.film, t: 'Dai tuoi libri al cinema', s: nf === 1 ? '1 film o serie tratto dai tuoi libri' : nf + ' film e serie tratti dai tuoi libri' });
   if (nq) out.push({ l: 'quotes', i: I.quote, t: 'Tutte le citazioni', s: nq === 1 ? '1 citazione salvata' : nq + ' citazioni salvate' });
-  out.push({ l: 'stats', i: I.stats, t: 'Statistiche', s: 'Libri, valore, pagine e letture' });
+  out.push({ l: 'stats', i: I.stats, t: 'Statistiche', s: 'Libri, pagine e letture' });   // i prezzi non ci sono più (giro 7)
   out.push({ l: 'export', i: I.out, t: 'Backup ed esportazione', s: 'Backup, Excel, PDF' });
   return out;
 }

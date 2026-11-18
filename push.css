@@ -7,7 +7,7 @@
 .pu-state.pu-warn{background:var(--warn-bg);color:var(--warn)}
 .pu-state.pu-wait{background:var(--surface2);color:var(--ink)}
 .pu-state .link{padding:0;min-height:32px}
-.pu-state .pu-allow{min-height:40px;padding:6px 14px;font-size:14px}
+.pu-state .pu-allow{justify-self:center;min-width:min(260px,100%);min-height:44px;padding:8px 18px;font-size:15px}   /* al centro del riquadro (Piero, 18/11/2026) */
 .pu-hours{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:0}
 .pu-hours label{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--ink)}
 .pu-hours select{min-height:44px;padding:8px 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}

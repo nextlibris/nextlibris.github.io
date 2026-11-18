@@ -309,7 +309,8 @@ function sheet() {
 window.addEventListener('online', function () { if (!auth && !prov) { provFail = false; paintSheet(); } });   // torna la rete: si riprova
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var el = document.getElementById('accSheet'); if (el && !el.hidden) close(); } });
 async function open() {
-  var el = sheet(); confirmAct = ''; el.hidden = false; provFail = false;   // a ogni apertura si riprova copyInfo = await getCopy(); paintSheet();
+  var el = sheet(); confirmAct = ''; el.hidden = false; provFail = false;   // a ogni apertura si riprova
+  paintSheet(); copyInfo = await getCopy(); paintSheet();   // il disegno era finito dentro il commento: con l'account la finestra restava vuota (Piero, 18/11/2026)
   if (!auth && !prov) { await providers(); paintSheet(); }
   var f = el.querySelector('input'); if (f) setTimeout(function () { f.focus(); }, 60);
 }

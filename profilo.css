@@ -33,6 +33,13 @@
 .owner .owner-n:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* elenco degli amici: foto e «Segui» */
 .fri .fr-go.fr-av{gap:10px}
+@media (max-width:420px){                 /* telefoni: il nome ha più spazio (Piero, 18/11/2026) */
+  .fri .fr-pick-list .fr-go.fr-av{gap:6px;padding:0 6px 0 10px}
+  .fri .fr-pick-list .fr-go.fr-av>.n{display:none}
+  .fri .fr-pick-list .fr-go.fr-av .pf-av{width:32px;height:32px;font-size:14px}
+  .fri .fr-pick-list .fr-go.fr-av .ch-to{min-width:36px}
+  .fri .fr-pick-list .fr-go.fr-av .fr-fol{padding:4px 9px}
+}
 .fri .fr-fol{flex:none;min-height:32px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:500 13px var(--font-body);cursor:pointer;white-space:nowrap}
 .fri .fr-fol[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
 .fri .fr-segui{margin:4px 0 0}

@@ -1081,6 +1081,7 @@ html[data-theme="dark"] .ico.act.fav.on svg{color:#F4C430}
 /* testata su due righe (Piero, 17/11/2026): «Next Libris [PROVA]» con le icone centrate sulla stessa linea, sotto una riga grigia con nome e numeri */
 .top-meta{margin:6px 0 0;font-size:15px;line-height:1.35;color:var(--muted)}
 .top-meta .summary{margin:0;display:inline}
+.top-meta .sum-i{white-space:nowrap}   /* «5 in prestito ⚠» non si spezza (Piero, 18/11/2026) */
 .top-meta .owner:not(:empty){display:block}   /* «Libreria di Piero R.» sopra, i numeri sotto (Piero, 17/11/2026) */
 html[data-look="nuovo"] .top{--h1-fs:calc(clamp(24px,6.8vw,38px) * var(--ft-k,1))}
 html[data-look="nuovo"] .top h1{font-size:var(--h1-fs)}
@@ -1621,6 +1622,7 @@ body.selecting .nx-box,body.scanning .nx-box{display:none}
 .dmenu .dopt small.dbk.dbk-no{color:var(--warn)}
 /* Menu: sottotitoli su una riga, mai a capo (Piero, 17/11/2026) */
 #drawerOpts .dmenu .dopt small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#drawerOpts .dmenu .don-menu small{white-space:normal;overflow:visible}   /* la frase di Sostieni si legge tutta (18/11/2026) */
 #drawerOpts .dlist,#drawerOpts .dsub,#drawerOpts .dopt{min-width:0;max-width:100%}
 #drawerOpts .dmenu .dopt > span:not(.n):not(.dset-i):not(.don-cup):not(.dbadge){flex:1 1 auto;min-width:0}
 @media (prefers-reduced-motion:reduce){.dmenu .dset-c{transition:none}}
@@ -1742,7 +1744,7 @@ html[data-look="nuovo"] .gc-face.sm .gc-ph::before,html[data-look="nuovo"] .gc-f
 #list .gc-au.gc-big{gap:4px}
 #list .gc-face .gc-ph .gc-gn{font:600 14px/1.15 var(--font-display)!important;letter-spacing:0!important;display:-webkit-box!important;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;width:100%;overflow-wrap:break-word;hyphens:none}
 #list .gc-face .gc-nm{font:500 11.5px/1.2 var(--font-body);opacity:.85;display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#list .gc-face .gc-ph .gc-sur{font:700 var(--fs,20px)/1.05 var(--font-display)!important;text-transform:uppercase;letter-spacing:.03em!important;display:block;width:100%;hyphens:none;overflow-wrap:normal;word-break:normal}
+#list .gc-face .gc-ph .gc-sur{font:700 min(var(--fs,20px),calc((100cqi - 16px) / (var(--lw,6) * .82)))/1.05 var(--font-display)!important;text-transform:uppercase;letter-spacing:.03em!important;display:block;width:100%;hyphens:none;overflow-wrap:normal;word-break:normal}
 .gcard .gc-n{position:absolute;right:6px;top:6px;min-width:24px;padding:1px 8px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 12.5px/20px var(--font-body);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .gcard.on .art{outline:3px solid var(--accent);outline-offset:2px}
 .gpanel{grid-column:1/-1;position:relative;padding:10px 12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
@@ -1809,6 +1811,15 @@ body.cols-sm #list .cover .ph b{font-size:12px}
 body.cols-sm #list .cover .ph small{font-size:10.5px}
 body.cols-sm #list .cover .badge{left:3px;bottom:3px;font-size:10px;padding:1px 5px}
 body.gridview #list{touch-action:pan-x pan-y}
+/* copertine piccole (Piero, 18/11/2026, scelta C): la scritta sulla copertina si rimpicciolisce fino a entrare (larghezza della copertina = 100cqi);
+   da 4 per riga in su sparisce la scritta sotto le copertine che hanno già il nome disegnato (senza foto né immagine) */
+#list .gc-face:not(.sm){container-type:inline-size}
+#list .gc-face .gc-nm{font-size:min(11.5px,12cqi);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:normal;word-break:normal}
+#list .gc-face .gc-ph .gc-gn{font-size:min(14px,16cqi)!important}
+#list .gc-face .gc-ico{width:min(52px,42cqi);height:min(52px,42cqi)}
+body.cols-sm #list .cover:not(:has(.art>img,.gc-img))>.cap,body.cols-sm #list .cover:not(:has(.art>img,.gc-img))>.cap2{display:none}
+body.cols-sm #list .cover .cap{-webkit-line-clamp:2;overflow-wrap:anywhere}
+
 .cols-row{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
 .cols-row input{flex:1;min-width:0;accent-color:var(--accent);height:32px}
 /* serie e copie accorpate (giro 1, 18/11/2026): una copertina «a pila» con il bollino del numero; nell'elenco una riga che si apre */
@@ -1851,6 +1862,17 @@ img.flag{display:inline-block;width:1.34em;height:1em;object-fit:cover;border-ra
 @media (min-width:880px){ .filmbox{grid-column:1 / -1} }
 .fm-list{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:10px}
 .fm-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+/* riquadri regolari (Piero, 18/11/2026): copertina sempre uguale, titolo al massimo su 2 righe, autore su una, film su una riga ciascuno */
+.fm-row{grid-template-columns:52px minmax(0,1fr);min-height:126px;box-sizing:border-box}
+.fm-book .sum-img{width:52px!important;height:76px!important}
+.fm-in{min-width:0}
+.fm-bt{display:block;width:100%}
+.fm-bt b{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.fm-bt small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-films li{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.fm-films li[hidden]{display:none}
+.fm-more{margin:4px 0 0;padding:0;min-height:32px;font-size:14px}
+.fm-all{display:block;width:100%;margin:0 0 10px}
 .fm-book,.fm-bt{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .fm-book .sum-img{display:block;width:44px;height:62px;border-radius:4px;overflow:hidden}
 .fm-book .sum-img img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1887,3 +1909,8 @@ html.has-bell body header.top .top-meta{margin-right:-128px}
 html.guest body header.top .beer-top.beer-pill,html.esempio body header.top .beer-top.beer-pill{display:none}
 html.guest body header.top .top-meta,html.esempio body header.top .top-meta{margin-right:0;padding-right:0}
 @media (max-width:380px){ html.has-bell body header.top{padding-right:110px} html.has-bell body header.top .top-meta{margin-right:-110px} }
+@media (max-width:340px){                 /* telefoni molto stretti o scritta grande: titolo più piccolo, PROVA non tocca la campanella (18/11/2026) */
+  html.has-bell body header.top{--h1-fs:calc(17px * var(--ft-k,1))}
+  .top h1 .prova-tag{margin-left:3px;padding:1px 4px;font-size:8.5px;letter-spacing:0}
+  .sortbar .sb-dot{display:none}          /* «Ordina» e «Raggruppa» vanno su due righe: niente puntino in fondo alla prima */
+}

@@ -3,6 +3,14 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 106 · 18/11/2026
+> **Copertine a misura** Di partenza 3 per riga: con due dita le ingrandisci o le rimpicciolisci. Quando sono piccole, il nome dell'autore si rimpicciolisce e si legge sempre intero.
+> **Cerca tra i tuoi amici** Una casella sopra l'elenco degli amici, per trovarli subito.
+> **Dai tuoi libri al cinema** Riquadri più ordinati, con «Mostra tutti» quando i film sono tanti.
+- **Account e sincronizzazione:** la finestra si apriva vuota per chi era dentro con l'account; ora si vedono la sincronizzazione e le altre azioni.
+- **Telefoni stretti e scritta grande:** testata, riepilogo con il triangolino degli avvisi, «Ordina · Raggruppa» ed elenco degli amici si leggono meglio.
+- **Notifiche:** il tasto «Permetti le notifiche» sta al centro.
+
 ## Versione 105 · 18/11/2026
 > **Chat con gli amici** Scrivi agli amici e crea gruppi fino a 30 persone; manda un libro o consiglialo direttamente in chat. Chi non è tuo amico può mandarti solo una richiesta, che accetti o rifiuti; puoi bloccare e segnalare.
 > **Il tuo profilo** Foto, statistiche dell'anno con lo scaffale dei libri letti, obiettivo facoltativo, In lettura, Consigliati e citazioni in evidenza. Tocca il nome di un amico per vedere il suo.

@@ -130,7 +130,7 @@ function sheet() {
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var el = document.getElementById('friSheet'); if (el && !el.hidden) close(); } });
 async function open(asOpts) {
-  var el = sheet(); confirmId = ''; err = ''; editName = false; view = null; wishes = null; opts = asOpts === true; ffOf = null; ff = null; el.hidden = false; paint();
+  var el = sheet(); confirmId = ''; err = ''; editName = false; view = null; friQv = ''; wishes = null; opts = asOpts === true; ffOf = null; ff = null; el.hidden = false; paint();
   await load(true);
   if (invite && me && me.utente) await findInvite();
 }
@@ -189,11 +189,12 @@ function paint() {
       return '<li class="fr-row fr-book">' + cover(r.libro || {}) + '<span class="fr-bk"><b>' + esc((r.libro && r.libro.t) || 'un libro') + '</b><small>Lo chiede ' + esc(r.nome_da || 'un amico') + '</small></span><span class="fr-act"><button class="btn" type="button" data-f="askno" data-id="' + esc(r.id) + '">No</button><button class="btn primary" type="button" data-f="askyes" data-id="' + esc(r.id) + '">Presta</button></span></li>';
     }).join('') + '</ul></section>';
     h += '<section class="fr-sec"><h3 class="fr-h">I tuoi amici' + (fr.length ? ' <span class="fr-n">' + fr.length + '</span>' : '') + '</h3>';
-    if (fr.length > 8) h += '<input type="search" class="fr-libq" data-pick-q placeholder="Cerca tra i tuoi amici" autocomplete="off" enterkeyhint="search">';
+    if (fr.length) h += '<input type="search" class="fr-libq" id="friFQ" data-pick-q placeholder="Cerca tra i tuoi amici" aria-label="Cerca tra i tuoi amici" autocomplete="off" enterkeyhint="search" value="' + esc(friQv) + '"><p class="fr-small" data-pick-none hidden>Nessun amico con questo nome.</p>';   // sempre, anche con pochi amici (Piero, 18/11/2026)
     h += fr.length ? '<ul class="fr-list fr-pick-list">' + fr.slice().sort(function (a, b) { return (a.utente || '').localeCompare(b.utente || '', 'it'); }).map(function (x) {
       var nn = nums[x.id] || {}, info = [];
-      if (nn.comuni != null) info.push(nn.comuni + (nn.comuni === 1 ? ' amico' : ' amici') + ' in comune');
-      if (nn.libri != null) info.push(nn.libri + (nn.libri === 1 ? ' libro' : ' libri') + ' in comune');
+      if (nn.comuni) info.push(nn.comuni + (nn.comuni === 1 ? ' amico' : ' amici'));   // niente zeri e «in comune» una volta sola: la riga sta su un telefono stretto (18/11/2026)
+      if (nn.libri) info.push(nn.libri + (nn.libri === 1 ? ' libro' : ' libri'));
+      if (info.length) info[info.length - 1] += ' in comune';
       return '<li class="fr-row fr-go fr-av">' + (window.NLProfilo ? window.NLProfilo.avatar(x.id, x.utente || x.nome) : '') + '<button class="fr-who fr-open" type="button" data-f="friend" data-id="' + esc(x.id) + '">' + nameOf(x) + '<small>' + esc(info.join(' · ') || 'Guarda il suo profilo') + '</small></button>' +
         chatBtn(x) + ('segue' in x ? '<button class="fr-fol" type="button" data-f="segui" data-id="' + esc(x.id) + '" aria-pressed="' + !!x.segue + '" title="' + (x.segue ? 'Segui i suoi desideri: tocca per smettere' : 'Segui i suoi desideri: un riassunto al giorno') + '">' + (x.segue ? 'Segui ✓' : 'Segui') + '</button>' : '') + '<span class="n" aria-hidden="true">›</span></li>';
     }).join('') + '</ul>' + (fr.some(function (x) { return 'segue' in x; }) ? '<p class="fr-small">«Segui»: un avviso al giorno quando aggiunge dei desideri, se li mostra agli amici. Non viene a saperlo.</p>' : '') : '<p class="fr-small">Ancora nessuno: cercalo per nome qui sotto, oppure mandagli il tuo invito.</p>';
@@ -209,6 +210,7 @@ function paint() {
     h += '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="opts">Impostazioni degli amici<small>Il tuo nome, chi vede cosa, chiave e worker</small></button><span class="n" aria-hidden="true">›</span></li></ul>';
   }
   body.innerHTML = h;
+  var fq = document.getElementById('friFQ'); if (fq && friQv) pickFilter(fq);   // il giro di controllo ridisegna: la ricerca resta
 }
 async function onSubmit(e) {
   var f = e.target; e.preventDefault();
@@ -810,10 +812,20 @@ function pickerHTML(items, attr, pressed, info) {
       return '<button type="button" class="fr-pick-row" ' + attr + '="' + esc(x.id) + '" aria-pressed="' + (pressed(x) ? 'true' : 'false') + '"><span class="fr-pick-n">' + esc(x.utente) + (i ? '<small>' + esc(i) + '</small>' : '') + '</span><span class="fr-pick-c" aria-hidden="true"></span></button>';
     }).join('') + '</div></div>';
 }
+var friQv = '';                                   // ricerca tra i tuoi amici (finestra Amici)
+function pickNorm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+function pickFilter(inp) {                       // senza accenti e maiuscole; le righe «Impostazioni…» (fr-box) restano
+  var q = pickNorm(inp.value.trim()), box = inp.parentNode, n = 0;
+  Array.prototype.forEach.call(box.querySelectorAll('.fr-pick-row, .fr-go, .fr-row'), function (r) {
+    if (r.closest('.fr-box')) return;
+    r.hidden = !!q && pickNorm(r.textContent).indexOf(q) < 0; if (!r.hidden) n++;
+  });
+  var none = box.querySelector('[data-pick-none]'); if (none) none.hidden = !q || n > 0;
+}
 document.addEventListener('input', function (e) {
   if (!e.target.hasAttribute || !e.target.hasAttribute('data-pick-q')) return;
-  var q = e.target.value.trim().toLowerCase(), box = e.target.parentNode;
-  Array.prototype.forEach.call(box.querySelectorAll('.fr-pick-row, .fr-go, .fr-row'), function (r) { r.hidden = q && r.textContent.toLowerCase().indexOf(q) < 0; });
+  if (e.target.id === 'friFQ') friQv = e.target.value;
+  pickFilter(e.target);
 });
 
 /* ---------- chiave Google e worker SBN condivisi con un amico: li usano tutti e due (Piero, 16/11/2026) ---------- */

@@ -33,7 +33,8 @@ var S = [
     p: ['Tocca un libro per aprirlo. Segna se lo stai leggendo o l\'hai già letto, dagli un voto con i <b>libricini</b> e tieni il segno con il <b>segnalibro</b>. Con la <b>stella</b> dici che lo consigli: gli amici lo vedono nel tuo profilo.',
       'La <b>matita</b> serve a correggere i dati. Se dal libro hanno tratto un film o una serie, lo trovi qui.'] },
   { ico: 'search', h: 'Trova e ordina', go: 'sort', sel: '#q, #sortBar',
-    p: ['Cerca per titolo o autore, usa i <b>Filtri</b> e <b>Ordina · Raggruppa</b> (per autore, genere, paese…). Scegli tra copertine ed elenco; sulle copertine <b>due dita</b> le ingrandiscono o le rimpiccioliscono.',
+    p: ['Cerca per titolo o autore, usa i <b>Filtri</b> e <b>Ordina · Raggruppa</b> (per autore, genere, paese…). Scegli tra copertine ed elenco.',
+      'Le copertine partono da <b>3 per riga</b>: allarga o stringi <b>due dita</b> sulle copertine per farle più grandi o più piccole (da 2 a 5 per riga). Lo trovi anche in Menu › Aspetto.',
       'Serie e copie dello stesso libro stanno insieme. Tocca il nome di un autore per <b>Info Autore</b>.'] },
   { ico: 'loan', h: 'Prestiti', go: 'loan',   // giro 7: Prestiti e Desideri in due schermate (testi approvati da Piero il 18/11/2026)
     p: ['Tieni il conto dei libri che presti e di quelli che ti prestano. Quando ridai un libro a un amico, tocca <b>Restituiscilo</b>; quando un tuo libro torna a casa, tocca <b>È tornato</b>.'] },

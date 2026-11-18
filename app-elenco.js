@@ -603,7 +603,7 @@ function grpFace(kind, name, none, small) {
   else {
     var pp = L.authorParts(name, settings.auCut[L.norm(name)]), sur = pp.sur || pp.name, giv = pp.sur ? pp.given : '';
     var lw = Math.max.apply(null, sur.split(/\s+/).map(function (w) { return w.length; }));   // la parola piu' lunga del cognome deve stare in una riga
-    inner = (giv ? '<small class="gc-nm">' + esc(giv) + '</small>' : '') + '<b class="gc-sur" style="--fs:' + Math.max(12, Math.min(20, Math.floor(94 / (0.8 * Math.max(lw, 4))))) + 'px">' + esc(sur) + '</b>';
+    inner = (giv ? '<small class="gc-nm">' + esc(giv) + '</small>' : '') + '<b class="gc-sur" style="--fs:' + Math.max(12, Math.min(20, Math.floor(94 / (0.8 * Math.max(lw, 4))))) + 'px;--lw:' + Math.max(lw, 4) + '">' + esc(sur) + '</b>';
   }
   return '<span class="gc-face' + (small ? ' sm' : '') + (kind === 'gen' || kind === 'pae' ? ' gc-gen' : '') + (kind === 'pae' ? ' gc-pae' : '') + '"' + (kind === 'aut' && !none ? ' data-aun="' + esc(name) + '"' : '') + (wait ? ' data-auf="' + esc(L.norm(name)) + '"' : '') + '>' +
     '<span class="ph gc-ph' + (kind === 'aut' ? ' gc-au' : '') + (!small && !none ? ' gc-big' : '') + '" style="--h:' + (none ? 200 : hue(name)) + '">' + inner + '</span>' + (url ? aufImg(url) : '') + '</span>';
@@ -711,12 +711,15 @@ function updateSummary() {
   var g = all.filter(function (b) { return b.g.length; }).length;
   var loans = tab === 'lib' ? done.filter(isLoan).length : 0;
   var n = done.length;
-  $('#summary').innerHTML = tab === 'wish'
-    ? (n ? '<b>' + n + '</b> da comprare' : 'Nessun libro da comprare')   /* giro 7: niente somme in euro */
-    : (n ? '<b>' + n + '</b> ' + (n === 1 ? 'libro' : 'libri') + (g ? ' · ' + g + ' da verificare' : '') +
-        (loans && settings.sumLoan ? ' · <button type="button" class="sum-link" data-sum="loan" aria-pressed="' + (flt === 'loan' ? 'true' : 'false') + '">' + loans + ' in prestito</button>' : '') +
-        (gone && settings.sumGone ? ' · ' + gone + ' non più in libreria' : '')
-      : (gone ? gone + ' non più in libreria' : 'Ancora nessun libro')) + alertBtn();
+  /* pezzi che non si spezzano: si va a capo solo tra un pezzo e l'altro, e il triangolino resta attaccato all'ultimo (Piero, 18/11/2026) */
+  var parts = tab === 'wish'
+    ? [n ? '<b>' + n + '</b> da comprare' : 'Nessun libro da comprare']   /* giro 7: niente somme in euro */
+    : n ? ['<b>' + n + '</b> ' + (n === 1 ? 'libro' : 'libri'), g ? g + ' da verificare' : '',
+        loans && settings.sumLoan ? '<button type="button" class="sum-link" data-sum="loan" aria-pressed="' + (flt === 'loan' ? 'true' : 'false') + '">' + loans + ' in prestito</button>' : '',
+        gone && settings.sumGone ? gone + ' non più in libreria' : ''].filter(Boolean)
+      : [gone ? gone + ' non più in libreria' : 'Ancora nessun libro'];
+  parts[parts.length - 1] += alertBtn();
+  $('#summary').innerHTML = parts.map(function (x) { return '<span class="sum-i">' + x + '</span>'; }).join(' · ');
   var nl = state.books.filter(function (b) { return !b.w && !b.xs && hasData(b); }).length, nw = state.books.filter(function (b) { return b.w && hasData(b); }).length;
   $('#cntLib').textContent = nl; $('#cntWish').textContent = nw;
   $('#tabLib').setAttribute('aria-selected', tab === 'lib' ? 'true' : 'false');

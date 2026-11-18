@@ -125,7 +125,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 105, date: '2026-11-18', note: "Chat con gli amici e gruppi, profilo con le statistiche dell'anno, «Lo consiglio», guida nuova" };
+var APP_VERSION = { v: 106, date: '2026-11-18', note: 'Copertine a misura, cerca tra gli amici, film più ordinati, finestra Account sistemata' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -484,7 +484,9 @@ function loadAll() {
     settings.viewDef = s.viewDef === 'list' ? 'list' : 'grid';                       // vista all'apertura: l'ultima scelta con il pulsante (giro 1, 18/11/2026: l'app ricorda l'ultima vista)
     settings.view = settings.viewDef;
     settings.sortBy = SORTS.indexOf(s.sortBy) >= 0 ? s.sortBy : 'recent'; sortBy = settings.sortBy;   // ultimo ordine usato (giro 1)
-    settings.cols = s.cols >= 2 && s.cols <= 5 ? Math.round(s.cols) : 0;             // copertine per riga sul telefono, 2-5 (0 = come prima, da sole) (giro 1)
+    settings.cols = s.cols >= 2 && s.cols <= 5 ? Math.round(s.cols) : 3;             // copertine per riga sul telefono, 2-5 (giro 1)
+    if (!s.cols3) settings.cols = 3;               // 3 per riga di partenza, per tutti, anche per chi le aveva cambiate (una volta sola; Piero, 18/11/2026)
+    settings.cols3 = true;
     settings.openAll = s.openAll === true && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);   // «schede sempre aperte» tolta il 16/11/2026: resta solo per le prove automatiche
     settings.sbnUrl = /^https:\/\//.test(L.str(s.sbnUrl)) ? L.str(s.sbnUrl) : '';
     settings.loanSnooze = Number(s.loanSnooze) || 0;
