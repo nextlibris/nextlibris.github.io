@@ -42,6 +42,8 @@ function nice(e) {
   if (/duplicate|unique|23505/.test(m) || (e && e.code === 409)) return 'Questo nome è già usato da un altro: aggiungi un\'iniziale o un numero (es. «Piero R.»).';
   if (/check|23514/.test(m)) return RULES;
   if (/troppe richieste/.test(m)) return 'Hai già tante richieste in attesa: aspetta che qualcuno risponda.';
+  if (/non tua/.test(m)) return 'Questa chiave o questo worker te li ha prestati un amico: puoi prestare solo i tuoi.';
+  if (/worker non valido|chiave non valida|niente da prestare/.test(m)) return 'Puoi prestare solo una chiave o un worker tuoi.';
   return 'Non ci riesco (' + m + '). Riprova tra poco.';
 }
 
@@ -63,7 +65,7 @@ async function load(force) {
       try { nums = {}; ((await rpc('amici_numeri')) || []).forEach(function (x) { nums[x.id] = x; }); } catch (e) { if (window.nlErr) nlErr(e); }
       try { swaps = (await rpc('miei_scambi')) || []; await applySwaps(); } catch (e) { if (window.console) console.warn('scambi', e); }
       try { asks = (await rpc('mie_richieste')) || []; await loadWho(); seenAnswers(); } catch (e) { if (window.console) console.warn('richieste', e); }
-      try { keys = (await rpc('chiavi_mie')) || []; checkKeys(); } catch (e) { if (window.console) console.warn('chiavi', e); }
+      try { keys = (await rpc('chiavi_mie')) || []; checkKeys(); await ownCheck(); } catch (e) { if (window.console) console.warn('chiavi', e); }
       lastLoad = Date.now(); err = '';
       if (me.utente && NL.name() !== me.utente) { syncing = true; NL.setName(me.utente); syncing = false; }   // il nome per gli amici vale anche nell'app
     } catch (e) { err = nice(e); }
@@ -832,7 +834,31 @@ document.addEventListener('input', function (e) {
 function borrowed() { return rd(K_KEY); }                      // { da, nome, gb, sbn } se stai usando quelli di un amico
 function ownKeys() {   // le tue, anche mentre usi quelle di un amico (tenute da parte in «chiavi-mie»)
   var st = NL.settings || {}, b = borrowed() || {}, m = rd('catalogo-libri-amici-chiavi-mie') || {};
-  return { gb: st.gbKey && st.gbKey !== b.gb ? st.gbKey : (b.gb && m.gb) || '', sbn: st.sbnUrl && st.sbnUrl !== b.sbn ? st.sbnUrl : (b.sbn && m.sbn) || '' };
+  var o = { gb: st.gbKey && st.gbKey !== b.gb ? st.gbKey : (b.gb && m.gb) || '', sbn: st.sbnUrl && st.sbnUrl !== b.sbn ? st.sbnUrl : (b.sbn && m.sbn) || '' };
+  if (/^prestata:/.test(o.gb)) o.gb = '';                       // i segni di quelle prestate non sono mai tue (026)
+  if (/worker-prestato\.invalid/.test(o.sbn)) o.sbn = '';
+  return o;
+}
+/* 026 (Piero, 18/11/2026): chiavi e worker di un amico copiati sul telefono prima del giro 8 sembravano tuoi (e si potevano prestare).
+   Il server dice quali dei valori che hai sono di un altro: si tolgono dal telefono; se quell'amico te li presta, li usi dal server. */
+var ownChecked = '';
+async function ownCheck() {
+  if (!NL.svcAll || !NL.svcPurge) return;
+  var vals = NL.svcAll(), sig = vals.join('|'); if (!vals.length || sig === ownChecked) return;
+  var rows = (await rpc('chiavi_controlla', { valori: vals })) || [];
+  ownChecked = sig;
+  if (!rows.length) return;
+  var bad = rows.map(function (r) { return r.v; }), st = NL.settings || {}, wasGb = bad.indexOf(st.gbKey) >= 0, wasSbn = bad.indexOf(st.sbnUrl) >= 0;
+  var m = rd('catalogo-libri-amici-chiavi-mie'); if (m) { if (bad.indexOf(m.gb) >= 0) m.gb = ''; if (bad.indexOf(m.sbn) >= 0) m.sbn = ''; wr('catalogo-libri-amici-chiavi-mie', m); }
+  NL.svcPurge(bad); ownChecked = NL.svcAll().join('|');
+  var lender = rows.filter(function (r) { return r.da; })[0], k = lender && keys.filter(function (x) { return x.a === uid() && x.da === lender.da; })[0];
+  if (k && !borrowed() && (wasGb || wasSbn)) {
+    wr('catalogo-libri-amici-chiavi-mie', ownKeys());
+    setKeys(k.gb_key || st.gbKey, k.sbn || st.sbnUrl);
+    wr(K_KEY, { da: k.da, nome: k.nome, gb: k.gb_key || '', sbn: k.sbn || '' });
+    NL.toast('La chiave e il worker di ' + k.nome + ' ora passano dal server: sul telefono non ci sono più.');
+  } else NL.toast('Tolti dal telefono una chiave o un worker che non erano tuoi.');
+  NL.emit && NL.emit('keys');
 }
 function keysInner(full) {
   var own = ownKeys(), fr = friends(), out = keys.filter(function (k) { return k.da === uid(); }), inn = keys.filter(function (k) { return k.a === uid(); }), b = borrowed(), h = '';

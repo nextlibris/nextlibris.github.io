@@ -3,6 +3,10 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 107 · 18/11/2026
+> **Chiave e worker solo tuoi** Il worker prestato da un amico ora passa dal server, come la chiave: sul tuo telefono non se ne vede l'indirizzo. Puoi prestare agli amici solo chiave e worker tuoi.
+- **Pulizia:** se sul telefono era rimasta la chiave o il worker di un amico (ricevuti prima della versione 105), l'app li toglie da sola; se quell'amico te li presta ancora, continui a usarli dal server.
+
 ## Versione 106 · 18/11/2026
 > **Copertine a misura** Di partenza 3 per riga: con due dita le ingrandisci o le rimpicciolisci. Quando sono piccole, il nome dell'autore si rimpicciolisce e si legge sempre intero.
 > **Cerca tra i tuoi amici** Una casella sopra l'elenco degli amici, per trovarli subito.

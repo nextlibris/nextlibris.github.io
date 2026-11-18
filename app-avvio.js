@@ -893,7 +893,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 window.NL = {
   openPh: function (src, cap) { openPh(src, cap); },   // foto dell'amico a tutto schermo (giro 10)
   inst: { standalone: isStandalone, kind: browserKind, go: doInstall },   // per la guida (giro 10)
-  setKey: function (v) { setSvc('key', v); }, openDon: function () { openDon(); },   // dalla guida della chiave (18/11/2026)
+  setKey: function (v) { setSvc('key', v); }, svcAll: function () { return svcAll(); }, svcPurge: function (v) { svcPurge(v); }, openDon: function () { openDon(); },   // dalla guida della chiave (18/11/2026)
   ownKey: function () { return mine('key'); },
   qThumb: function (c) { return qThumb(c); },   // miniatura della foto di una citazione (profilo, 18/11/2026)   // la TUA chiave, anche mentre usi quella di un amico (giro 8)
   renderOwner: function () { renderOwner(); }, emit: function (n, a) { emit(n, a); },   // (nella 104.8 queste due erano finite dentro il commento: rimesse)

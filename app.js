@@ -125,7 +125,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 106, date: '2026-11-18', note: 'Copertine a misura, cerca tra gli amici, film più ordinati, finestra Account sistemata' };
+var APP_VERSION = { v: 107, date: '2026-11-18', note: 'Chiave e worker solo tuoi: il worker prestato passa dal server' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -313,8 +313,36 @@ function apiFetch(url, init) {
     countCall('g');
     var lm = /[?&]key=prestata(?:%3A|:)([0-9a-f-]{36})/i.exec(u);
     if (lm) return lentFetch(u, lm[1]);
-  } else if (settings.sbnUrl && u.indexOf(settings.sbnUrl) === 0) countCall('s');
+  } else if (settings.sbnUrl && u.indexOf(settings.sbnUrl) === 0) {
+    countCall('s');
+    var wm = /^https:\/\/worker-prestato\.invalid\/([0-9a-f-]{36})\b.*[?&]isbn=([0-9Xx]+)/i.exec(u);   // worker di un amico: passa dal server (026)
+    if (wm) return lentWorker(wm[1], wm[2]);
+  }
   return fetch(url, init);
+}
+/* worker SBN prestato (026, Piero 18/11/2026): l'indirizzo vero resta sul server, la funzione «libri» fa la richiesta */
+function lentWorker(da, isbn) {
+  var S = window.NLSocial, no = { ok: false, status: 503, local: true, json: function () { return Promise.resolve({}); } };
+  if (!S || !S.raw || !S.auth()) return Promise.resolve(no);
+  return S.raw('/functions/v1/libri?da=' + da + '&isbn=' + encodeURIComponent(isbn)).then(function (r) {
+    if ((r.headers.get('x-nl-stop') || '') === 'no') emit('lentGone');
+    return r;
+  });
+}
+/* chiavi e worker di un altro rimasti sul telefono (copiati prima del giro 8): si tolgono da impostazioni e salvati (026) */
+function svcAll() {
+  var out = [settings.gbKey, settings.sbnUrl].concat(saved.key, saved.sbn);
+  try { var m = JSON.parse(ls.get('catalogo-libri-amici-chiavi-mie') || 'null') || {}; out.push(m.gb, m.sbn); } catch (e) { nlErr(e); }
+  return out.filter(function (v, i, a) { return v && !/^prestata:/.test(v) && !/worker-prestato\.invalid/.test(v) && a.indexOf(v) === i; }).slice(0, 20);
+}
+function svcPurge(vals) {
+  if (!vals || !vals.length) return;
+  ['key', 'sbn'].forEach(function (k) { saved[k] = saved[k].filter(function (x) { return vals.indexOf(x) < 0; }); });
+  ls.set(LS_SAVED, JSON.stringify(saved));
+  if (vals.indexOf(settings.gbKey) >= 0) settings.gbKey = '';
+  if (vals.indexOf(settings.sbnUrl) >= 0) settings.sbnUrl = '';
+  backupReady = null; saveSettings();
+  if (!$('#optSheet').hidden) renderSvc();
 }
 function lookupOpts() { return { gbKey: settings.gbKey, sbnUrl: settings.sbnUrl && sUsed() < S_STOP ? settings.sbnUrl : '', fetch: apiFetch, lean: !googleLeft(true) }; }
 /* ricerca per ISBN: prima l'archivio comune (modulo ricerche.js: libri gia' cercati da altri, senza Google), poi le banche dati; il risultato va nell'archivio */
