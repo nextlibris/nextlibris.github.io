@@ -69,3 +69,8 @@ html[data-layout="a"] .stick.stuck #btnView{min-height:46px;padding:0 11px}
 /* «Aggiungi un libro»: In Libreria | Nei Desideri (16/11/2026) */
 #layAdd .lay-dest{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:auto;margin:0}
 #layAdd .lay-dest button{justify-content:center}
+
+/* «Per autore» nel + (giro 2, 18/11/2026): una riga larga sotto i quattro tasti */
+.lay-big.lay-wide{grid-column:1 / -1;flex-direction:row;align-items:center;gap:12px;min-height:64px}
+.lay-big.lay-wide span{display:flex;flex-direction:column;gap:2px}
+@media (max-height:480px) and (min-width:600px){ .lay-big.lay-wide{grid-column:auto;flex-direction:column;align-items:flex-start;min-height:104px} }

@@ -6,47 +6,26 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
-<title>Next Libris · trasloco</title>
+<title>Next Libris · ci siamo spostati</title>
 <link rel="icon" href="icons/next-libris-192.png">
 <link rel="stylesheet" href="style.css">
 <style>
-/* pagina del trasloco (trasloco.js): stessi colori e pulsanti dell'app */
+/* pagina «Ci siamo spostati» (trasloco.js): stessi colori e pulsanti dell'app */
 .tr{max-width:440px;margin:0 auto;padding:max(40px,env(safe-area-inset-top)) 20px 32px;text-align:center}
 .tr-ico{width:72px;height:72px;border-radius:18px;display:block;margin:0 auto 18px}
 .tr h1{font:700 24px/1.2 var(--font-display);margin:0 0 6px}
 .tr-url{margin:0 0 18px;color:var(--accent);font-weight:600;overflow-wrap:anywhere}
 .tr-txt{margin:0 0 22px;color:var(--ink)}
-.tr-btns{display:flex;flex-direction:column;gap:10px}
-.tr-btns .btn{width:100%}
-.tr-stato{min-height:1.45em;margin:16px 0 0;color:var(--muted);font-size:14.5px}
-.tr-stato.warn{color:var(--warn)}
-.tr-stato.bad{color:var(--bad)}
-.tr-file{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
-.tr-file p{margin:0 0 4px}
-.tr-file .link{font-size:14px;text-align:center}
-.tr-file input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.tr .btn{display:block;width:100%;text-decoration:none;box-sizing:border-box}
 </style>
 </head>
 <body>
 <main class="tr">
   <img src="icons/next-libris-192.png" alt="" class="tr-ico">
-  <h1 id="trTit">Next Libris</h1>
-  <p class="tr-url" id="trUrl"></p>
-  <p class="tr-txt" id="trTxt"></p>
-  <div class="tr-btns">
-    <button type="button" class="btn primary" id="trGo" hidden></button>
-    <button type="button" class="btn" id="trAlt" hidden></button>
-  </div>
-  <p class="tr-stato" id="trStato" role="status" aria-live="polite"></p>
-  <div class="tr-file" id="trFileV" hidden>
-    <p>Il trasloco non parte?</p>
-    <button type="button" class="link" id="trScarica">Scarica il file del trasloco</button>
-  </div>
-  <div class="tr-file" id="trFileN" hidden>
-    <p>Hai il file del trasloco?</p>
-    <label class="link" for="trFile">Carica il file del trasloco</label>
-    <input type="file" id="trFile" accept=".json,application/json">
-  </div>
+  <h1>Ci siamo spostati</h1>
+  <p class="tr-url">nextlibris.github.io</p>
+  <p class="tr-txt">Next Libris adesso è solo su <b>nextlibris.github.io</b>. Una copia a un altro indirizzo non è nostra: non darle la tua chiave né i tuoi dati.</p>
+  <a class="btn primary" id="trGo" href="https://nextlibris.github.io/">Apri Next Libris</a>
 </main>
 <script src="trasloco.js"></script>
 </body>

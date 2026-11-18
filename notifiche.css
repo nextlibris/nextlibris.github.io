@@ -19,8 +19,14 @@ html.has-bell .top{padding-right:134px}
 .nt .nt-ico.nt-ask{border-color:var(--info-line,#8DB1D6);color:var(--info)}
 .nt .nt-ico.nt-tip,.nt .nt-ico.nt-key{border-color:var(--line);color:var(--ink)}
 .nt .nt-ico.nt-lim{border-color:#C2372B;color:#C2372B}
+.nt .nt-ico.nt-msg{border-color:var(--accent);color:var(--accent)}   /* chat (giro 9b) */
+.nt .nt-ico.nt-av{background:var(--accent);border-color:var(--accent);color:#fff;font-size:13px;letter-spacing:.02em}   /* avviso importante di Next Libris (giro 8) */
 .nt .nt-t{min-width:0;display:grid;gap:2px}
 .nt .nt-txt{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
 .nt .nt-txt b{font-weight:700}
 .nt .nt-t small{font-size:12.5px;color:var(--muted)}
 .nt .nt-dot{color:var(--accent);font-weight:700}
+
+/* «Me lo presti?» sotto l'avviso di un desiderio entrato nella libreria di un amico (giro 6) */
+.nt .nt-lend{margin:0 0 10px 58px;min-height:36px;padding:5px 14px;font-size:14px}
+.nt .nt-asked{display:block;margin:0 0 10px 58px;font-size:13px;color:var(--muted)}

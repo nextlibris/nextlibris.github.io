@@ -131,6 +131,9 @@ html.guest #list .row.g-noread :is(.cv-strip,.read){display:none}
 .share-app[hidden]{display:none}
 .share-app .fr-h{margin:0;font-size:16px}
 .share-app .fr-small{margin:0;font-size:13px;color:var(--muted);line-height:1.4}
+.share-app .share-sub{margin:4px 0 -2px;font:600 13px/1.2 var(--font-body);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.share-app .fr-pick-row .pf-av{flex:none;width:32px;height:32px;font-size:13px}
+.share-tip{display:block;width:100%;box-sizing:border-box;min-height:52px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);color:var(--ink);font:16px/1.4 var(--font-body);resize:vertical}
 .share-ext{display:grid;gap:10px}
 .share-ext>summary{cursor:pointer;color:var(--accent);font-weight:600;padding:8px 2px}
 .share-ext.only>summary{display:none}
@@ -165,10 +168,18 @@ html.guest #list .g-read .g-rs{margin:0;font-size:14.5px;color:var(--muted)}
 html.guest #list .g-read .g-rs b{color:var(--ink);font-weight:600}
 /* libreria e desideri dell'amico (17/11/2026 sera): due tasti nella sua striscia; chiave e worker con un'icona sulla riga del nome */
 .guest-bar .gb-tabs{margin:6px 0 2px}
-html.guest header.top .top-meta .gb-icos{position:absolute;right:max(4px,env(safe-area-inset-right));margin-top:-8px;display:flex;gap:2px}   /* in alto a destra, sulla riga del nome: ⇄ prestiti e regali, chiave (17/11/2026) */
+header.top .top-meta .gb-icos{position:absolute;right:max(4px,env(safe-area-inset-right));margin-top:-8px;display:flex;gap:2px}   /* in alto a destra, sulla riga del nome: ⇄ prestiti e regali, chiave (17/11/2026) */
 .gb-icos:empty{display:none}
 .gb-key{position:relative;width:36px;height:36px;min-width:36px;padding:0;border-radius:50%;color:var(--muted)}
 .gb-key svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .gb-key.on{color:var(--accent)}
 .gb-key .gk-ok{position:absolute;right:1px;bottom:2px;min-width:14px;height:14px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 9px/14px var(--font-body);text-align:center}
 .gb-key[hidden]{display:none}
+/* nella propria libreria: icona della chiave in alto a destra, sulla riga «Libreria di …» (giro 1, 18/11/2026) */
+html:not(.guest) header.top .top-meta{position:relative}
+html:not(.guest) header.top .top-meta .gb-icos{top:-8px;margin-top:0}
+.fri .kw-intro{color:var(--ink);font-size:14px}
+
+/* togli dagli amici: in rosso, nella libreria dell'amico e nel suo profilo (Piero, giro 6) */
+.gb-key.gb-drop{color:var(--bad)}
+.gb-key.gb-drop:hover,.gb-key.gb-drop:focus-visible{background:var(--bad-bg)}

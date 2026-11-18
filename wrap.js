@@ -58,6 +58,10 @@ function wrapData(books, quotes, Q, now) {
   var am = {};
   read.forEach(function (b) { NL.authorsOf(b).forEach(function (a) { var k = L.norm(a); var x = am[k] || (am[k] = { name: a, n: 0, r: 0 }); x.n++; x.r += b.rt || 0; }); });
   var ta = top(am, 1)[0]; d.author = ta && ta.n >= 2 ? ta : null;
+  if (NL.wdBookCountry) {                    // paesi degli autori letti (giro 2, 18/11/2026)
+    var pm = {}; read.forEach(function (b) { var c = NL.wdBookCountry(b); if (c) (pm[c] || (pm[c] = { c: c, n: 0 })).n++; });
+    d.countries = top(pm, 12);
+  }
   var lg = read.filter(pages).sort(function (x, y) { return pages(y) - pages(x); })[0];
   d.longest = lg ? { t: lg.t, a: lg.a, pg: pages(lg) } : null;
   var bs = read.filter(function (b) { return b.rt > 0; }).sort(function (x, y) { return y.rt - x.rt || (y.rd > x.rd ? 1 : -1); })[0];
@@ -105,6 +109,12 @@ function slides(d) {
     out.push({ cls: 'w-c3', html: (d.genres.length ? '<p class="w-kick">I tuoi generi (' + esc(d.genFrom === 'letti' ? 'tra i libri letti' : 'tra i libri entrati') + ')</p><ol class="w-bars">' +
       d.genres.map(function (g) { return '<li><span class="w-bn">' + esc(g.name) + '</span><span class="w-bar"><i style="width:' + Math.max(6, g.pc) + '%"></i></span><b>' + g.pc + '%</b></li>'; }).join('') + '</ol>' : '') +
       (d.author ? '<p class="w-kick w-gap">Autore della stagione</p><p class="w-mid">' + esc(d.author.name) + '</p><p class="w-sub">' + d.author.n + ' libri letti</p>' : '') });
+  }
+  if (d.countries && d.countries.length) {
+    var pn = d.countries.length;
+    out.push({ cls: 'w-c4', html: '<p class="w-kick">Con i libri letti</p><p class="w-mid">Hai viaggiato in ' + (pn === 1 ? '1 paese' : pn + ' paesi') + '</p>' +
+      '<p class="w-flags" aria-hidden="true">' + d.countries.map(function (x) { return '<span>' + (NL.wdFlagImg ? NL.wdFlagImg(x.c) : NL.wdFlag(x.c)) + '</span>'; }).join('') + '</p>' +
+      '<p class="w-sub">' + esc(d.countries.map(function (x) { return NL.wdCName(x.c) + (x.n > 1 ? ' (' + x.n + ')' : ''); }).join(', ')) + '</p>' });
   }
   if (d.longest || d.best) {
     out.push({ cls: 'w-c4', html: (d.longest ? '<p class="w-kick">Il più lungo</p><p class="w-mid">«' + esc(d.longest.t) + '»</p><p class="w-sub">' + esc(d.longest.a) + ' · ' + nf.format(d.longest.pg) + ' pagine</p>' : '') +

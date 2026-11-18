@@ -23,7 +23,7 @@
 <link rel="manifest" href="manifest.json?v=36" crossorigin="use-credentials">
 <link rel="icon" type="image/png" href="icons/next-libris-192.png">
 <link rel="apple-touch-icon" href="icons/next-libris-192.png">
-<script src="indirizzo.js"></script><!-- vecchio indirizzo: solo la pagina del trasloco -->
+<script src="indirizzo.js"></script><!-- vecchio indirizzo: solo «Ci siamo spostati» -->
 <script src="avvio.js"></script><!-- aspetto e tema prima di disegnare; mai dentro la cornice di un altro sito -->
 <link rel="preload" href="vendor/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>/* schermata d'apertura: qui e non nel CSS, cosi' e' la primissima cosa disegnata */
@@ -43,10 +43,13 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <link rel="stylesheet" href="layout.css"><!-- modulo: disposizione dello schermo -->
 <link rel="stylesheet" href="schede.css"><!-- modulo: aspetto della scheda aperta -->
 <link rel="stylesheet" href="social.css"><!-- modulo: account e sincronizzazione -->
+<link rel="stylesheet" href="profilo.css"><!-- modulo: profilo -->
 <link rel="stylesheet" href="amici.css"><!-- modulo: amici -->
 <link rel="stylesheet" href="notifiche.css"><!-- modulo: notifiche (campanella) -->
+<link rel="stylesheet" href="chat.css"><!-- modulo: chat (giro 9b) -->
 <link rel="stylesheet" href="ricerche.css"><!-- modulo: ricerche condivise e archivio comune -->
 <link rel="stylesheet" href="push.css"><!-- modulo: notifiche push -->
+<link rel="stylesheet" href="guida.css"><!-- modulo: guida di primo avvio e libreria di esempio -->
 </head>
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/next-libris-192.png" alt="" width="168" height="168"><b>Next Libris</b><span id="splashWho"></span></div>
@@ -57,7 +60,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <p class="top-meta"><span class="owner" id="owner"></span><span class="summary" id="summary" aria-live="polite"></span></p>
     </div>
     <div class="sync" id="sync" role="status"><span class="dot"></span><span id="syncTxt">Salvato su questo telefono</span></div>
-    <button class="ico beer-top" id="btnBeer" type="button" aria-label="Sostieni Next Libris: offrimi una birra" title="Offrimi una birra"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></button>
+    <button class="ico beer-top beer-pill" id="btnBeer" type="button" aria-label="Sostieni Next Libris: offrimi una birra" title="Offrimi una birra"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg><span class="beer-t">Sostieni</span></button>
     <button class="ico gear" id="btnOpts" aria-label="Opzioni" title="Opzioni"></button>
   </header>
 
@@ -87,7 +90,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 
   <section class="tools" aria-label="Strumenti">
     <button class="btn filt" id="btnFilters" aria-expanded="false" aria-controls="drawer"><span id="icoFilt" aria-hidden="true"></span>Filtri<span class="badge" id="fltBadge" hidden></span></button>
-    <input id="q" type="search" placeholder="Cerca nell'elenco" aria-label="Cerca nell'elenco" autocomplete="off">
+    <span class="qwrap"><input id="q" type="search" placeholder="Cerca nell'elenco" aria-label="Cerca nell'elenco" autocomplete="off"><button type="button" class="qx" id="qX" aria-label="Cancella la ricerca" title="Cancella la ricerca" hidden>×</button></span>   <!-- X: cancella solo il testo, non i filtri (giro 5) -->
     <div class="acts">
       <button class="btn sm" id="btnView"></button>
       <button class="btn sm" id="btnCheck"></button>
@@ -114,6 +117,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <option value="aut">Autore</option>
       <option value="gen">Genere</option>
       <option value="genaut" data-s="Genere › autore">Genere, poi autore</option>
+      <option value="pae" data-s="Paese">Paese dell'autore</option>
       <option value="read">Lettura</option>
     </select>
   </div>
@@ -135,7 +139,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   </section>
   <section class="don-ask" id="donAsk" hidden aria-labelledby="donAskT">
     <h3 id="donAskT">50 libri catalogati</h3>
-    <p>Next Libris è gratis, senza pubblicità e senza abbonamenti. Se ti è utile, offrimi una birra!</p>
+    <p>Grazie per usare Next Libris! È gratis per tutti e senza pubblicità: se ti è utile, aiutaci a tenerla così con una birra.</p>
     <button class="btn primary" type="button" id="donAskGo">Offrimi una birra</button>
     <div class="don-ask-more"><button class="link" type="button" id="donAskLater">Più tardi</button><button class="link" type="button" id="donAskNever">Non chiedere più</button></div>
   </section>
@@ -386,7 +390,9 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <div class="au-txt" id="auTxt" aria-live="polite"></div>
     <p class="au-src" id="auSrc" hidden>Da Wikipedia, l'enciclopedia libera.</p>
     <div class="au-cut" id="auCut" hidden></div>
+    <div class="au-cut au-pa" id="auPa" hidden></div>
     <div class="au-acts">
+      <button class="btn" type="button" id="auWorks" hidden>Le sue opere ›</button>
       <button class="btn" type="button" id="auMine"></button>
       <button class="btn" type="button" id="auWeb">Cerca sul web</button>
       <a class="btn" id="auWiki" target="_blank" rel="noopener" hidden>Apri su Wikipedia</a>
@@ -396,10 +402,35 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   </div>
 </div>
 
+<!-- opere di un autore, da Wikidata (giro 2, 18/11/2026): da Info Autore («Le sue opere») e dal + («Per autore») -->
+<div class="sheet" id="woSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="woH">
+    <h2 id="woH">Cerca per autore</h2>
+    <form class="wo-find" id="woFind" hidden>
+      <label class="field"><span>Nome dell'autore</span><input id="woQ" type="text" autocomplete="off" enterkeyhint="search" maxlength="120" placeholder="es. Italo Calvino"></label>
+      <button class="btn primary" type="submit">Cerca</button>
+    </form>
+    <div class="tabs wo-dest" id="woDest" role="tablist" aria-label="Dove aggiungerlo" hidden><button type="button" role="tab" data-dest="lib">In Libreria</button><button type="button" role="tab" data-dest="wish">Nei Desideri</button></div>
+    <p class="msg" id="woMsg" aria-live="polite"></p>
+    <ul class="wo-list" id="woList"></ul>
+    <p class="au-src" id="woSrc" hidden>Elenco da Wikidata, la banca dati libera di Wikipedia: può non essere completo.</p>
+    <div class="row-btns"><button type="button" class="btn" id="woClose">Chiudi</button></div>
+  </div>
+</div>
+<!-- film e serie TV tratti dai tuoi libri, da Wikidata (giro 2, 18/11/2026) -->
+<div class="sheet" id="filmSheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="filmH">
+    <h2 id="filmH">Dai tuoi libri al cinema</h2>
+    <div id="filmBody" aria-live="polite"></div>
+    <p class="au-src">Da Wikidata, la banca dati libera di Wikipedia.</p>
+    <div class="row-btns"><button type="button" class="btn" id="filmClose">Chiudi</button></div>
+  </div>
+</div>
+
 <div class="sheet" id="donSheet" hidden>
   <div class="sheet-in don-in" role="dialog" aria-modal="true" aria-labelledby="donH">
     <h2 id="donH">Sostieni Next Libris</h2>
-    <p class="msg">Next Libris è gratis, senza pubblicità e senza abbonamenti. Se ti ha fatto ritrovare almeno un libro prestato e mai tornato, offrimi una birra!</p>
+    <p class="msg">Next Libris è gratis, senza pubblicità e senza abbonamenti: è fatta per far venire voglia di leggere e di scambiarsi i libri con gli amici. Se ti piace, offrimi una birra!</p>
     <div class="don-amts" role="radiogroup" aria-label="Importo">
       <button type="button" class="don-amt" role="radio" aria-checked="false" data-amt="2">Piccola<small>2 €</small></button>
       <button type="button" class="don-amt" role="radio" aria-checked="true" data-amt="3">Media<small>3 €</small></button>
@@ -475,8 +506,8 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       </section>
       <section class="bk-sec"><h3>Altro</h3>
         <div class="bk-btns">
-          <button class="btn bk-lib" type="button" data-bk="fav" data-v="1">Metti tra i preferiti</button>
-          <button class="btn bk-lib" type="button" data-bk="fav" data-v="0">Togli dai preferiti</button>
+          <button class="btn bk-lib" type="button" data-bk="fav" data-v="1">Lo consiglio</button>
+          <button class="btn bk-lib" type="button" data-bk="fav" data-v="0">Non lo consiglio più</button>
           <button class="btn" type="button" data-bk="move">Sposta nei Desideri</button>
           <button class="btn" type="button" data-bk="verify">Segna come verificati</button>
           <button class="btn" type="button" data-bk="share">Condividi questi libri</button>
@@ -518,38 +549,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   </form>
 </div>
 
-<div class="sheet" id="svcSheet" hidden>
-  <form class="sheet-in" id="svcForm" role="dialog" aria-modal="true" aria-labelledby="svcH">
-    <h2 id="svcH">Condividi chiave e worker</h2>
-    <p class="msg" id="svcWhat"></p>
-    <label class="check"><input type="checkbox" id="svcSbnOn"><span>Worker SBN (catalogo delle biblioteche)</span></label>
-    <label class="check"><input type="checkbox" id="svcKeyOn"><span>Chiave Google Libri</span></label>
-    <label class="field"><span>Il tuo nome</span><input type="text" id="svcSendName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
-    <div class="svc-warn">
-      <p><b>Mandalo solo a persone di fiducia, in un messaggio privato.</b> Chi ha il link usa la tua quota: Google 1.000 ricerche al giorno, Cloudflare 100.000, divise tra chi le usa. Non costa nulla, ma se finisce la quota le ricerche rallentano per tutti fino al giorno dopo.</p>
-      <p>Consigliato: in Google Cloud › Credenziali limita la chiave alla sola «Books API» e al sito https://nextlibris.github.io/*. Il worker risponde già solo a Next Libris.</p>
-    </div>
-    <div class="row-btns">
-      <button class="btn primary" type="submit">Manda</button>
-      <button class="btn" type="button" id="svcCopy">Copia</button>
-      <button class="btn" type="button" id="svcClose">Annulla</button>
-    </div>
-  </form>
-</div>
-
-<div class="sheet" id="svcInSheet" hidden>
-  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="svcInH">
-    <h2 id="svcInH"></h2>
-    <ul class="svc-in" id="svcInList"></ul>
-    <p class="msg">Servono a rendere la ricerca dei libri più completa. Usali solo se ti fidi di chi te li manda.</p>
-    <div class="row-btns">
-      <button class="btn primary" type="button" id="svcInUse">Usali</button>
-      <button class="btn" type="button" id="svcInLater">Mettili tra i salvati</button>
-      <button class="btn" type="button" id="svcInNo">No, grazie</button>
-    </div>
-  </div>
-</div>
-
 <div class="sheet" id="copySheet" hidden>
   <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="copyH">
     <h2 id="copyH">Copia l'elenco</h2>
@@ -587,7 +586,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         <div class="seg seg-au">
           <label><input type="radio" name="auInv" value="1"><span>Neruda, Pablo</span></label><label><input type="radio" name="auInv" value="0"><span>Pablo Neruda</span></label>
         </div>
-        <p class="hint">Come si leggono i nomi in «Raggruppa: Autore» e nei filtri. L'ordine è sempre per cognome. Se un cognome è diviso male (García Márquez), si corregge nella finestra dell'autore, «Chi è».</p>
+        <p class="hint">Come si leggono i nomi in «Raggruppa: Autore» e nei filtri. L'ordine è sempre per cognome. Se un cognome è diviso male (García Márquez), si corregge nella finestra dell'autore, «Info Autore».</p>
       </fieldset>
       <div id="lookNew">
         <fieldset class="choice">
@@ -608,31 +607,68 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         </fieldset>
         <button class="btn" id="lookReset" type="button">Torna all'aspetto predefinito</button>
       </div>
-      <fieldset class="choice">
-        <legend>All'apertura mostra</legend>
-        <div class="seg seg-view">
-          <label><input type="radio" name="viewDef" value="grid"><span>Copertine</span></label><label><input type="radio" name="viewDef" value="list"><span>Elenco</span></label>
-        </div>
-        <p class="hint">Copertine è il predefinito. Il pulsante «Elenco» / «Copertine» sopra i libri cambia la vista solo fino alla prossima apertura.</p>
+      <fieldset class="choice cols-opt">
+        <legend>Dimensione delle copertine</legend>
+        <div class="cols-row"><span aria-hidden="true">Grandi</span><input type="range" id="optCols" min="2" max="5" step="1" aria-describedby="optColsTxt"><span aria-hidden="true">Piccole</span></div>
+        <p class="hint" id="optColsTxt"></p>
+        <p class="hint">Anche con due dita sulle copertine: allarga per ingrandirle, stringi per rimpicciolirle. L'app ricorda l'ultima vista che hai usato: copertine o elenco, ordine, raggruppamento e dimensione.</p>
       </fieldset>
       <fieldset class="choice sum-opts">
         <legend>Riepilogo in alto</legend>
         <p class="hint">Sotto il nome compare sempre il numero dei libri. Puoi aggiungere:</p>
-        <label class="check"><input type="checkbox" id="optSumEur"><span>Valore in euro<small>La somma dei prezzi dei libri in libreria.</small></span></label>
         <label class="check"><input type="checkbox" id="optSumLoan"><span>Libri in prestito<small>«4 in prestito»: toccandolo vedi solo quelli.</small></span></label>
         <label class="check"><input type="checkbox" id="optSumGone"><span>Libri non più in libreria<small>Venduti, regalati o smarriti.</small></span></label>
         <label class="check"><input type="checkbox" id="optShowSync"><span>Conferma del salvataggio<small>Mostra «Salvato su questo telefono» sotto il riepilogo: vuol dire che ogni modifica è già salvata. Se il salvataggio non riesce o sei senza rete, l'avviso compare comunque.</small></span></label>
       </fieldset>
     </section>
     <section class="opt-sec" data-sec="search" data-title="Ricerca dei libri">
-      <p class="hint">Senza worker e senza chiave l'app cerca lo stesso (Google Libri e Open Library): servono a fare più ricerche e ad avere dati più precisi.</p>
+      <p class="hint">Chiave e worker sono facoltativi: servono a trovare più libri e ad avere dati più precisi.</p>
       <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti chiave e worker salvati</button>
 
-      <div class="svc" id="svcSbn">
-        <div class="svc-h">
-          <h3>Catalogo SBN<small>Worker Cloudflare</small></h3>
-          <span class="svc-st" id="sbnSt"></span>
+      <div class="svc svc-fold" id="svcKey">   <!-- sezioni richiudibili, Google sopra il worker (giro 5) -->
+        <button type="button" class="svc-h svc-tog" aria-expanded="false" aria-controls="svcKeyB">
+          <span class="svc-t">Google Libri</span>
+          <span class="svc-st" id="gbSt"></span>
+          <span class="svc-chev" aria-hidden="true"></span>
+        </button>
+        <p class="hint svc-desc">Trova titoli, copertine e descrizioni nell'archivio di Google. Senza chiave l'app usa solo Open Library e trova meno libri.</p>
+        <button class="btn svc-guide" type="button" data-guide="key" id="gbGuide">Come si crea la chiave (gratis)</button>
+        <div class="svc-b" id="svcKeyB" hidden>
+        <p class="svc-count" id="gbCount" aria-live="polite"></p>
+        <div class="svc-row">
+          <label class="sr" for="gbKey">Chiave API di Google Libri</label>
+          <input type="text" id="gbKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla la chiave (inizia con AIza)">
+          <button class="btn svc-show" type="button" id="gbShow" aria-pressed="false" hidden>Mostra</button>
         </div>
+        <p class="hint svc-uff">Incolla la chiave solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>
+        <div class="svc-acts">
+          <button class="btn svc-clear" id="gbClear" type="button" hidden>Cancella</button>
+          <div class="svc-saved" id="gbSaved" hidden></div>
+        </div>
+        <button class="link svc-leak" id="gbLeak" type="button" hidden>La mia chiave è finita in giro</button>
+        <details class="svc-how">
+          <summary>Come si crea la chiave (gratis, una volta sola)</summary>
+          <ol class="hint keysteps">
+          <li>Apri <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> con il tuo account Google e crea un progetto.</li>
+          <li>Apri <a href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">Books API</a> e premi «Abilita».</li>
+          <li>Vai in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>
+          <li>Limita la chiave: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>
+          <li>Copia la chiave e incollala qui sopra.</li>
+        </ol>
+        </details>
+        </div>
+      </div>
+
+
+      <div class="svc svc-fold" id="svcSbn">
+        <button type="button" class="svc-h svc-tog" aria-expanded="false" aria-controls="svcSbnB">
+          <span class="svc-t">Worker SBN</span>
+          <span class="svc-st" id="sbnSt"></span>
+          <span class="svc-chev" aria-hidden="true"></span>
+        </button>
+        <p class="hint svc-desc">Aggiunge i dati delle biblioteche italiane: editore, anno e pagine più precisi. Il worker è un piccolo intermediario gratuito su Cloudflare (100.000 richieste al giorno).</p>
+        <button class="btn svc-guide" type="button" data-guide="sbn" id="sbnGuide">Come si crea il worker (gratis)</button>
+        <div class="svc-b" id="svcSbnB" hidden>
         <p class="svc-count" id="sbnCount" aria-live="polite"></p>
         <div class="svc-row">
           <label class="sr" for="sbnUrl">Indirizzo del worker Cloudflare</label>
@@ -642,7 +678,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
           <button class="btn svc-clear" id="sbnClear" type="button" hidden>Cancella</button>
           <div class="svc-saved" id="sbnSaved" hidden></div>
         </div>
-        <p class="hint">Il catalogo delle biblioteche italiane ha i dati più precisi su editore, anno e pagine. Il worker è un piccolo intermediario gratuito su Cloudflare (100.000 richieste al giorno).</p>
         <details class="svc-how" id="sbnHow">
           <summary>Come si crea il worker (gratis, una volta sola)</summary>
           <ol class="hint keysteps">
@@ -654,32 +689,9 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
           <li>Tocca «Prova la ricerca ISBN» qui sotto: deve comparire «✓ Catalogo SBN».</li>
           </ol>
         </details>
+        </div>
       </div>
 
-      <div class="svc" id="svcKey">
-        <div class="svc-h">
-          <h3>Google Libri<small>Chiave API</small></h3>
-          <span class="svc-st" id="gbSt"></span>
-        </div>
-        <p class="svc-count" id="gbCount" aria-live="polite"></p>
-        <div class="svc-row">
-          <label class="sr" for="gbKey">Chiave API di Google Libri</label>
-          <input type="text" id="gbKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla la chiave (inizia con AIza)">
-        </div>
-        <div class="svc-acts">
-          <button class="btn svc-clear" id="gbClear" type="button" hidden>Cancella</button>
-          <div class="svc-saved" id="gbSaved" hidden></div>
-        </div>
-        <details class="svc-how">
-          <summary>Come si crea la chiave (gratis, una volta sola)</summary>
-          <ol class="hint keysteps">
-          <li>Apri <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> con il tuo account Google e crea un progetto.</li>
-          <li>Apri <a href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">Books API</a> e premi «Abilita».</li>
-          <li>Vai in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>
-          <li>Copia la chiave e incollala qui sopra.</li>
-        </ol>
-        </details>
-      </div>
 
       <h3 class="opt-h3">Con gli amici</h3>
       <div class="svc-box dmenu" id="svcBox"></div>
@@ -728,7 +740,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <section class="opt-sec" data-sec="share" data-title="Condivisione">
       <label class="field"><span>Il tuo nome</span>
         <input type="text" id="optName" enterkeyhint="done" maxlength="30" autocomplete="given-name" autocapitalize="words" placeholder="es. Piero"></label>
-      <p class="hint" id="optNameHint">Compare quando condividi un libro o una lista: «I preferiti di Piero», «Piero ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l'elenco, oppure Esporta.</p>
+      <p class="hint" id="optNameHint">Compare quando condividi un libro o una lista: «I consigli di Piero», «Piero ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l'elenco, oppure Esporta.</p>
       <h3 class="opt-h3">Fai conoscere l'app</h3>
       <p class="share-lead">Fai inquadrare il codice con la fotocamera del telefono, oppure manda il link.</p>
       <figure class="qr-box">
@@ -811,10 +823,10 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         <button type="button" class="dopt dgo" id="goFilters"><span><b>Filtri</b><small id="goFltTxt">Tutti i libri</small></span><span class="dbadge" id="goFltN" hidden></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt dgo" id="goSugg"><span><b>Suggerimenti</b><small>Cosa leggere dopo, da scoprire</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt dgo dq-all" id="goQuotes" hidden><span><b>Tutte le citazioni</b><small id="goQTxt"></small></span><span class="n" aria-hidden="true">›</span></button>
-        <button type="button" class="dopt dgo" id="goStats"><span><b>Statistiche</b><small>Libri, valore, pagine, letture</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt dgo" id="goStats"><span><b>Statistiche</b><small>Libri, pagine, letture</small></span><span class="n" aria-hidden="true">›</span></button>
       </div>
       <div class="dlist dmenu ddon">
-        <button type="button" class="dopt don-menu" id="donMenu"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span><b>Sostieni Next Libris</b><small>Se ti piace, offrimi una birra!</small></span><span class="n" aria-hidden="true">♥</span></button>
+        <button type="button" class="dopt don-menu" id="donMenu"><span class="don-cup" aria-hidden="true"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg></span><span><b>Sostieni Next Libris</b><small>Next Libris è gratis e senza pubblicità. Se ti piace, offrici una birra.</small></span><span class="n" aria-hidden="true">♥</span></button>
       </div>
       <h3>La tua libreria</h3>
       <div class="dlist dmenu">
@@ -1007,7 +1019,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   <p class="lb-cap" id="phCap"></p>
 </div>
 <input class="sr" id="fileCover" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
-<input class="sr" id="filePrice" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 <input class="sr" id="fileGal" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
 <input class="sr" id="fileNative" type="file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 <input class="sr" id="fileBackup" type="file" accept="application/json,.json,text/plain,.txt" tabindex="-1" aria-hidden="true">
@@ -1017,15 +1028,28 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <script src="vendor/zxing.min.js" defer></script>
 <script src="vendor/tesseract.min.js" defer></script>
 <script src="lib.js" defer></script>
-<script src="app.js" defer></script>
+<script src="app.js" defer></script><!-- app divisa in parti (17/11/2026): stesso ordine, l'ultima fa partire l'app -->
+<script src="app-aggiungi.js" defer></script>
+<script src="app-vista.js" defer></script>
+<script src="app-scheda.js" defer></script>
+<script src="app-per-te.js" defer></script>
+<script src="app-elenco.js" defer></script>
+<script src="app-finestre.js" defer></script>
+<script src="app-filtri.js" defer></script>
+<script src="app-strumenti.js" defer></script>
+<script src="app-wiki.js" defer></script>
+<script src="app-avvio.js" defer></script>
 <script src="wrap.js" defer></script><!-- modulo: riepilogo di ogni stagione -->
 <script src="layout.js" defer></script><!-- modulo: disposizione dello schermo -->
 <script src="schede.js" defer></script><!-- modulo: aspetto della scheda aperta -->
 <script src="social.js" defer></script><!-- modulo: account e sincronizzazione -->
+<script src="profilo.js" defer></script><!-- modulo: profilo -->
 <script src="amici.js" defer></script><!-- modulo: amici -->
 <script src="notifiche.js" defer></script><!-- modulo: notifiche (campanella) -->
+<script src="chat.js" defer></script><!-- modulo: chat (giro 9b) -->
 <script src="ricerche.js" defer></script><!-- modulo: ricerche condivise e archivio comune -->
 <script src="push.js" defer></script><!-- modulo: notifiche push -->
+<script src="guida.js" defer></script><!-- modulo: guida di primo avvio e libreria di esempio -->
 <div id="printView" aria-hidden="true"></div>
 </body>
 </html>

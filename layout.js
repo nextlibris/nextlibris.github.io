@@ -21,13 +21,16 @@ var I = {
   books: '<path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="M16.5 5l3.5-.8 2.6 15.4-3.5.8z"/>',
   heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
   spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   quote: '<path d="M7 7h4v4c0 3-2 5-4 6M14 7h4v4c0 3-2 5-4 6"/>',
   stats: '<path d="M5 20V10M12 20V4M19 20v-7"/>',
   out: '<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19h14"/>',
   cal: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
-  next: '<path d="M5 6h14M5 12h9M5 18h6"/><path d="M17 15l3 3-3 3"/>'
+  next: '<path d="M5 6h14M5 12h9M5 18h6"/><path d="M17 15l3 3-3 3"/>',
+  film: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l1-4 16.5-2.2.8 3.6L3 9zM8 4.4l2.6 3.5M13 3.7l2.6 3.5"/>',
+  pen: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.6-3.6 3.4-5.5 7-5.5s6.4 1.9 7 5.5"/>'
 };
 function save() { NL.ls.set(LS, JSON.stringify({ v: cur })); }
 
@@ -41,7 +44,7 @@ function build() {
     '<button type="button" data-l="wish">' + svg(I.heart) + '<span>Desideri</span></button>' +
     '<button type="button" class="lay-plus" data-l="add" aria-label="Aggiungi un libro">' + svg(I.plus, 28) + '</button>' +
     '<button type="button" data-l="you">' + svg(I.spark) + '<span>Per te</span></button>' +
-    '<button type="button" data-l="menu">' + svg(I.menu) + '<span>Menu</span></button></nav>'));
+    '<button type="button" data-l="prof">' + svg(I.user) + '<span>Profilo</span></button></nav>'));   // 5 tasti (Piero, 18/11/2026): il Menu resta sull'ingranaggio in alto e nel profilo
   document.body.appendChild(el('<div class="sheet" id="layAdd" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layAddH">' +
     '<h2 id="layAddH">Aggiungi un libro</h2>' +
     '<div class="tabs lay-dest" role="tablist" aria-label="Dove aggiungerlo"><button type="button" role="tab" data-dest="lib">In Libreria</button><button type="button" role="tab" data-dest="wish">Nei Desideri</button></div>' +
@@ -49,7 +52,8 @@ function build() {
     '<button type="button" class="lay-big pri" data-l="scan">' + NL.icon('scan') + '<b>Scansiona</b><small>il codice a barre: il modo più preciso</small></button>' +
     '<button type="button" class="lay-big" data-l="photo">' + NL.icon('cam') + '<b>Foto</b><small>della copertina</small></button>' +
     '<button type="button" class="lay-big" data-l="type">' + NL.icon('key') + '<b>Digita</b><small>titolo o ISBN</small></button>' +
-    '<button type="button" class="lay-big" data-l="check">' + NL.icon('check') + '<b>Ce l\'ho già?</b><small>controlla in libreria</small></button></div>' +
+    '<button type="button" class="lay-big" data-l="check">' + NL.icon('check') + '<b>Ce l\'ho già?</b><small>controlla in libreria</small></button>' +
+    '<button type="button" class="lay-big lay-wide" data-l="author">' + svg(I.pen, 26) + '<span><b>Per autore</b><small>le sue opere, da Wikipedia</small></span></button></div>' +
     '<div class="row-btns"><button type="button" class="btn" data-l="close">Chiudi</button></div></div></div>'));
   document.body.appendChild(el('<div class="sheet" id="layYou" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layYouH">' +
     '<h2 id="layYouH">Per te</h2><div class="dlist dmenu" id="layYouList"></div>' +
@@ -60,6 +64,8 @@ function youItems() {
   var out = [{ l: 'sugg', i: I.next, t: 'Suggerimenti', s: 'Cosa leggere dopo e libri da scoprire' }];
   var W = window.NLWrap; if (W && W.cfg().on && W.quarters().length) out.push({ l: 'wrap', i: I.cal, t: 'La tua stagione in libri', s: 'Il riepilogo di ogni stagione' });
   var nq = NL.nQuotes();
+  var nf = NL.films ? NL.films().length : 0;        // film e serie TV tratti dai tuoi libri (giro 2, 18/11/2026)
+  if (nf) out.push({ l: 'films', i: I.film, t: 'Dai tuoi libri al cinema', s: nf === 1 ? '1 film o serie tratto dai tuoi libri' : nf + ' film e serie tratti dai tuoi libri' });
   if (nq) out.push({ l: 'quotes', i: I.quote, t: 'Tutte le citazioni', s: nq === 1 ? '1 citazione salvata' : nq + ' citazioni salvate' });
   out.push({ l: 'stats', i: I.stats, t: 'Statistiche', s: 'Libri, valore, pagine e letture' });
   out.push({ l: 'export', i: I.out, t: 'Backup ed esportazione', s: 'Backup, Excel, PDF' });
@@ -81,14 +87,23 @@ function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') 
 function sheetsClose() { ['#layAdd', '#layYou'].forEach(function (k) { var s = $(k); if (s) s.hidden = true; }); }
 function act(l) {
   sheetsClose();
+  // libreria di esempio (guida): la barra resta dentro l'esempio (Piero, 18/11/2026)
+  if (NL.esempio && NL.esempio()) {
+    if (l === 'lib' || l === 'wish') { NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); NL.emit('guest'); return; }
+    if (l === 'prof') { if (window.NLProfilo) window.NLProfilo.open('esempio'); return; }
+    if (l === 'add' || l === 'you') { NL.toast('È solo un esempio: prova con i tuoi libri.'); return; }
+  }
   if (l === 'lib' || l === 'wish') { if (NL.guest && NL.guest()) NL.guestExit(); NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); }   // sempre i tuoi, anche dalla libreria di un amico (17/11/2026 sera)
   else if (l === 'add') sheetOpen('#layAdd');
   else if (l === 'you') sheetOpen('#layYou');
   else if (l === 'menu') NL.openMenu();
+  else if (l === 'prof') { if (NL.guest && NL.guest()) NL.guestExit(); if (window.NLProfilo) window.NLProfilo.open(); }
   else if (l === 'scan') $('#btnScan').click();
   else if (l === 'photo') $('#btnPhoto').click();
   else if (l === 'type') $('#btnType').click();
   else if (l === 'check') $('#btnCheck').click();
+  else if (l === 'author') NL.openWorks();
+  else if (l === 'films') NL.openFilms();
   else if (l === 'sugg') NL.openSugg('next');
   else if (l === 'wrap') { if (window.NLWrap) window.NLWrap.open(); }
   else if (l === 'quotes') NL.openQuotes();

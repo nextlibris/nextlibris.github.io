@@ -2,18 +2,22 @@
 // le copie parallele (…/next-libris-prova/, in generale …/next-libris-NOME/) stanno allo stesso indirizzo di base: copie offline con un prefisso
 // loro, e ognuna cancella solo le proprie (la versione vera non tocca quelle che cominciano con «nome-catalogo-libri-»)
 const COPIA = (self.registration.scope.match(/\/next-libris-([a-z]+)\//) || [])[1] || '';
-const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v104';
+const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v105';
 const MINE = (k) => (COPIA ? k.startsWith(COPIA + '-') : !/^[a-z]+-catalogo-libri-/.test(k));
-const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app.js', 'lib.js', 'manifest.json',
+const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app.js', 'app-aggiungi.js', 'app-vista.js', 'app-scheda.js', 'app-per-te.js', 'app-elenco.js', 'app-finestre.js', 'app-filtri.js', 'app-strumenti.js', 'app-wiki.js', 'app-avvio.js',   // app.js divisa in parti (17/11/2026)
+  'lib.js', 'manifest.json',
   'icons/next-libris-192.png', 'icons/next-libris-512.png', 'vendor/zxing.min.js', 'vendor/fonts/literata-latin.woff2', 'vendor/fonts/bricolage-latin.woff2', 'vendor/fonts/plex-latin-400.woff2', 'vendor/fonts/plex-latin-500.woff2', 'vendor/fonts/plex-latin-600.woff2', 'vendor/tesseract.min.js', 'vendor/worker.min.js', 'REGISTRO_MODIFICHE.md',
   'wrap.js', 'wrap.css',   // modulo: riepilogo ogni tre mesi
   'layout.js', 'layout.css',   // modulo: disposizione dello schermo
   'schede.js', 'schede.css',   // modulo: aspetto della scheda aperta
   'social.js', 'social.css',   // modulo: account e sincronizzazione
+  'profilo.js', 'profilo.css',   // modulo: profilo
   'amici.js', 'amici.css',   // modulo: amici
   'notifiche.js', 'notifiche.css',   // modulo: notifiche (campanella)
+  'chat.js', 'chat.css',   // modulo: chat (giro 9b)
   'ricerche.js', 'ricerche.css',   // modulo: ricerche condivise e archivio comune
   'push.js', 'push.css',   // modulo: notifiche push
+  'guida.js', 'guida.css',   // modulo: guida di primo avvio e libreria di esempio
   'trasloco.html', 'trasloco.js', 'privacy.html'];   // trasloco.html: senza, la pagina arriverebbe come index.html; privacy.html: letta anche dalla finestra Privacy (17/11/2026)
 
 self.addEventListener('install', (e) => {

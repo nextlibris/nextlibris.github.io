@@ -207,6 +207,12 @@ details.opts summary{cursor:pointer;padding:6px 0}
 
 /* ---- barra strumenti ---- */
 .tools input[type="search"]{flex:1 1 150px;min-width:0}
+.tools .qwrap{position:relative;display:flex;flex:1 1 150px;min-width:0}
+.tools .qwrap input[type="search"]{flex:1 1 auto;width:100%;padding-right:44px}
+#q::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+.qx{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qx:hover,.qx:focus-visible{color:var(--ink);background:var(--surface2)}
+.qx[hidden]{display:none}
 .tools select{flex:0 1 150px;min-width:0}
 .acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;flex:1 1 100%}
 .btn.sm{flex-direction:column;gap:3px;min-height:58px;padding:6px 2px;font-size:12.5px;line-height:1.15;text-align:center;font-weight:600}
@@ -920,6 +926,19 @@ svg.qr path{fill:none;stroke-linecap:butt}
 .schip-x{flex:none;padding:0 11px 0 7px;color:var(--muted);font-size:18px;line-height:1}
 .schip button:hover{background:var(--accent-soft)}
 .svc .hint{margin:0}
+.svc-fold{gap:6px}   /* sezioni richiudibili di Ricerca dei libri (giro 5) */
+button.svc-h.svc-tog{width:100%;min-height:44px;margin:-6px 0 0;padding:4px 0;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;align-items:center;font:inherit}
+.svc-tog .svc-t{flex:1 1 auto;min-width:0;font:600 18px/1.2 var(--font-display)}
+.svc-tog .svc-st{margin-top:0}
+.svc-chev{flex:none;width:10px;height:10px;margin:0 4px 4px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.svc-fold.open .svc-chev{transform:rotate(-135deg);margin-bottom:-4px}
+.svc-desc{font-size:14px;line-height:1.4}
+.btn.svc-guide{justify-self:start;min-height:40px;padding:6px 14px;font-size:14px}
+.btn.svc-guide[hidden]{display:none}
+.svc-b{display:grid;gap:10px;padding-top:8px;border-top:1px solid var(--line);margin-top:4px}
+.svc-b[hidden]{display:none}
+#gbKey[readonly]{color:var(--muted);letter-spacing:.02em;cursor:pointer}
+.btn.svc-show[hidden]{display:none}
 .svc-how summary{cursor:pointer;min-height:36px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--accent)}
 .svc-how .keysteps{margin:6px 0 0}
 .opt-sec>*{min-width:0}
@@ -1009,6 +1028,17 @@ body.welcome-on .tip{display:none}
 .tag.from{background:var(--surface);border-style:dashed;color:var(--ink)}
 .ico.act.fav.on{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
 .ico.act.fav.on svg{color:var(--accent);fill:currentColor}
+/* «Lo consiglio» (coccarda accanto alla stella) e puntina delle citazioni in evidenza (giro 6) */
+.ico.act.lc.on{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+.ico.act.lc.on svg circle{fill:currentColor;fill-opacity:.28}
+.qpin{display:grid;place-items:center;width:34px;height:30px;padding:0;border:0;border-radius:8px;background:none;color:var(--muted);cursor:pointer}
+.qpin svg{width:17px;height:17px}
+.qpin.on{color:var(--accent)}
+.qpin.on svg path:first-child{fill:currentColor;fill-opacity:.28}
+.qpin:hover,.qpin:focus-visible{background:var(--accent-soft)}
+.qpin:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.aq-q .qp .qpin{margin-left:auto}
+.aq-q .qp .qpin + .link{margin-left:0}
 .opt-h3{margin:8px 0 0;font:600 17px/1.2 var(--font-display)}
 .share-prev{margin:0;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--ink);font-size:14.5px;font-weight:600;overflow-wrap:anywhere}
 #shareWhat{color:var(--ink);font-size:15px;overflow-wrap:anywhere}
@@ -1769,3 +1799,91 @@ html[data-look="nuovo"] .gc-face.sm .gc-ph::before,html[data-look="nuovo"] .gc-f
 .au-cut .link{font-size:14px;padding:0 0 0 4px;min-height:0}
 .au-cut .auc-opts{margin:6px 0 0;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .au-cut .auc-auto{display:block;margin:4px 10px 6px;padding:0}
+/* dimensione delle copertine (giro 1, 18/11/2026): N per riga sul telefono, stessa grandezza sugli schermi larghi; due dita sulle copertine */
+@media (max-width:699px){ body.cols #list .grid{grid-template-columns:repeat(var(--cols),minmax(0,1fr))} }
+@media (min-width:700px){ body.cols #list .grid{grid-template-columns:repeat(auto-fill,minmax(calc(600px / var(--cols)),1fr))} }
+body.cols-sm #list .grid{gap:12px 8px}
+body.cols-sm #list .cover .cap{font-size:12px}
+body.cols-sm #list .cover .ph{padding:6px 5px}
+body.cols-sm #list .cover .ph b{font-size:12px}
+body.cols-sm #list .cover .ph small{font-size:10.5px}
+body.cols-sm #list .cover .badge{left:3px;bottom:3px;font-size:10px;padding:1px 5px}
+body.gridview #list{touch-action:pan-x pan-y}
+.cols-row{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}
+.cols-row input{flex:1;min-width:0;accent-color:var(--accent);height:32px}
+/* serie e copie accorpate (giro 1, 18/11/2026): una copertina «a pila» con il bollino del numero; nell'elenco una riga che si apre */
+.pcard .art{box-shadow:4px -4px 0 -1px var(--bg),4px -4px 0 0 var(--line)}
+#list .prow{gap:12px;min-height:0;margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.pk-img{flex:none;overflow:visible;box-shadow:3px -3px 0 -1px var(--surface),3px -3px 0 0 var(--line)}
+.pk-img img{border-radius:4px}
+#list .prow+.pk-panel{margin:-4px 0 10px;padding:8px 8px 10px}
+
+/* ---- Wikidata (giro 2, 18/11/2026): paese degli autori, film tratti dai libri, opere di un autore ---- */
+.au-pa{margin-top:6px}
+.au-pa .aup-b{white-space:nowrap}
+.au-pa .aup-wait{font-style:italic}
+.au-pa .aup-opts{padding:10px}
+.au-pa .aup-f{margin:0 0 6px}
+.au-pa .aup-list{display:grid;gap:2px}
+.au-pa .aup-list .pk-o{width:100%}
+.au-pa .aup-list .msg{margin:6px 4px}
+.gc-flag{font-size:44px;line-height:1}
+.gc-face.sm .gc-flag{font-size:20px}
+img.flag{display:inline-block;width:1.34em;height:1em;object-fit:cover;border-radius:2px;vertical-align:-.14em;margin-right:.35em;box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 14%,transparent)}   /* bandiere come immagini (giro 5) */
+.gc-flag img.flag{display:block;width:56px;height:42px;margin:0;border-radius:4px}
+.gc-face.sm .gc-flag img.flag{width:24px;height:18px;border-radius:2px}
+.w-flags img.flag,.pf-flags img.flag{margin-right:0}
+.st-pa-note b{color:var(--ink);font-weight:600}
+.st-pa-wait{display:flex;align-items:center;gap:8px}
+.filmbox{display:block;font-size:14.5px;line-height:1.4;padding:4px 12px 6px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}   /* «Dal libro»: film e serie TV (giro 5) */
+.filmbox[hidden]{display:none}
+.filmbox .fl-h{margin:6px 0 2px;font-size:13px;font-weight:600;color:var(--muted)}
+.filmbox .fl-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:6px 0;color:var(--ink);text-decoration:none}
+.filmbox .fl-row + .fl-row{border-top:1px solid var(--line)}
+.filmbox .fl-e{flex:none;font-size:18px;line-height:1}
+.filmbox .fl-m{flex:1;min-width:0}
+.filmbox .fl-m b{font-weight:600}
+.filmbox .fl-go{flex:none;font-size:22px;line-height:1;color:var(--muted)}
+.filmbox a.fl-row:hover b,.filmbox a.fl-row:focus-visible b{color:var(--accent)}
+.filmbox .fl-more{margin:2px 0 4px;font-size:13px}
+.fm-films a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.fm-x{color:var(--muted)}
+@media (min-width:880px){ .filmbox{grid-column:1 / -1} }
+.fm-list{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:10px}
+.fm-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.fm-book,.fm-bt{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.fm-book .sum-img{display:block;width:44px;height:62px;border-radius:4px;overflow:hidden}
+.fm-book .sum-img img{width:100%;height:100%;object-fit:cover;display:block}
+.fm-book .sum-img.ph{display:flex;align-items:center;justify-content:center;font:700 18px var(--font-display)}
+.fm-bt b{display:block;font:600 16px/1.25 var(--font-display)}
+.fm-bt small{display:block;font-size:13px;color:var(--muted)}
+.fm-films{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px;font-size:14.5px;line-height:1.4}
+.wo-find{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin:0 0 10px}
+.wo-find .field{margin:0}
+.wo-dest{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:auto;margin:0 0 10px}
+.wo-dest button{justify-content:center}
+.wo-list{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+.wo-row{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.wo-row .wo-t{flex:1;min-width:0}
+.wo-row b{display:block;font:600 15.5px/1.25 var(--font-display);overflow-wrap:anywhere}
+.wo-row small{display:block;font-size:13px;color:var(--muted)}
+.wo-row .wo-go{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--accent)}
+.wo-row.have b{font-weight:500}
+.wo-row .tag{flex:none}
+#woMsg{display:flex;align-items:center;gap:8px}
+
+/* «Sostieni» in testata come pillola con la parola (Piero, 18/11/2026: da riconfermare nel prossimo giro).
+   Sta sulla seconda riga, a destra di «Libreria di …» (dove prima c'era la chiave): sulla prima riga con titolo, PROVA e tre icone non ci sta a 360 px */
+html body header.top .beer-top.beer-pill{display:inline-flex;align-items:center;gap:5px;width:auto;height:34px;padding:0 11px 0 8px;top:calc(var(--h1-fs,31px) * 1.2 + 8px);right:0;border-radius:999px;
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);color:var(--accent)}
+.top .beer-pill svg{width:20px;height:20px}
+.top .beer-pill .beer-t{font-weight:700;font-size:14px;line-height:1}
+header.top{padding-right:52px}
+html.has-fri header.top{padding-right:90px}
+html.has-bell header.top{padding-right:128px}
+html body header.top .top-meta{margin-right:-52px;padding-right:112px}   /* la riga del nome usa anche lo spazio sotto le icone, tranne la pillola */
+html.has-fri body header.top .top-meta{margin-right:-90px}
+html.has-bell body header.top .top-meta{margin-right:-128px}
+html.guest body header.top .beer-top.beer-pill,html.esempio body header.top .beer-top.beer-pill{display:none}
+html.guest body header.top .top-meta,html.esempio body header.top .top-meta{margin-right:0;padding-right:0}
+@media (max-width:380px){ html.has-bell body header.top{padding-right:110px} html.has-bell body header.top .top-meta{margin-right:-110px} }

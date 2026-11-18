@@ -30,6 +30,7 @@ function lender(key) { try { var b = JSON.parse(NL.ls.get(K_LENT) || 'null'); re
 NL.on('apiCall', function (k) {
   if (!uid() || (k !== 'g' && k !== 's')) return;
   var sv = NL.svc(); if (!(k === 'g' ? sv.gbKey : sv.sbnUrl)) return;
+  if (k === 'g' && /^prestata:/.test(sv.gbKey)) return;            // chiave prestata: conta il server (funzione «libri», giro 8)
   pend[k]++;
   schedule(pend.g + pend.s >= 10 ? 0 : 3000);                       // a gruppi: una richiesta a Supabase ogni ~10 ricerche o 3 secondi
 });
@@ -41,7 +42,7 @@ async function flush(read) {
   var sv = NL.svc(), q = NL.quota(), crossed = false;
   for (var i = 0; i < 2; i++) {
     var k = i ? 's' : 'g', val = k === 'g' ? sv.gbKey : sv.sbnUrl;
-    if (!val) { pend[k] = 0; continue; }
+    if (!val || (k === 'g' && /^prestata:/.test(val))) { pend[k] = 0; continue; }
     var n = Math.min(pend[k], 200); if (!n && !read) continue;
     pend[k] -= n;
     try {
@@ -93,26 +94,65 @@ function sheet() {
       '<li>Apri <a href="' + LINKS.project + '" target="_blank" rel="noopener">Google Cloud</a> ed entra con il tuo account Google. Crea un progetto con il nome che vuoi (per esempio «Libri»).</li>' +
       '<li>Apri <a href="' + LINKS.api + '" target="_blank" rel="noopener">Books API</a> e tocca «Abilita».</li>' +
       '<li>Vai in <a href="' + LINKS.cred + '" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>' +
-      '<li>Copia la chiave (comincia con <b>AIza</b>) e incollala qui: Menu › Impostazioni › Ricerca dei libri.</li>' +
+      '<li>Limita la chiave: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>' +
+      '<li>Copia la chiave (comincia con <b>AIza</b>) e incollala qui sotto.</li>' +
     '</ol>' +
+    '<div class="kg-paste"><label class="sr" for="kgKey">La tua chiave Google Libri</label><input type="text" id="kgKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui la chiave"><button class="btn primary" type="button" id="kgSave">Salva</button></div>' +
+    '<p class="fr-small kg-err" id="kgErr" hidden></p>' +
     '<div class="row-btns"><button class="btn" type="button" id="kgClose">Più tardi</button><a class="btn primary" id="kgGo" href="' + LINKS.project + '" target="_blank" rel="noopener">Apri Google Cloud</a></div>' +
-    '<button class="link" type="button" id="kgPaste">Ho già la chiave: incollala</button></div>';
+    '</div>';
   document.body.appendChild(el);
   var shut = function () { el.hidden = true; };
   el.addEventListener('click', function (e) { if (e.target === el) shut(); });
   el.querySelector('#kgClose').addEventListener('click', shut);
-  el.querySelector('#kgPaste').addEventListener('click', function () { shut(); NL.openOptions('search'); setTimeout(function () { var i = document.getElementById('gbKey'); if (i) i.focus(); }, 300); });
+  // campo della chiave direttamente qui (Piero, 18/11/2026)
+  el.querySelector('#kgSave').addEventListener('click', function () {
+    var v = el.querySelector('#kgKey').value.replace(/\s+/g, ''), er = el.querySelector('#kgErr');
+    if (!/^AIza[\w-]{30,}$/.test(v)) { er.hidden = false; er.textContent = v ? 'Non sembra una chiave Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima la chiave.'; return; }
+    er.hidden = true; NL.setKey(v); el.querySelector('#kgKey').value = ''; shut();
+    NL.toast('Chiave salvata: ora la ricerca usa la tua chiave Google Libri.');
+  });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) shut(); });
   return el;
 }
-function guide(who) {
+function guide() {   // il motivo (chiave finita, chiave dell'amico…) non cambia piu' il testo (18/11/2026)
   var el = sheet();
-  document.getElementById('kgWhy').innerHTML = who === true
-    ? 'Con una chiave tua la ricerca trova più libri, con copertina grande, descrizione e suggerimenti, e non dipendi dalla chiave di un amico.'
-    : who
-    ? 'La chiave di <b>' + esc(who) + '</b> ha finito le ricerche di oggi. Intanto i libri si cercano con Open Library e il catalogo delle biblioteche (SBN); con una chiave tua hai di nuovo tutte le ricerche, anche le copertine grandi e i suggerimenti.'
-    : 'La tua chiave ha finito le ricerche di oggi: torna domattina verso le 9. La usano anche gli amici a cui l\'hai prestata: mandagli questi passaggi, così ne creano una loro.';
+  // testo unico (Piero, 18/11/2026)
+  document.getElementById('kgWhy').innerHTML = 'Con una chiave tua l\'app trova molti più libri, con copertine e descrizioni.';
+  var er = document.getElementById('kgErr'); if (er) er.hidden = true;
   el.hidden = false;
 }
-window.NLRicerche = { guide: guide, flush: flush, state: function () { return { pend: pend }; } };
+/* ---------- «La mia chiave è finita in giro» (giro 8, R4): tranquillizza e guida a rigenerarla ---------- */
+function leakSheet() {
+  var el = document.getElementById('klSheet'); if (el) return el;
+  el = document.createElement('div'); el.className = 'sheet kg'; el.id = 'klSheet'; el.hidden = true;
+  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="klH"><h2 id="klH">La mia chiave è finita in giro</h2>' +
+    '<p class="msg">Niente paura. Una chiave Google Libri fa solo ricerche di libri e non costa niente: al massimo qualcuno consuma le tue ricerche del giorno. Per chiuderla fuori:</p>' +
+    '<ol class="kg-steps">' +
+      '<li>Apri <a href="' + LINKS.cred + '" target="_blank" rel="noopener">Google Cloud › Credenziali</a>.</li>' +
+      '<li>Tocca la tua chiave › «Rigenera chiave».</li>' +
+      '<li>Incolla qui la chiave nuova.</li>' +
+    '</ol>' +
+    '<div class="kg-paste"><label class="sr" for="klKey">La chiave nuova</label><input type="text" id="klKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui la chiave nuova"><button class="btn primary" type="button" id="klSave">Salva</button></div>' +
+    '<p class="fr-small kg-err" id="klErr" hidden></p>' +
+    '<p class="fr-small" id="klFri">Gli amici a cui la presti continuano a cercare senza fare niente.</p>' +
+    '<div class="row-btns"><button class="btn" type="button" id="klClose">Chiudi</button><a class="btn primary" href="' + LINKS.cred + '" target="_blank" rel="noopener">Apri Google Cloud</a></div>' +
+    '</div>';
+  document.body.appendChild(el);
+  var shut = function () { el.hidden = true; };
+  el.addEventListener('click', function (e) { if (e.target === el) shut(); });
+  el.querySelector('#klClose').addEventListener('click', shut);
+  el.querySelector('#klSave').addEventListener('click', function () {
+    var v = el.querySelector('#klKey').value.replace(/\s+/g, ''), er = el.querySelector('#klErr'), old = NL.ownKey ? NL.ownKey() : '';
+    var bad = !/^AIza[\w-]{30,}$/.test(v) ? (v ? 'Non sembra una chiave Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima la chiave nuova.')
+      : v === old ? 'Questa è la chiave di prima: su Google Cloud tocca «Rigenera chiave» e incolla quella nuova.' : '';
+    if (bad) { er.hidden = false; er.textContent = bad; return; }
+    er.hidden = true; NL.setKey(v); el.querySelector('#klKey').value = ''; shut();
+    NL.toast('Chiave nuova salvata: quella vecchia non funziona più.');
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) shut(); });
+  return el;
+}
+function leak() { var el = leakSheet(); el.querySelector('#klErr').hidden = true; el.querySelector('#klKey').value = ''; el.hidden = false; }
+window.NLRicerche = { guide: guide, leak: leak, flush: flush, state: function () { return { pend: pend }; } };
 })();

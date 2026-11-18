@@ -1,0 +1,108 @@
+/* Next Libris · modulo «Profilo» (giro 3, 18/11/2026): pagina del profilo, foto o iniziale, «Segui» */
+.pf-av{flex:none;width:36px;height:36px;border-radius:50%;display:inline-grid;place-items:center;overflow:hidden;background:hsl(var(--pf-h,150) 32% 42%);color:#fff;font:600 16px/1 var(--font-body);user-select:none}
+.pf-av.big{width:64px;height:64px;font-size:28px}
+.pf-av img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-av.has{background:var(--surface2)}
+.prof #profBody{display:grid;gap:14px}
+.prof .pf-top{display:flex;align-items:center;gap:14px;min-width:0}
+.prof .pf-id{display:grid;gap:2px;min-width:0}
+.prof .pf-name{font:600 20px/1.2 var(--font-display);overflow-wrap:anywhere}
+.prof .pf-id small{font-size:13px;color:var(--muted)}
+.prof .pf-acts{margin:-8px 0 0}
+.prof .pf-acts .link{padding:4px 0;font-size:14px}
+.prof .pf-photo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--surface2)}
+.prof .pf-photo .fr-small{flex:1 1 100%;margin:0}
+.prof .pf-nums{margin:0;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.prof .pf-q{margin:0;padding:2px 0 2px 12px;border-left:3px solid var(--accent);display:grid;gap:4px}
+.prof .pf-q p{margin:0;font:italic 16px/1.45 var(--font-display);overflow-wrap:anywhere;white-space:pre-line}
+.prof .pf-q footer{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.prof .pf-qlist{display:grid;gap:14px}
+.prof .pf-qpick{all:unset;display:block;cursor:pointer;border-radius:10px;padding:8px 10px 8px 0;box-sizing:border-box;width:100%}
+.prof .pf-qpick[aria-current="true"]{background:var(--accent-soft)}
+.prof .pf-qpick:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.prof .pf-dl{margin:0;display:grid;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.prof .pf-st{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line)}
+.prof .pf-st:last-child{border-bottom:0}
+.prof .pf-st dt{font-size:14px;color:var(--muted);flex:none;max-width:50%}
+.prof .pf-st dd{margin:0;font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}
+.prof .pf-st dd small{font-weight:400;font-size:13px;color:var(--muted);white-space:nowrap}
+.prof .pf-flags{font-size:18px;line-height:1.5;font-weight:400}
+.prof .pf-fol .btn{justify-self:start}
+/* testata: il nome apre il profilo */
+.owner .owner-n{all:unset;cursor:pointer;border-radius:6px}
+.owner .owner-n:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* elenco degli amici: foto e «Segui» */
+.fri .fr-go.fr-av{gap:10px}
+.fri .fr-fol{flex:none;min-height:32px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font:500 13px var(--font-body);cursor:pointer;white-space:nowrap}
+.fri .fr-fol[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.fri .fr-segui{margin:4px 0 0}
+/* libreria di un amico: nota sui libri in prestito da te; l'etichetta «Prestato da te» è solo da leggere */
+.guest-bar .gb-note{color:var(--muted)}
+html.guest .tag.loan.recv{pointer-events:none}
+/* giro 6: profilo dell'amico (Libreria, Desideri, icone), file di copertine, puntine */
+.prof #profBody{grid-template-columns:minmax(0,1fr)}
+.prof #profBody > *{min-width:0}
+.prof .pf-go{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prof .pf-go .btn{min-height:40px;padding:6px 16px}
+.prof .pf-icos{margin-left:auto;display:flex;align-items:center;gap:2px}
+.prof .pf-icos .gb-key{width:40px;height:40px;min-width:40px}
+.prof .pf-fol{display:grid;gap:8px}
+.prof .pf-fol .fr-small{margin:0}
+.prof .pf-row{display:grid;gap:8px}
+.prof .pf-strip{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.prof .pf-bk{all:unset;box-sizing:border-box;flex:none;width:76px;display:grid;gap:4px;align-content:start;cursor:pointer;scroll-snap-align:start}
+.prof .pf-cv{position:relative;display:block;width:76px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:hsl(var(--pf-h,150) 28% 38%);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.prof .pf-cvt{position:absolute;inset:0;display:grid;place-items:center;padding:6px;font:600 11px/1.25 var(--font-display);text-align:center;overflow:hidden;overflow-wrap:anywhere}
+.prof .pf-cv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.prof .pf-cap{font-size:12px;line-height:1.25;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.prof .pf-bk:focus-visible .pf-cv{outline:2px solid var(--accent);outline-offset:2px}
+.prof .pf-qpick[aria-pressed="true"]{background:var(--accent-soft)}
+.prof .pf-st dd small.w{display:block;white-space:normal;overflow-wrap:anywhere}
+.prof .pf-bk.noimg .pf-cap{display:none}
+/* giro 7 (in prova): profilo più facile da trovare — foto tonda in testata e «Il mio profilo» in cima al Menu */
+.owner .owner-av{float:left;display:grid;margin:1px 10px 0 0;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;min-width:0;min-height:0}   /* a sinistra delle due righe (nome e numeri) */
+.owner .owner-av .pf-av{width:40px;height:40px;font-size:17px}
+.owner .owner-av .pf-av:not(.has)::before{content:attr(data-ch)}   /* l'iniziale non entra nel testo della testata */
+.owner .owner-av:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pf-menu{align-items:center;justify-content:flex-start}
+.pf-menu > span:nth-child(2){flex:1;min-width:0}
+.pf-menu .pf-menu-av{flex:none;display:grid;margin-right:12px}
+.pf-menu .pf-av{width:34px;height:34px;font-size:15px}
+
+/* 18/11/2026 (Piero): la tua foto è un tasto, con la piccola macchina fotografica; citazioni con la foto della pagina */
+.prof .pf-avbtn{all:unset;position:relative;flex:none;cursor:pointer;border-radius:50%}
+.prof .pf-avbtn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.prof .pf-cam{position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);border:2px solid var(--surface)}
+.prof .pf-cam svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
+.prof .pf-q.has-ph{grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:start}
+.prof .pf-q.has-ph .qimg-w{grid-column:2;grid-row:1 / span 2}
+.prof .pf-q.has-ph .qimg{width:52px;height:70px}
+.prof .pf-q .pf-qph{font:500 14px/1.4 var(--font-body);color:var(--muted)}
+
+/* numeri del profilo (18/11/2026, «misto» scelto da Piero): scheda dell'anno + tessere */
+.prof .pf-year{border-radius:20px;background:linear-gradient(160deg,#1B6A4F,#0F4433);color:#fff;padding:16px 16px 14px;margin-bottom:10px}
+.prof .pf-yl{margin:0;font:600 15px/1.3 var(--font-display);opacity:.9}
+.prof .pf-yn{display:block;font:700 46px/1.05 var(--font-display);margin:2px 0 6px}
+.prof .pf-yt{margin:8px 0 0;font:400 15px/1.45 var(--font-body)}
+.prof .pf-yt b{color:#FFE7A3;font-weight:700}
+.prof .pf-yt .pf-flags img.flag{width:20px;height:15px;vertical-align:-2px}
+.prof .pf-goal{display:grid;gap:5px;margin:4px 0 2px;font:600 14px/1.2 var(--font-body);cursor:default}
+.prof .pf-goal[role="button"]{cursor:pointer}
+.prof .pf-gbar{height:8px;border-radius:4px;background:#ffffff40;overflow:hidden}
+.prof .pf-gbar i{display:block;height:100%;background:#fff;border-radius:4px}
+.prof .pf-gadd{color:#fff;font-size:14px;padding:4px 0;text-decoration-color:#ffffff90}
+.prof .pf-gedit{display:flex;align-items:center;gap:8px;margin:6px 0 2px}
+.prof .pf-gedit input{width:96px;min-height:40px;border-radius:10px;border:0;padding:0 10px;font:600 16px var(--font-body);color:var(--ink);background:#fff}
+.prof .pf-gedit .btn{background:#fff;color:#0F4433;border:0}
+.prof .pf-gedit .link{color:#fff}
+.prof .pf-shelf{display:flex;align-items:flex-end;gap:3px;height:60px;margin:12px 0 2px;padding:0 2px;border-bottom:3px solid #ffffff60;overflow:hidden}
+.prof .pf-shelf i{display:block;flex:0 1 11px;min-width:4px;border-radius:2px 2px 0 0}
+.prof .pf-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.prof .pf-tile{display:grid;align-content:start;gap:2px;border-radius:14px;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);min-width:0}
+.prof .pf-tile.wide{grid-column:1 / -1}
+.prof .pf-ti{font-size:19px;line-height:1.2}
+.prof .pf-tn{font:700 26px/1.1 var(--font-display)}
+.prof .pf-tv{font:600 15px/1.25 var(--font-body);overflow-wrap:anywhere}
+.prof .pf-tt{font-size:13px;line-height:1.3;color:var(--muted);overflow-wrap:anywhere}
+.prof .pf-tt .pf-flags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.prof .pf-tt .pf-flags img.flag{width:24px;height:18px}

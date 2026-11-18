@@ -851,12 +851,13 @@ Cloudflare) e "Google Libri" (chiave API). Ognuno mostra:
 Sotto il campo compaiono i salvati (fino a 4 per tipo): un tocco lo rimette,
 la x lo dimentica. In alto, "Rimetti chiave e worker salvati" rimette in un
 colpo gli ultimi usati.
-Per darli a un familiare o a un amico: Impostazioni > Condivisione > "Condividi
-chiave e worker". Parte un link: chi lo apre in Next Libris sceglie "Usali"
-o "Mettili tra i salvati". Mandalo solo a persone di fiducia, in privato:
-chi ha il link usa la tua quota (gratuita). Consigliato: in Google Cloud >
-Credenziali limita la chiave alla "Books API" e al sito
-https://nextlibris.github.io/*.
+Per darli a un familiare o a un amico: Menu > "Chiave Google e worker" >
+"Presta a un amico" (serve l'account e l'amicizia su Next Libris). La chiave
+Google prestata resta sul server di Next Libris: l'amico non la vede, puo'
+fare fino a 300 ricerche al giorno e tu smetti di prestarla quando vuoi.
+Il link per mandare chiave e worker non c'e' piu'. Consigliato: in Google
+Cloud > Credenziali limita la chiave alla sola "Books API"; la fatturazione
+non va attivata (di partenza e' spenta), cosi' non si paga mai niente.
 Worker, chiave e salvati sono anche nel backup:
 ripristinandolo su un altro telefono (o dopo aver reinstallato l'app)
 tornano in uso, se li' non ce ne sono gia'.

@@ -61,3 +61,6 @@ body.wrap-open{overflow:hidden}
 .wa-go{margin-left:auto;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.18);font-weight:600;font-size:14px;white-space:nowrap}
 .wrap-ask .ico{color:inherit}
 body.selecting .wrap-ask,body.scanning .wrap-ask{display:none}
+
+/* bandiere dei paesi letti (giro 2, 18/11/2026) */
+.w-flags{display:flex;flex-wrap:wrap;gap:6px 10px;margin:16px 0 4px;font-size:clamp(34px,10vw,48px);line-height:1.1}

@@ -3,6 +3,19 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 105 · 18/11/2026
+> **Chat con gli amici** Scrivi agli amici e crea gruppi fino a 30 persone; manda un libro o consiglialo direttamente in chat. Chi non è tuo amico può mandarti solo una richiesta, che accetti o rifiuti; puoi bloccare e segnalare.
+> **Il tuo profilo** Foto, statistiche dell'anno con lo scaffale dei libri letti, obiettivo facoltativo, In lettura, Consigliati e citazioni in evidenza. Tocca il nome di un amico per vedere il suo.
+> **«Lo consiglio»** La stella ora vuol dire «Lo consiglio»: gli amici vedono i tuoi consigliati nel profilo (i vecchi preferiti sono diventati consigliati).
+> **Guida nuova** Una breve guida a schermate, con una libreria di esempio da provare; si rivede da Menu › Info e aiuto › Come si usa.
+- **Desideri:** segui i desideri di un amico; ti avvisiamo se un tuo desiderio è nella libreria di un amico («Ce l'ha già…»).
+- **Barra in basso:** Libreria · Desideri · + · Per te · Profilo; il Menu è sull'ingranaggio in alto e nel profilo.
+- **Ricerca dei libri:** prima le edizioni italiane; X nella casella per cancellare il testo; raggruppa per paese con le bandiere; film tratti dal libro nella scheda.
+- **Chiave Google prestata:** resta sul server e non arriva più al telefono dell'amico (300 ricerche al giorno per amico); «La mia chiave è finita in giro» per cambiarla.
+- **Backup:** promemoria ogni 45 giorni o dopo 40 libri nuovi, da mandare con un tocco su Drive, WhatsApp o email.
+- **Visibilità:** di partenza gli amici vedono libreria, desideri e profilo (non tutte le citazioni); si cambia in Amici e privacy.
+- **Sostieni:** offri una birra a Next Libris dal Menu o dalla pillola 🍺.
+
 ## Versione 104 · 17/11/2026
 > **Foto degli autori di nuovo complete** Wikipedia ha cambiato l'indirizzo delle foto e l'app le scartava: ora arrivano tutte, anche quella di Ennio Flaiano.
 - **Foto degli autori:** accettate le foto dal nuovo indirizzo di Wikipedia (thumb.wikimedia.org); gli autori rimasti senza foto si ricercano da soli una volta.

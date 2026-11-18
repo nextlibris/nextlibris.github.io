@@ -18,7 +18,7 @@ var NAME_RE = /^[0-9A-Za-zÀ-ÖØ-öø-ÿ ._'-]{3,20}$/;
 var K_PEND = 'catalogo-libri-amici-scambi-da-mandare';
 var opts = false, nums = {};
 var ffOf = null, ff = null;   // amici dell'amico: di chi, e cosa è arrivato (17/11/2026)
-var swaps = [], view = null, wishes = null, libs = null, libsShow = 30, libsQ = '', recvId = '', asks = [], tips = [], who = {}, gMeta = {}, gId = null;
+var swaps = [], view = null, wishes = null, libs = null, libsShow = 30, libsQ = '', recvId = '', asks = [], who = {}, gMeta = {}, gId = null;
 var K_KEY = 'catalogo-libri-amici-chiave-in-uso';
 var keys = [];
 var me = null, list = null, loading = null, lastLoad = 0, found = null, foundQ = '', invite = null, confirmId = '', busy = '', err = '', editName = false, syncing = false;
@@ -53,16 +53,16 @@ async function load(force) {
   loading = (async function () {
     try {
       var p;
-      var cols = ['utente,nome,desideri,libreria,amici,regali', 'utente,nome,desideri,libreria,amici', 'utente,nome,desideri,libreria'];   // database senza 016 o 015
+      var cols = ['utente,nome,desideri,libreria,amici,regali,creato,foto,cit,p_cit,p_stat,p_cits,p_let,p_pref,p_cons,scrivermi', 'utente,nome,desideri,libreria,amici,regali,creato,foto,cit,p_cit,p_stat,p_cits,p_let,p_pref,p_cons', 'utente,nome,desideri,libreria,amici,regali,creato,foto,cit,p_cit,p_stat,p_cits', 'utente,nome,desideri,libreria,amici,regali', 'utente,nome,desideri,libreria,amici', 'utente,nome,desideri,libreria'];   // database senza 016 o 015
       for (var ci = 0; ci < cols.length; ci++) {
         try { p = await S.call('/rest/v1/profili?select=' + cols[ci] + '&id=eq.' + encodeURIComponent(uid()), { user: true }); break; }
         catch (e0) { if ((e0 && e0.code === 'net') || ci === cols.length - 1) throw e0; }
       }
-      me = (p && p[0]) || { utente: null, nome: '', desideri: false };
+      me = (p && p[0]) || { utente: null, nome: '', desideri: true, libreria: true };   // accese di partenza (022, 18/11/2026)
       list = abc(await rpc('miei_amici'));
       try { nums = {}; ((await rpc('amici_numeri')) || []).forEach(function (x) { nums[x.id] = x; }); } catch (e) { if (window.nlErr) nlErr(e); }
       try { swaps = (await rpc('miei_scambi')) || []; await applySwaps(); } catch (e) { if (window.console) console.warn('scambi', e); }
-      try { asks = (await rpc('mie_richieste')) || []; tips = (await rpc('miei_consigli')) || []; await loadWho(); seenAnswers(); } catch (e) { if (window.console) console.warn('richieste', e); }
+      try { asks = (await rpc('mie_richieste')) || []; await loadWho(); seenAnswers(); } catch (e) { if (window.console) console.warn('richieste', e); }
       try { keys = (await rpc('chiavi_mie')) || []; checkKeys(); } catch (e) { if (window.console) console.warn('chiavi', e); }
       lastLoad = Date.now(); err = '';
       if (me.utente && NL.name() !== me.utente) { syncing = true; NL.setName(me.utente); syncing = false; }   // il nome per gli amici vale anche nell'app
@@ -108,12 +108,21 @@ function sheet() {
   el.addEventListener('submit', onSubmit);
   el.addEventListener('input', function (e) { if (e.target.id === 'friLibQ') { libsQ = e.target.value; libsShow = 30; var l = document.getElementById('friLibList'); if (l) l.innerHTML = libList(); } });
   el.addEventListener('change', async function (e) {
-    var k = e.target.id === 'friWish' ? 'desideri' : e.target.id === 'friLib' ? 'libreria' : e.target.id === 'friAmici' ? 'amici' : e.target.id === 'friRegali' ? 'regali' : ''; if (!k) return;
+    if (e.target.name === 'friScr') {                        // Possono scrivermi (giro 9b): si scrive direttamente nel profilo
+      var v = e.target.value, prev = me.scrivermi || 'amici_amici', boxes = el.querySelectorAll('input[name="friScr"]');
+      Array.prototype.forEach.call(boxes, function (r) { r.disabled = true; });
+      try { await S.call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: { id: uid(), scrivermi: v } });
+        me.scrivermi = v; NL.toast(v === 'tutti' ? 'Ora possono scriverti tutti (chi non è tuo amico con una richiesta).' : v === 'amici' ? 'Ora possono scriverti solo i tuoi amici.' : 'Ora possono scriverti i tuoi amici e gli amici dei tuoi amici.'); }
+      catch (x) { Array.prototype.forEach.call(boxes, function (r) { r.checked = r.value === prev; }); NL.toast(nice(x)); }
+      Array.prototype.forEach.call(boxes, function (r) { r.disabled = false; });
+      return;
+    }
+    var k = { friWish: 'desideri', friLib: 'libreria', friAmici: 'amici', friRegali: 'regali', friPCit: 'p_cit', friPStat: 'p_stat', friPCits: 'p_cits', friPLet: 'p_let', friPPref: 'p_pref', friPCons: 'p_cons' }[e.target.id] || ''; if (!k) return;
     var on = e.target.checked, body = { id: uid() }; body[k] = on; e.target.disabled = true;
     try { await S.call('/rest/v1/profili?on_conflict=id', { method: 'POST', user: true, prefer: 'resolution=merge-duplicates,return=minimal', body: body });
       me[k] = on;
-      NL.toast(k === 'regali' ? (on ? 'Gli amici ora vedono i regali che prenoti.' : 'Gli amici ora vedono solo «Regalo prenotato».') : k === 'desideri' ? (on ? 'I tuoi amici ora vedono i tuoi desideri.' : 'I tuoi desideri ora sono solo tuoi.') : k === 'amici' ? (on ? 'I tuoi amici ora vedono chi sono i tuoi amici.' : 'I tuoi amici ora vedono solo gli amici in comune.') : (on ? 'I tuoi amici ora vedono la tua libreria.' : 'La tua libreria ora è solo tua.'));
-      if (on) S.run && S.run(false); }
+      NL.toast(k === 'p_let' ? (on ? 'Gli amici ora vedono cosa stai leggendo.' : 'Cosa stai leggendo ora è solo tuo.') : k === 'p_pref' ? (on ? 'Gli amici ora vedono i tuoi preferiti.' : 'I tuoi preferiti ora sono solo tuoi.') : k === 'p_cons' ? (on ? 'Gli amici ora vedono i libri che consigli.' : 'I libri che consigli ora non si vedono nel profilo.') : k === 'p_cit' ? (on ? 'Gli amici ora vedono le tue citazioni in evidenza.' : 'Le citazioni in evidenza ora sono solo tue.') : k === 'p_stat' ? (on ? 'Gli amici ora vedono i tuoi numeri.' : 'I tuoi numeri ora sono solo tuoi.') : k === 'p_cits' ? (on ? 'Gli amici ora vedono le tue citazioni.' : 'Le tue citazioni ora sono solo tue.') : k === 'regali' ? (on ? 'Gli amici ora vedono i regali che prenoti.' : 'Gli amici ora vedono solo «Regalo prenotato».') : k === 'desideri' ? (on ? 'I tuoi amici ora vedono i tuoi desideri.' : 'I tuoi desideri ora sono solo tuoi.') : k === 'amici' ? (on ? 'I tuoi amici ora vedono chi sono i tuoi amici.' : 'I tuoi amici ora vedono solo gli amici in comune.') : (on ? 'I tuoi amici ora vedono la tua libreria.' : 'La tua libreria ora è solo tua.'));
+      if (on) S.run && S.run(false); NL.emit && NL.emit('privacy', k); }
     catch (x) { e.target.checked = !on; NL.toast(nice(x)); }
     e.target.disabled = false;
   });
@@ -138,6 +147,9 @@ function relBtn(x) {
   if (x.rel === 'ricevuta') return '<button class="btn primary" type="button" data-f="yes" data-id="' + esc(x.id) + '">Accetta</button>';
   return '<button class="btn primary" type="button" data-f="ask" data-u="' + esc(x.utente) + '"' + (busy === x.utente ? ' disabled' : '') + '>Chiedi l\'amicizia</button>';
 }
+/* «Scrivi» (giro 9b): apre la chat con questa persona; il database decide se si può (amico, richiesta, «Possono scrivermi») */
+var I_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg>';
+function chatBtn(x) { var n = x.utente || x.nome || ''; return window.NLChat && x.id && x.id !== uid() ? '<button class="ico ch-to" type="button" data-f="chat" data-id="' + esc(x.id) + '" data-u="' + esc(n) + '" title="Scrivi a ' + esc(n) + '" aria-label="Scrivi a ' + esc(n) + '">' + I_CHAT + '</button>' : ''; }
 function row(x, btns) { return '<li class="fr-row"><span class="fr-who">' + nameOf(x) + '</span><span class="fr-act">' + btns + '</span></li>'; }
 function nameForm(first) {
   var v = first ? tidy(NL.name()).slice(0, 20) : me.utente;
@@ -176,23 +188,19 @@ function paint() {
     if (askIn.length) h += '<section class="fr-sec"><h3 class="fr-h">Ti chiedono in prestito <span class="fr-n">' + askIn.length + '</span></h3><ul class="fr-list">' + askIn.map(function (r) {
       return '<li class="fr-row fr-book">' + cover(r.libro || {}) + '<span class="fr-bk"><b>' + esc((r.libro && r.libro.t) || 'un libro') + '</b><small>Lo chiede ' + esc(r.nome_da || 'un amico') + '</small></span><span class="fr-act"><button class="btn" type="button" data-f="askno" data-id="' + esc(r.id) + '">No</button><button class="btn primary" type="button" data-f="askyes" data-id="' + esc(r.id) + '">Presta</button></span></li>';
     }).join('') + '</ul></section>';
-    if (tips.length) h += '<section class="fr-sec"><h3 class="fr-h">Consigliati dagli amici <span class="fr-n">' + tips.length + '</span></h3><ul class="fr-list">' + tips.map(function (c) {
-      var L0 = c.libro || {}, have = NL.isMine && NL.isMine({ t: L0.t || '', a: L0.a || '', i: L0.i || '' });
-      return '<li class="fr-row fr-book">' + cover(L0) + '<span class="fr-bk"><b>' + esc(L0.t || 'un libro') + '</b><small>' + esc(L0.a || '') + (L0.a ? ' · ' : '') + 'da ' + esc(c.nome_da || 'un amico') + '</small></span><span class="fr-act">' +
-        (have ? '<span class="fr-tag">Ce l\'hai già</span>' : '<button class="btn primary" type="button" data-f="tipwish" data-id="' + esc(c.id) + '">Ai desideri</button>') +
-        '<button class="link" type="button" data-f="tipdrop" data-id="' + esc(c.id) + '">Togli</button></span></li>';
-    }).join('') + '</ul></section>';
     h += '<section class="fr-sec"><h3 class="fr-h">I tuoi amici' + (fr.length ? ' <span class="fr-n">' + fr.length + '</span>' : '') + '</h3>';
     if (fr.length > 8) h += '<input type="search" class="fr-libq" data-pick-q placeholder="Cerca tra i tuoi amici" autocomplete="off" enterkeyhint="search">';
     h += fr.length ? '<ul class="fr-list fr-pick-list">' + fr.slice().sort(function (a, b) { return (a.utente || '').localeCompare(b.utente || '', 'it'); }).map(function (x) {
       var nn = nums[x.id] || {}, info = [];
       if (nn.comuni != null) info.push(nn.comuni + (nn.comuni === 1 ? ' amico' : ' amici') + ' in comune');
       if (nn.libri != null) info.push(nn.libri + (nn.libri === 1 ? ' libro' : ' libri') + ' in comune');
-      return '<li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="friend" data-id="' + esc(x.id) + '">' + nameOf(x) + '<small>' + esc(info.join(' · ') || 'Guarda la sua libreria') + '</small></button><span class="n" aria-hidden="true">›</span></li>';
-    }).join('') + '</ul>' : '<p class="fr-small">Ancora nessuno: cercalo per nome qui sotto, oppure mandagli il tuo invito.</p>';
+      return '<li class="fr-row fr-go fr-av">' + (window.NLProfilo ? window.NLProfilo.avatar(x.id, x.utente || x.nome) : '') + '<button class="fr-who fr-open" type="button" data-f="friend" data-id="' + esc(x.id) + '">' + nameOf(x) + '<small>' + esc(info.join(' · ') || 'Guarda il suo profilo') + '</small></button>' +
+        chatBtn(x) + ('segue' in x ? '<button class="fr-fol" type="button" data-f="segui" data-id="' + esc(x.id) + '" aria-pressed="' + !!x.segue + '" title="' + (x.segue ? 'Segui i suoi desideri: tocca per smettere' : 'Segui i suoi desideri: un riassunto al giorno') + '">' + (x.segue ? 'Segui ✓' : 'Segui') + '</button>' : '') + '<span class="n" aria-hidden="true">›</span></li>';
+    }).join('') + '</ul>' + (fr.some(function (x) { return 'segue' in x; }) ? '<p class="fr-small">«Segui»: un avviso al giorno quando aggiunge dei desideri, se li mostra agli amici. Non viene a saperlo.</p>' : '') : '<p class="fr-small">Ancora nessuno: cercalo per nome qui sotto, oppure mandagli il tuo invito.</p>';
     h += '</section>';
     h += '<section class="fr-sec"><h3 class="fr-h">Aggiungi un amico</h3><form id="friFormQ" class="fr-q"><input type="search" id="friQ" placeholder="Il suo nome" autocomplete="off" spellcheck="false" enterkeyhint="search" value="' + esc(foundQ && foundQ !== invite ? foundQ : '') + '"><button class="btn" type="submit">Cerca</button></form>';
-    if (found && foundQ && foundQ !== invite) h += found.length ? '<ul class="fr-list">' + found.map(function (x) { return row(x, relBtn(x)); }).join('') + '</ul>' : '<p class="fr-small">Nessuno con un nome così.</p>';
+    if (found && foundQ && foundQ !== invite) h += found.length ? '<ul class="fr-list">' + found.map(function (x) { return row(x, chatBtn(x) + relBtn(x)); }).join('') + '</ul>' : '<p class="fr-small">Nessuno con un nome così.</p>';
+    if (found && found.some(function (x) { return !x.rel; })) h += '<label class="check fr-wish fr-segui"><input type="checkbox" id="friSegui"' + (askFollow ? ' checked' : '') + '><span>Segui i suoi desideri<small>Quando sarete amici: un avviso al giorno se ne aggiunge e li mostra. Non viene a saperlo.</small></span></label>';
     if (err) h += '<p class="msg bad" id="friErr">' + esc(err) + '</p>';
     h += '<button class="btn fr-invite" type="button" data-f="invite">Invita un amico</button></section>';
     if (se.length) h += '<section class="fr-sec"><h3 class="fr-h">Richieste che hai mandato</h3><ul class="fr-list">' + se.map(function (x) {
@@ -228,19 +236,23 @@ async function onClick(e) {
   if (a === 'ask-drop') { confirmId = id; paint(); return; }
   if (a === 'opts') { opts = true; view = null; paint(); var si0 = document.querySelector('#friSheet .sheet-in'); if (si0) si0.scrollTop = 0; return; }
   if (a === 'optsback') { opts = false; paint(); return; }
-  if (a === 'friend') { close(); openGuest(id); return; }
-  if (a === 'tipwish' || a === 'tipdrop') { tipAct(a, id); return; }
+  if (a === 'friend') { close(); if (window.NLProfilo && window.NLProfilo.open) window.NLProfilo.open(id); else openGuest(id); return; }   // il nome apre il profilo; da lì Libreria e Desideri (giro 6)
+  if (a === 'chat') { close(); if (window.NLChat) { var cu = b.dataset.u; setTimeout(function () { window.NLChat.to(id, cu); }, 60); } return; }   // Scrivi (giro 9b)
+  if (a === 'blocked') { if (window.NLChat) window.NLChat.blocked(); return; }
   if (a === 'keyshare') { keySheet(id); return; }
   if (a === 'keyuse' || a === 'keyoff') { keyAct(a, id); return; }
   if (a === 'askyes' || a === 'askno') { askAnswer(id, a === 'askyes'); return; }
   if (a === 'back') { view = null; wishes = null; libs = null; confirmId = ''; paint(); return; }
   if (a === 'more') { libsShow += 30; var l = document.getElementById('friLibList'); if (l) l.innerHTML = libList(); return; }
   if (a === 'cancel') { confirmId = ''; paint(); return; }
+  if (a === 'segui') { follow(id, b.getAttribute('aria-pressed') !== 'true'); return; }
   b.disabled = true; err = '';
   try {
     if (a === 'ask') {
       busy = b.dataset.u;
-      var st = await rpc('chiedi_amicizia', { utente: b.dataset.u });
+      var fs = document.getElementById('friSegui'), st; askFollow = !!(fs && fs.checked);
+      try { st = await rpc('chiedi_amicizia', askFollow ? { utente: b.dataset.u, segui: true } : { utente: b.dataset.u }); }
+      catch (x0) { if (!askFollow || (x0 && x0.code === 'net')) throw x0; st = await rpc('chiedi_amicizia', { utente: b.dataset.u }); }   // database senza la 018
       NL.toast(st === 'amici' ? 'Ora siete amici.' : 'Richiesta mandata a ' + b.dataset.u + '.');
       if (invite && b.dataset.u.toLowerCase() === invite.toLowerCase()) { invite = null; wr(K_INV, null); }
       (found || []).forEach(function (x) { if (x.utente === b.dataset.u) x.rel = st === 'amici' ? 'amici' : 'inviata'; });
@@ -263,6 +275,17 @@ async function onClick(e) {
   } catch (x2) { err = nice(x2); }
   busy = '';
   await load(true);
+}
+/* seguire i desideri di un amico (giro 3): un riassunto al giorno, campanella e push; lui non lo sa */
+var askFollow = false;
+async function follow(id, on) {
+  var x = (list || []).filter(function (y) { return y.id === id; })[0];
+  try { await rpc('segui', { amico: id, si: !!on }); }
+  catch (e) { NL.toast(nice(e)); return false; }
+  if (x) x.segue = !!on;
+  NL.toast(on ? 'Segui i desideri di ' + friendName(id) + ': un avviso al giorno, se ne aggiunge.' : 'Non segui più i desideri di ' + friendName(id) + '.');
+  paint(); NL.emit && NL.emit('segui', id);
+  return true;
 }
 async function shareInvite() {
   if (!uid() || !me || !me.utente) { open(); return; }
@@ -296,10 +319,12 @@ function paintMenu() {
     var h = document.createElement('h3'); h.id = 'friMenuH'; h.textContent = 'Amici';
     m = document.createElement('div'); m.className = 'dlist dmenu'; m.id = 'friMenu';
     m.innerHTML = '<button type="button" class="dopt dgo" id="goFri"><span><b>I tuoi amici</b><small id="goFriTxt"></small></span><span class="n" aria-hidden="true">›</span></button>';   // «Invita» sta nella finestra Amici (17/11/2026)
-    var at = document.querySelector('#drawerOpts .ddon') || top;   // dopo Sostieni (Piero, 17/11/2026: Sostieni sopra Amici)
+    var at = document.querySelector('#drawerOpts .ddon') || top;   // Sostieni sempre al centro, sopra Amici (Piero, 18/11/2026)
     at.parentNode.insertBefore(h, at.nextSibling); h.parentNode.insertBefore(m, h.nextSibling);
     m.querySelector('#goFri').addEventListener('click', function () { NL.fromMenu(open); });
+    /* «Il mio profilo» sta in cima al Menu (giro 7, profilo.js) */
   }
+  ownKeyIco();   // «Chiave Google e worker» sotto «I tuoi amici» (18/11/2026)
   var t, rec = received().length, fr = friends().length;
   if (!uid()) t = 'Entra per trovare gli amici';
   else if (!me || !list) t = 'Richieste e amici';
@@ -394,9 +419,10 @@ async function openGuest(id) {
   catch (e) { NL.toast(nice(e)); return; }
   gMeta = {}; gId = id;
   var books = [];
-  (lb.libri || []).forEach(function (x) { gMeta[x.id] = { fuori: !!x.fuori, w: false }; books.push(Object.assign(snapG(x), { id: x.id, rs: x.rs || '', rt: x.rt || 0, rd: x.rd || '', pp: x.pp || '', ts: Number(x.ts) || 0, w: false })); });
+  (lb.libri || []).forEach(function (x) { gMeta[x.id] = { fuori: !!x.fuori, w: false, mio: !!x.mio }; books.push(Object.assign(snapG(x), { id: x.id, rs: x.rs || '', rt: x.rt || 0, rd: x.rd || '', pp: x.pp || '', ts: Number(x.ts) || 0, w: false }, x.mio ? { sk: 'p', sda: 'te' } : {})); });   // mio: glielo hai prestato tu, si vede anche con la libreria nascosta (giro 3)
   (ws.libri || []).forEach(function (x) { gMeta[x.id] = { w: true, prenotato: x.prenotato || '', preso: !!(x.preso || x.prenotato) }; books.push(Object.assign(snapG(x), { id: x.id, ts: Number(x.ts) || 0, w: true })); });
   var info = { id: id, comuni: lb.comuni, libVis: !!lb.visibili, wishVis: !!ws.visibili, totale: lb.totale || 0,
+    nMiei: (lb.libri || []).filter(function (x) { return x.mio; }).length,
     empty: { lib: lb.visibili ? name + ' non ha ancora libri nella sua libreria.' : name + ' non mostra la sua libreria agli amici.', wish: ws.visibili ? 'La sua lista dei desideri è vuota.' : name + ' non mostra i suoi desideri agli amici.' } };
   entering = true;   // passando da un amico all'altro l'uscita dal primo non deve azzerare gId e gMeta del secondo (17/11/2026)
   try { NL.guestEnter(name, books, info); } finally { entering = false; }
@@ -404,7 +430,8 @@ async function openGuest(id) {
 var entering = false;
 function guestBar() {
   var g = NL.guest && NL.guest(), bar = document.getElementById('guestBar');
-  if (!g) { if (bar) bar.hidden = true; ['guestKey', 'guestSwap', 'guestDrop'].forEach(function (i) { var k0 = document.getElementById(i); if (k0) k0.hidden = true; }); var m0 = document.querySelector('header.top .top-meta'); if (m0) m0.style.paddingRight = ''; return; }
+  if (g && NL.esempio && NL.esempio()) { if (bar) bar.hidden = true; return; }   // libreria di esempio della guida: la sua striscia la mette guida.js (giro 4)
+  if (!g) { if (bar) bar.hidden = true; ['guestKey', 'guestSwap', 'guestDrop'].forEach(function (i) { var k0 = document.getElementById(i); if (k0) k0.hidden = true; }); ownKeyIco(); return; }
   if (!bar) {
     var top = document.querySelector('header.top'); if (!top) return;
     bar = document.createElement('section'); bar.id = 'guestBar'; bar.className = 'guest-bar';
@@ -412,7 +439,7 @@ function guestBar() {
     bar.addEventListener('click', function (e) {
       var b = e.target.closest('[data-g]'); if (!b) return;
       if (b.dataset.g === 'back') NL.guestExit();
-      else if (b.dataset.g === 'notmine') NL.setFlt(NL.flt() === 'notmine' ? '' : 'notmine'), guestBar();
+      else if (b.dataset.g === 'notmine' || b.dataset.g === 'common') NL.setFlt(NL.flt() === b.dataset.g ? '' : b.dataset.g), guestBar();   // una esclude l'altra
       else if (b.dataset.g === 'more') openFriend(gId);
       else if (b.dataset.g === 'ff') openFF(gId);
       else if (b.dataset.g === 'key') keySheet(gId);
@@ -437,10 +464,12 @@ function guestBar() {
   if (last.length) h += '<p class="gb-line"><b>Letti di recente</b> ' + last.map(function (b) {
     var w = NL.L.rateWord ? NL.L.rateWord(b.rt) : ''; return '«' + esc(b.t || 'senza titolo') + '»' + (w ? ' <small>' + esc(w) + '</small>' : '');
   }).join(', ') + '</p>';
+  if (info.libVis === false && info.nMiei && t !== 'wish') h += '<p class="gb-line gb-note">' + gn + ' non mostra la sua libreria: qui vedi solo ' + (info.nMiei === 1 ? 'il libro che ha' : 'i libri che ha') + ' in prestito da te.</p>';
   h += '<div class="tabs gb-tabs" role="tablist" aria-label="Libri di ' + gn + '"><button type="button" role="tab" data-g="tab" data-t="lib" aria-selected="' + (t !== 'wish') + '">Libreria <span class="cnt">' + lib.length + '</span></button>' +
     '<button type="button" role="tab" data-g="tab" data-t="wish" aria-selected="' + (t === 'wish') + '">Desideri <span class="cnt">' + nW + '</span></button></div>';
   var own = ownKeys(), out = outKey(gId), fromHim = keys.filter(function (k) { return k.a === uid() && k.da === gId; })[0], b0 = borrowed();
-  h += '<div class="chips gb-chips">' + (lib.length && t !== 'wish' ? '<button type="button" class="chip todo" data-g="notmine" aria-pressed="' + (NL.flt() === 'notmine') + '">Solo quelli che non hai</button>' : '') +
+  h += '<div class="chips gb-chips">' + (lib.length && t !== 'wish' ? '<button type="button" class="chip todo" data-g="notmine" aria-pressed="' + (NL.flt() === 'notmine') + '">Solo quelli che non hai</button>' +
+      (inComune ? '<button type="button" class="chip todo" data-g="common" aria-pressed="' + (NL.flt() === 'common') + '">In comune</button>' : '') : '') +
     (fromHim && !(b0 && b0.da === gId) ? '<button type="button" class="chip todo" data-g="usekey">Usa la sua chiave</button>' : '') + '</div>';
   bar.innerHTML = h;
   /* icone in alto a destra, sulla riga «Libreria di …»: ⇄ prestiti e regali tra voi, poi chiave Google e worker (Piero, 17/11/2026) */
@@ -473,15 +502,34 @@ function guestBar() {
     dr.hidden = false; dr.title = dl; dr.setAttribute('aria-label', dl);
     dr.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 11h6"/></svg>';
   }
+  var ok0 = document.getElementById('ownKey'); if (ok0) ok0.hidden = true;
   if (meta && box) meta.style.paddingRight = (box.offsetWidth + 8) + 'px';   // il nome dell'amico va a capo, non sotto le icone
 }
+/* nella propria libreria (e nei Desideri): icona della chiave sempre in alto a destra sulla riga «Libreria di …»; apre la finestra della chiave,
+   accesa se hai chiave o worker (tuoi o prestati). Senza chiave: la finestra porta alla guida «Crea la tua chiave Google» (giro 1, 18/11/2026) */
+/* 18/11/2026 (Piero): la chiave esce dalla testata; sta in Impostazioni, nel Menu (sotto «I tuoi amici») e nel tuo profilo */
+function ownKeyIco() {
+  var kb0 = document.getElementById('ownKey'); if (kb0) kb0.remove();
+  if (!(NL.guest && NL.guest())) { var mt = document.querySelector('header.top .top-meta'); if (mt) mt.style.paddingRight = ''; }
+  var g = document.getElementById('goKeys');
+  if (!g) {
+    var fm = document.getElementById('friMenu'); if (!fm) return;
+    g = document.createElement('button'); g.type = 'button'; g.className = 'dopt dgo'; g.id = 'goKeys';
+    g.innerHTML = '<span><b>Chiave Google e worker</b><small id="goKeysTxt"></small></span><span class="n" aria-hidden="true">›</span>';
+    fm.appendChild(g); g.addEventListener('click', function () { NL.fromMenu(keyWin); });
+  }
+  var own = ownKeys(), b = borrowed(), on = !!(own.gb || own.sbn || (b && (b.gb || b.sbn)));
+  document.getElementById('goKeysTxt').textContent = on ? (own.gb || own.sbn ? 'Le tue, da prestare agli amici' : 'Prestate da un amico') : 'Crea la tua chiave, è gratis';
+}
+function okRefresh() { ownKeyIco(); }
+NL.on('keys', okRefresh); NL.on('optclose', okRefresh);
 NL.on('guest', function (name) { if (!name && entering) return; if (!name) { window.__guestInfo = null; } guestBar(); if (!name) { gId = null; gMeta = {}; load(true); } });
 /* le info della libreria aperta (amici in comune): le passa openGuest prima di entrare */
 var _enter = NL.guestEnter;
 if (_enter) NL.guestEnter = function (name, books, info) { window.__guestInfo = info; var r = _enter(name, books, info); guestBar(); return r; };
 /* sulla scheda di un suo libro: Aggiungi ai miei desideri / Ce l'hai anche tu / Me lo presti? / Te lo regalo io */
 function guestActs(el) {
-  if (!(NL.guest && NL.guest())) return;
+  if (!(NL.guest && NL.guest()) || (NL.esempio && NL.esempio())) return;
   var cards = el.matches && el.matches('.row.open') ? [el] : Array.prototype.slice.call(el.querySelectorAll ? el.querySelectorAll('.row.open') : []);
   cards.forEach(function (card) {
     var id = card.dataset.id, b = NL.get(id), m = gMeta[id] || {}; if (!b) return;
@@ -500,8 +548,9 @@ function guestActs(el) {
       top.insertBefore(wb, top.firstChild);
     }
     var h = '<p class="cvg-h">' + (m.w ? 'Desiderio di ' : 'Di ') + esc(NL.guest()) + '</p><div class="cvg-row">';
-    if (have) h += '<span class="fr-tag fr-mine">Ce l\'hai anche tu</span>';
-    if (!m.w) h += m.fuori ? '<span class="fr-tag">Adesso è in prestito</span>' : ask ? '<span class="fr-tag">Richiesta mandata</span><button type="button" class="link" data-g="unask" data-r="' + esc(ask.id) + '">Annulla</button>' : '<button type="button" class="btn primary" data-g="ask">Me lo presti?</button>';
+    if (have && !m.mio) h += '<span class="fr-tag fr-mine">Ce l\'hai anche tu</span>';
+    if (m.mio) h += '<span class="fr-tag fr-mine">Glielo hai prestato tu</span>';
+    else if (!m.w) h += m.fuori ? '<span class="fr-tag">Adesso è in prestito</span>' : ask ? '<span class="fr-tag">Richiesta mandata</span><button type="button" class="link" data-g="unask" data-r="' + esc(ask.id) + '">Annulla</button>' : '<button type="button" class="btn primary" data-g="ask">Me lo presti?</button>';
     if (m.w) h += m.prenotato === 'io' ? '<span class="fr-tag fr-mine">Lo regali tu</span><button type="button" class="link" data-g="ungift">Annulla</button>' : m.prenotato ? '<span class="fr-tag">Lo regala ' + esc(m.prenotato) + '</span>' : m.preso ? '<span class="fr-tag">Regalo prenotato</span>' : '<button type="button" class="btn primary" data-g="gift">Te lo regalo io</button>';
     h += '</div>' + (m.w && (m.prenotato === 'io' || !m.preso) ? '<p class="fr-small">' + esc(NL.guest()) + ' non vede chi gli farà un regalo; ' + (me && me.regali === false ? 'gli altri amici vedono solo «Regalo prenotato».' : 'gli altri amici vedono il tuo nome.') + '</p>' : '');
     var box = document.createElement('div'); box.className = 'cv-guest'; box.innerHTML = h;
@@ -560,17 +609,13 @@ function paintAsk() {
   document.getElementById('friAskT').textContent = (r[0].nome_da || 'Un amico') + ': «' + ((r[0].libro && r[0].libro.t) || 'un libro') + '»';
 }
 
-/* ---------- consigli: dalla condivisione di un libro, a un amico dell'app ---------- */
-async function tipAct(a, id) {
-  var c = tips.filter(function (x) { return x.id === id; })[0]; if (!c) return;
-  if (a === 'tipwish') { NL.addMine(Object.assign(snapG(c.libro || {}), { w: true, fr: c.nome_da || '' })); NL.toast('Aggiunto ai tuoi desideri.'); }
-  try { await rpc('togli_consiglio', { id: id }); } catch (e) { if (window.nlErr) nlErr(e); }
-  tips = tips.filter(function (x) { return x.id !== id; }); paint();
-}
-var shareSel = {};
-function paintShareFriends(books) {
+/* ---------- consigli (giro 9d): dalla finestra Condividi, ad amici e gruppi; arrivano solo in chat ---------- */
+var shareSel = {}, shareGrp = {};
+function chatGroups() { var C = window.NLChat; return C && C.state ? (C.state().chats || []).filter(function (c) { return c.tipo === 'gruppo' && c.stato !== 'chiusa'; }) : []; }
+function paintShareFriends(books, again) {
   var sh = document.getElementById('shareSheet'), form = document.getElementById('shareForm'); if (!sh || !form) return;
-  var fr = uid() ? friends() : [], one = books && books.length === 1 ? books[0] : null, app = !!(one && fr.length);
+  var fr = uid() ? friends() : [], grs = uid() ? chatGroups() : [], one = books && books.length === 1 ? books[0] : null, app = !!(one && (fr.length || grs.length));
+  if (!again && one && uid() && window.NLChat && window.NLChat.groups) window.NLChat.groups().then(function (g) { if (g.length !== grs.length && !sh.hidden) paintShareFriends(books, true); });
   var box = document.getElementById('shareFriBox'), ext = document.getElementById('shareExt');
   if (!box) {
     if (!app) return;
@@ -585,24 +630,39 @@ function paintShareFriends(books) {
     cl.addEventListener('click', function () { document.getElementById('shareClose').click(); });
     form.appendChild(cl);
     box.addEventListener('click', async function (e) {
-      var r = e.target.closest('[data-share]');
+      var r = e.target.closest('[data-share]'), g = e.target.closest('[data-shareg]');
       if (r) { var id = r.dataset.share; shareSel[id] = !shareSel[id]; r.setAttribute('aria-pressed', shareSel[id] ? 'true' : 'false'); goBtn(); return; }
-      if (!e.target.closest('#shareAppGo') || !box.__b) return;
-      var ids = Object.keys(shareSel).filter(function (k) { return shareSel[k]; }); if (!ids.length) return;
-      var go = document.getElementById('shareAppGo'); go.disabled = true; go.textContent = 'Mando…';
-      var ok = 0;
-      for (var i = 0; i < ids.length; i++) { try { await rpc('consiglia', { a: ids[i], libro: snap(box.__b) }); ok++; } catch (x) { NL.toast(nice(x)); } }
-      if (ok) { NL.toast(ok === 1 ? 'Consigliato ' + aChi(friendName(ids[0])) + ': lo trova nella sua app.' : 'Consigliato a ' + ok + ' amici: lo trovano nella loro app.'); document.getElementById('shareClose').click(); }
-      else { go.disabled = false; goBtn(); }
+      if (g) { var gid = g.dataset.shareg; shareGrp[gid] = !shareGrp[gid]; g.setAttribute('aria-pressed', shareGrp[gid] ? 'true' : 'false'); goBtn(); return; }
+      if (!e.target.closest('#shareAppGo') || !box.__b || !window.NLChat) return;
+      var ids = picked(shareSel), gids = picked(shareGrp); if (!ids.length && !gids.length) return;
+      var go = document.getElementById('shareAppGo'), t = document.getElementById('shareTipTxt'); go.disabled = true; go.textContent = 'Mando…';
+      var res = await window.NLChat.recommend(box.__b, ids, gids, t ? t.value.trim() : '');
+      if (res.err) NL.toast(res.err);
+      if (res.ok) {
+        var n = ids.length + gids.length;
+        NL.toast(n === 1 ? 'Consigliato ' + (ids.length ? aChi(friendName(ids[0])) : 'nel gruppo') + ': lo trova nella chat.' : 'Consigliato in ' + res.ok + ' chat: lo trovano lì.');
+        document.getElementById('shareClose').click();
+      } else goBtn();
     });
   }
-  function goBtn() { var n = Object.keys(shareSel).filter(function (k) { return shareSel[k]; }).length, g = document.getElementById('shareAppGo'); if (!g) return; g.disabled = !n; g.textContent = n > 1 ? 'Consiglia a ' + n + ' amici' : 'Consiglia'; }
+  function picked(o) { return Object.keys(o).filter(function (k) { return o[k]; }); }
+  function goBtn() { var n = picked(shareSel).length + picked(shareGrp).length, g = document.getElementById('shareAppGo'); if (!g) return; g.disabled = !n; g.textContent = n > 1 ? 'Consiglia (' + n + ')' : 'Consiglia'; }
   box.hidden = !app; document.getElementById('shareAppClose').hidden = !app;
   ext.open = !app; ext.classList.toggle('only', !app);
   if (!app) return;
-  shareSel = {}; box.__b = one;
-  box.innerHTML = '<h3 class="fr-h">Consiglialo a un amico</h3><p class="fr-small">Lo trova nella sua app di Next Libris, tra i consigliati: niente link da mandare.</p>' +
-    pickerHTML(fr, 'data-share', function () { return false; }, null) + '<button class="btn primary" type="button" id="shareAppGo" disabled>Consiglia</button>';
+  var txt = again && document.getElementById('shareTipTxt') ? document.getElementById('shareTipTxt').value : '';
+  if (!again) { shareSel = {}; shareGrp = {}; }
+  box.__b = one;
+  var gAv = window.NLChat && window.NLChat.grpAv;
+  box.innerHTML = '<h3 class="fr-h">Consiglialo</h3><p class="fr-small">Arriva nella chat con l\'amico o nel gruppo che scegli: niente link da mandare.</p>' +
+    (fr.length ? (grs.length ? '<p class="share-sub">Amici</p>' : '') + pickerHTML(fr, 'data-share', function (x) { return !!shareSel[x.id]; }, null) : '') +
+    (grs.length ? '<p class="share-sub">Gruppi</p><div class="fr-pick"><div class="fr-pick-list" role="list">' + grs.slice().sort(function (a, b) { return (a.nome || '').localeCompare(b.nome || '', 'it'); }).map(function (c) {
+      return '<button type="button" class="fr-pick-row" data-shareg="' + esc(c.id) + '" aria-pressed="' + (shareGrp[c.id] ? 'true' : 'false') + '">' + (gAv ? gAv(c.nome) : '') + '<span class="fr-pick-n">' + esc(c.nome || 'Gruppo') + (c.membri ? '<small>' + c.membri + ' persone</small>' : '') + '</span><span class="fr-pick-c" aria-hidden="true"></span></button>';
+    }).join('') + '</div></div>' : '') +
+    '<textarea id="shareTipTxt" class="share-tip" rows="2" maxlength="1000" placeholder="Due righe sul perché (facoltativo)" aria-label="Due righe sul perché"></textarea>' +
+    '<button class="btn primary" type="button" id="shareAppGo" disabled>Consiglia</button>';
+  document.getElementById('shareTipTxt').value = txt;
+  goBtn();
 }
 NL.on('share', function (ev) { paintShareFriends(ev && ev.books); });
 
@@ -623,10 +683,12 @@ function whoActs(el) {
     var box = document.createElement('div'); box.className = 'cv-guest cv-who';
     box.innerHTML = '<p class="cvg-h">Ce l\'hanno i tuoi amici</p>' + who[b.i].map(function (x) {
       var ask = asks.filter(function (r) { return r.da === uid() && r.a === x.amico && r.libro_id === x.libro_id && r.stato === 'attesa'; })[0];
-      return '<div class="cvg-row"><b>' + esc(x.utente) + '</b>' + (x.fuori ? '<span class="fr-tag">Adesso è in prestito</span>' : ask ? '<span class="fr-tag">Richiesta mandata</span>' : '<button type="button" class="btn primary" data-w="' + esc(x.amico) + '" data-l="' + esc(x.libro_id) + '">Me lo presti?</button>') + '</div>';
+      return '<div class="cvg-row"><b>' + esc(x.utente) + '</b>' + chatBtn({ id: x.amico, utente: x.utente }) + (x.fuori ? '<span class="fr-tag">Adesso è in prestito</span>' : ask ? '<span class="fr-tag">Richiesta mandata</span>' : '<button type="button" class="btn primary" data-w="' + esc(x.amico) + '" data-l="' + esc(x.libro_id) + '">Me lo presti?</button>') + '</div>';
     }).join('');
     box.addEventListener('click', async function (e) {
-      e.stopPropagation(); var x = e.target.closest('[data-w]'); if (!x) return; x.disabled = true;
+      e.stopPropagation();
+      var c = e.target.closest('[data-f="chat"]'); if (c) { if (window.NLChat) window.NLChat.to(c.dataset.id, c.dataset.u); return; }   // Scrivi (giro 9b)
+      var x = e.target.closest('[data-w]'); if (!x) return; x.disabled = true;
       try { await rpc('chiedi_prestito', { amico: x.dataset.w, libro_id: x.dataset.l }); asks = (await rpc('mie_richieste')) || []; NL.toast('Richiesta mandata.'); }
       catch (y) { NL.toast(nice(y)); }
       NL.refreshRow(card.dataset.id);
@@ -634,6 +696,48 @@ function whoActs(el) {
     card.appendChild(box);
   });
 }
+
+/* ---------- «Ce l'ha già Marta» (giro 6): aggiungi un desiderio e un amico che mostra la libreria ha già quel libro.
+   Avvisa soltanto: il libro resta nei Desideri. Stesso libro = stesso ISBN, oppure stesso titolo e autore (lo decide il database, chi_ha). ---------- */
+var wishSeen = null, wishWait = {}, wishT = 0;
+function wishList() { return mine().filter(function (b) { return b.w; }); }
+function wishBase() { wishSeen = {}; wishList().forEach(function (b) { wishSeen[b.id] = 1; }); }
+try { wishBase(); } catch (e) { wishSeen = null; }
+function wishCheck() {
+  if (!wishSeen) { wishBase(); return; }
+  var now = Date.now(), ospite = !!(NL.guest && NL.guest());
+  wishList().forEach(function (b) {
+    if (wishSeen[b.id]) return;
+    wishSeen[b.id] = 1;
+    if (!ospite && now - (Number(b.ts) || 0) < 600000) wishWait[b.id] = now;      // solo i desideri appena aggiunti, non quelli presi dalla libreria di un amico
+  });
+  if (!uid() || !list || !list.some(function (x) { return x.stato === 'amici'; })) { wishWait = {}; return; }
+  var ids = Object.keys(wishWait); if (!ids.length) return;
+  if (ids.length > 3) { wishWait = {}; return; }                                   // tanti insieme: arrivano da un altro telefono o da un file
+  var again = false;
+  ids.forEach(function (id) {
+    var b = NL.get(id);
+    if (!b || !b.w) { delete wishWait[id]; return; }
+    if (!b.t && now - wishWait[id] < 20000) { again = true; return; }             // sta ancora cercando il titolo: aspetto un po'
+    delete wishWait[id];
+    if (b.t || b.i) wishAsk(b);
+  });
+  if (again) { clearTimeout(wishT); wishT = setTimeout(wishCheck, 5000); }
+}
+async function wishAsk(b) {
+  var r;
+  try { r = (await rpc('chi_ha', { titolo: b.t || '', autore: b.a || '', isbn: b.i || '' })) || []; } catch (e) { return; }   // senza rete o database senza la 019: niente avviso
+  var by = {}, nomi = [];
+  r.forEach(function (x) { if (!by[x.amico]) { by[x.amico] = x; nomi.push(x.utente || 'un amico'); } });
+  if (!nomi.length || !NL.get(b.id) || !NL.get(b.id).w) return;
+  if (nomi.length === 1) {
+    var x = r[0], gia = asks.some(function (q) { return q.da === uid() && q.a === x.amico && q.libro_id === x.libro_id && q.stato === 'attesa'; });
+    NL.toast('Ce l\'ha già ' + nomi[0] + (x.fuori ? ' (adesso è in prestito)' : '') + '. Resta nei tuoi Desideri.', x.fuori || gia ? undefined : { label: 'Me lo presti?', fn: async function () {
+      try { await rpc('chiedi_prestito', { amico: x.amico, libro_id: x.libro_id }); asks = (await rpc('mie_richieste')) || []; NL.toast('Richiesta mandata a ' + nomi[0] + '.'); } catch (e) { NL.toast(nice(e)); }
+    }  }, 6000);
+  } else NL.toast('Ce l\'hanno già ' + nomi[0] + ' e ' + (nomi.length === 2 ? nomi[1] : 'altri ' + (nomi.length - 1) + ' amici') + '. Resta nei tuoi Desideri.');
+}
+NL.on('saved', function () { clearTimeout(wishT); wishT = setTimeout(wishCheck, 1500); });
 
 /* ---------- Impostazioni degli amici: nome, chi vede cosa, chiave e worker ---------- */
 function optsView() {
@@ -643,6 +747,20 @@ function optsView() {
     '<label class="check fr-wish"><input type="checkbox" id="friWish"' + (me.desideri ? ' checked' : '') + '><span>Gli amici vedono i miei desideri<small>Così sanno cosa regalarti; chi ti farà un regalo resta una sorpresa.</small></span></label>' +
     '<label class="check fr-wish"><input type="checkbox" id="friRegali"' + (me.regali !== false ? ' checked' : '') + '><span>Gli amici vedono i regali che prenoto<small>Quando dici «Te lo regalo io», gli altri amici vedono il tuo nome. Se la togli vedono solo «Regalo prenotato». Il festeggiato non lo vede mai.</small></span></label>' +
     '<label class="check fr-wish"><input type="checkbox" id="friAmici"' + (me.amici !== false ? ' checked' : '') + '><span>Gli amici vedono i miei amici<small>Solo i nomi, così trovate altri amici e possono chiedervi l\'amicizia. Se la togli, vedono solo gli amici che avete in comune.</small></span></label></div></section>';
+  if ('p_cit' in me) h += '<section class="fr-sec"><h3 class="fr-h">Nel tuo profilo</h3><div class="fr-share"><p class="fr-small">La tua foto la vedono solo gli amici. Il resto è acceso di partenza, tranne tutte le citazioni: togli quello che non vuoi mostrare.</p>' +
+    ('p_let' in me ? '<label class="check fr-wish"><input type="checkbox" id="friPLet"' + (me.p_let !== false ? ' checked' : '') + '><span>Gli amici vedono cosa sto leggendo<small>I libri «In lettura». Solo se vedono anche la libreria.</small></span></label>' +
+    '<label class="check fr-wish"><input type="checkbox" id="friPCons"' + (me.p_cons !== false ? ' checked' : '') + '><span>Gli amici vedono i libri che consiglio<small>Quelli con la stella «Lo consiglio». Solo se vedono anche la libreria.</small></span></label>' : '') +
+    '<label class="check fr-wish"><input type="checkbox" id="friPCit"' + (me.p_cit ? ' checked' : '') + '><span>Gli amici vedono le mie citazioni in evidenza<small>Quelle con la puntina (fino a 3), con titolo e autore del libro.</small></span></label>' +
+    '<label class="check fr-wish"><input type="checkbox" id="friPStat"' + (me.p_stat ? ' checked' : '') + '><span>Gli amici vedono i miei numeri<small>Libri e pagine lette, autore e genere più letti, paesi, libri prestati. Solo se vedono anche la libreria.</small></span></label>' +
+    '<label class="check fr-wish"><input type="checkbox" id="friPCits"' + (me.p_cits ? ' checked' : '') + '><span>Gli amici vedono tutte le mie citazioni<small>Il testo, la pagina e il libro. Mai gli appunti né le foto delle pagine.</small></span></label></div></section>';
+  if ('scrivermi' in me && window.NLChat) {                 // chat (giro 9b): chi può scrivermi; di partenza gli amici degli amici
+    var sc = me.scrivermi || 'amici_amici';
+    h += '<section class="fr-sec"><h3 class="fr-h">Chat</h3><fieldset class="choice fr-scr"><legend>Possono scrivermi</legend>' +
+      [['tutti', 'Tutti', 'Chi non è tuo amico ti manda prima una richiesta: decidi tu se accettarla.'], ['amici_amici', 'Gli amici dei miei amici', 'Anche loro con una richiesta. È la scelta di partenza.'], ['amici', 'Solo i miei amici', '']].map(function (o) {
+        return '<label class="check"><input type="radio" name="friScr" value="' + o[0] + '"' + (sc === o[0] ? ' checked' : '') + '><span>' + o[1] + (o[2] ? '<small>' + o[2] + '</small>' : '') + '</span></label>';
+      }).join('') + '</fieldset>' +
+      '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="blocked">Persone bloccate<small>Non ti trovano e non possono scriverti</small></button><span class="n" aria-hidden="true">›</span></li></ul></section>';
+  }
   h += keysHTML(true);
   h += '<p class="fr-small">Gli altri vedono solo il tuo nome. Il resto, solo se lo scegli qui.</p>';
   return h;
@@ -672,13 +790,13 @@ function ffView() {
   var com = all.filter(function (x) { return x.comune; }), oth = all.filter(function (x) { return !x.comune; });
   h += '<section class="fr-sec"><h3 class="fr-h">In comune' + (com.length ? ' <span class="fr-n">' + com.length + '</span>' : '') + '</h3>';
   h += com.length ? '<ul class="fr-list fr-box">' + com.map(function (x) {
-    return '<li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="friend" data-id="' + esc(x.id) + '">' + nameOf(x) + '<small>Guarda la sua libreria</small></button><span class="n" aria-hidden="true">›</span></li>';
+    return '<li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="friend" data-id="' + esc(x.id) + '">' + nameOf(x) + '<small>' + (window.NLProfilo ? 'Guarda il suo profilo' : 'Guarda la sua libreria') + '</small></button><span class="n" aria-hidden="true">›</span></li>';
   }).join('') + '</ul>' : '<p class="fr-small">Nessun amico in comune.</p>';
   h += '</section>';
   if (ff.visibili) {
     h += '<section class="fr-sec"><h3 class="fr-h">Altri amici di ' + esc(n) + (oth.length ? ' <span class="fr-n">' + oth.length + '</span>' : '') + '</h3>';
     if (oth.length > 8) h += '<input type="search" class="fr-libq" data-pick-q placeholder="Cerca tra i suoi amici" autocomplete="off" enterkeyhint="search">';
-    h += oth.length ? '<ul class="fr-list">' + oth.map(function (x) { return row(x, relBtn(x)); }).join('') + '</ul>' : '<p class="fr-small">Nessun altro.</p>';
+    h += oth.length ? '<ul class="fr-list">' + oth.map(function (x) { return row(x, chatBtn(x) + relBtn(x)); }).join('') + '</ul>' : '<p class="fr-small">Nessun altro.</p>';
     h += '</section>';
   } else h += '<p class="fr-small">' + esc(n) + ' mostra solo gli amici che avete in comune.</p>';
   if (err) h += '<p class="msg bad" id="friErr">' + esc(err) + '</p>';
@@ -707,8 +825,10 @@ function ownKeys() {   // le tue, anche mentre usi quelle di un amico (tenute da
 function keysInner(full) {
   var own = ownKeys(), fr = friends(), out = keys.filter(function (k) { return k.da === uid(); }), inn = keys.filter(function (k) { return k.a === uid(); }), b = borrowed(), h = '';
   if ((own.gb || own.sbn) && fr.length) {
-    h += '<p class="fr-small">Presta ' + (own.gb && own.sbn ? 'la tua chiave API di Google Libri e il tuo worker SBN' : own.gb ? 'la tua chiave API di Google Libri' : 'il tuo worker SBN') + ' a un amico: li usate tutti e due e trova più libri. Tocca un amico per scegliere cosa prestare o per smettere.</p>' +
-      pickerHTML(fr, 'data-f="keyshare" data-id', function (x) { return !!outKey(x.id); }, function (x) { var k = outKey(x.id); return k ? lentLabel(k) : ''; });
+    h += '<p class="fr-small">Prestarli non ti costa niente e puoi smettere quando vuoi. Tocca un amico per scegliere cosa prestargli.</p>' +   // testo approvato (giro 5)
+      pickerHTML(fr, 'data-f="keyshare" data-id', function (x) { return !!outKey(x.id); }, function (x) { var k = outKey(x.id); return k ? lentLabel(k) : ''; }) +
+      '<p class="fr-small kw-n">' + lentText(lentCount()) + '.</p>' +
+      '<p class="fr-small kw-uff">Incolla la chiave solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>';   // indirizzo ufficiale (Piero, 18/11/2026)
   }
   inn.forEach(function (k) {
     var using = b && b.da === k.da, what = k.gb_key && k.sbn ? 'la sua chiave Google e il worker SBN' : k.gb_key ? 'la sua chiave Google' : 'il suo worker SBN';
@@ -718,6 +838,8 @@ function keysInner(full) {
   if (!h && full) h = '<p class="fr-small">Non hai ancora una chiave Google o un worker SBN da condividere: si impostano in Menu › Impostazioni › Ricerca dei libri. Se un amico condivide i suoi con te, li trovi qui.</p>';
   return h;
 }
+function lentCount() { var m = {}; keys.forEach(function (k) { if (k.da === uid()) m[k.a] = 1; }); return Object.keys(m).length; }   // amici a cui presti (chi la riceve con il link non si conta; giro 5)
+function lentText(n) { return n === 0 ? 'Non la usa ancora nessun amico' : n === 1 ? 'La usa 1 amico' : 'La usano ' + n + ' amici'; }
 function keysHTML(full) { var h = keysInner(full); return h ? '<section class="fr-sec" id="friKeys"><h3 class="fr-h">Chiave Google e worker SBN</h3>' + h + '</section>' : ''; }
 
 /* ---------- finestra «Chiave Google e worker» (da Condivisione; Piero, 16/11/2026): solo la chiave, e chiudendo torni dove eri ---------- */
@@ -735,7 +857,6 @@ function kwSheet() {
     var b = e.target.closest && e.target.closest('[data-kw]'); if (!b) return;
     var k = b.dataset.kw;
     if (k === 'login') { shut(); S.open(); }
-    else if (k === 'link') { shut(); NL.svcShare && NL.svcShare(); }
     else if (k === 'guide') { var R = window.NLRicerche; if (R && R.guide) R.guide(true); }
     else if (k === 'friends') { shut(); NL.closeDrawer && NL.closeDrawer(); open(); }
   });
@@ -745,21 +866,18 @@ function kwSheet() {
 function kwRow(k, t, sub) { return '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-kw="' + k + '">' + esc(t) + '<small>' + esc(sub) + '</small></button><span class="n" aria-hidden="true">›</span></li></ul>'; }
 function paintKw() {
   var el = document.getElementById('kwSheet'), body = document.getElementById('kwBody'); if (!el || el.hidden || !body) return;
-  var own = ownKeys(), b = borrowed(), h = '';
+  var own = ownKeys(), b = borrowed(), h = '', intro = '<p class="fr-small kw-intro">Una chiave Google Libri fa 1.000 ricerche al giorno. Con un uso normale bastano per te e per decine di amici. Il primo giorno, quando un amico carica la sua libreria, ne consuma di più: puoi aiutare fino a <b>6 amici nuovi al giorno</b> (50 libri ciascuno). Il worker ne regge migliaia.</p>';   // testo approvato (giro 5)
   if (!uid()) {
     h = '<p class="fr-small">Per prestarli agli amici, o per usare quelli che un amico ti presta, serve l\'account.</p><button class="btn primary" type="button" data-kw="login">Entra con il tuo account</button>';
-    if (own.gb || own.sbn) h += kwRow('link', 'Manda con un link', 'A chi usa Next Libris senza account.');
   } else if (!list) {
     h = '<p class="fr-small">' + (err ? esc(err) : 'Un momento…') + '</p>';
-    if (own.gb || own.sbn) h += kwRow('link', 'Manda con un link', 'A chi non è tra i tuoi amici su Next Libris.');
   } else {
     h = keysInner(false);
     if ((own.gb || own.sbn) && !friends().length) h += '<p class="fr-small">Per prestarli serve almeno un amico su Next Libris.</p>' + kwRow('friends', 'Aggiungi un amico', 'Cercalo per nome o mandagli il tuo invito.');
     if (!h) h = '<p class="fr-small">Non hai ancora una chiave Google o un worker SBN tuoi. Se un amico ti presta i suoi, li trovi qui.</p>';
-    if (own.gb || own.sbn) h += kwRow('link', 'Manda con un link', 'A chi non è tra i tuoi amici su Next Libris.');
   }
   if (!own.gb) h += kwRow('guide', 'Crea la tua chiave Google', 'È gratis: 1.000 ricerche al giorno solo per te.');
-  body.innerHTML = h;
+  body.innerHTML = intro + h;
 }
 function keyWin() {
   var el = kwSheet(); document.body.appendChild(el); el.hidden = false; paintKw();
@@ -878,7 +996,7 @@ function keySheet(id) {
   document.body.appendChild(el);   // sopra la finestra da cui si apre
   document.getElementById('keyH').textContent = 'Presta a ' + friendName(id);
   document.getElementById('keyOpts').innerHTML =
-    opt('keyGb', cur ? cur.gb : true, !!own.gb, 'Chiave API di Google Libri', 'Più libri trovati, con copertina e descrizione.') +
+    opt('keyGb', cur ? cur.gb : true, !!own.gb, 'Chiave API di Google Libri', 'Più libri trovati, con copertina e descrizione. Resta al sicuro: l\'amico non la vede e può fare 300 ricerche al giorno.') +
     opt('keySbn', cur ? cur.sbn : true, !!own.sbn, 'Worker SBN', 'Cerca nel catalogo delle biblioteche italiane.');
   keyBtn();
   el.hidden = false;
@@ -928,6 +1046,15 @@ function ownPart(p) {
   paintKw(); NL.emit && NL.emit('keys');
   return mine;
 }
+/* giro 8: la chiave prestata resta sul server. Se cambi la tua chiave (anche dopo «La mia chiave è finita in giro»), il server la
+   aggiorna per tutti gli amici a cui la presti; se chi te la prestava ha smesso, il server lo dice (lentGone) e si rileggono le chiavi. */
+NL.on('ownkey', function (v) {
+  if (!uid() || !keys.some(function (k) { return k.da === uid() && k.gb_key; })) return;
+  rpc('chiavi_aggiorna', { gb_key: v }).then(function (n) { if (n) NL.toast('Chiave aggiornata anche per gli amici a cui la presti.'); })
+    .catch(function (e) { NL.toast('Non riesco ad aggiornare la chiave per gli amici: ' + nice(e)); });
+});
+var goneAt = 0;
+NL.on('lentGone', function () { if (Date.now() - goneAt < 60000) return; goneAt = Date.now(); load(true); });
 function checkKeys() {
   var b = borrowed(), inn = keys.filter(function (k) { return k.a === uid(); });
   if (b) {
@@ -1103,7 +1230,9 @@ S.onAuth(function () {
 });
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && uid() && Date.now() - lastLoad > 60000) load(true); });
 setInterval(function () { if (document.visibilityState === 'visible' && uid() && !loading && Date.now() - lastLoad > 170000) load(true); }, 60000);   // richieste e avvisi senza chiudere l'app
-paintTop();
+paintTop(); okRefresh();
 if (uid()) setTimeout(function () { load(true); }, 1500);
-window.NLAmici = { ownPart: ownPart, open: open, ff: openFF, keys: keyWin, offers: function () { var b = borrowed(); return keys.filter(function (k) { return k.a === uid() && !(b && b.da === k.da); }).map(function (k) { return { nome: k.nome, gb: !!k.gb_key, sbn: !!k.sbn }; }); }, load: load, onLoad: function (fn) { loaded.push(fn); }, friend: openFriend, guest: openGuest, state: function () { return { me: me, list: list, invite: invite, swaps: swaps, asks: asks, tips: tips, keys: keys, who: who }; } };   // per le prove
+window.NLAmici = { ownPart: ownPart, open: open, ff: openFF, keys: keyWin, lentCount: function () { return uid() && list ? lentCount() : -1; }, lentText: lentText, offers: function () { var b = borrowed(); return keys.filter(function (k) { return k.a === uid() && !(b && b.da === k.da); }).map(function (k) { return { nome: k.nome, gb: !!k.gb_key, sbn: !!k.sbn }; }); }, load: load, onLoad: function (fn) { loaded.push(fn); }, friend: openFriend, guest: openGuest, swapSheet: swapSheet, keySheet: keySheet, dropSheet: dropSheet, nums: function (id) { return nums[id] || null; },
+  acts: function (id) { var own = ownKeys(); return { swap: swapsWith(id).length > 0, key: !!(own.gb || own.sbn), lent: outKey(id) ? lentLabel(outKey(id)) : '' }; },   // icone del profilo dell'amico (giro 6)
+  guestId: function () { return NL.guest && NL.guest() ? gId : null; }, follow: follow, friendName: friendName, rpc: rpc, uid: uid, state: function () { return { me: me, list: list, invite: invite, swaps: swaps, asks: asks, keys: keys, who: who }; } };   // per le prove
 })();

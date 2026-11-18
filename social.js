@@ -77,6 +77,8 @@ async function token() {
   setAuth(j);
   return auth.at;
 }
+/* richiesta con l'accesso dell'utente che restituisce la risposta così com'è (stato e intestazioni): per la funzione «libri» (giro 8) */
+async function raw(path) { return fetch(CFG.url + path, { headers: { apikey: CFG.key, Authorization: 'Bearer ' + (await token()) }, cache: 'no-store' }); }
 var authFns = [];                                    // moduli che vogliono sapere quando si entra o si esce (amici.js)
 function authChanged() { authFns.forEach(function (f) { try { f(auth); } catch (e) { if (window.nlErr) nlErr(e); } }); }
 function setAuth(j) {
@@ -445,5 +447,5 @@ document.addEventListener('visibilitychange', function () { if (document.visibil
 if (/(access_token|error_code)=/.test(location.hash)) fromLink(); else if (auth) schedule(1500);
 window.addEventListener('hashchange', function () { if (/(access_token|error_code)=/.test(location.hash)) fromLink(); });   // link aperto nella stessa scheda dell'app
 window.NLSocial = { run: run, open: open, state: function () { return { auth: auth, sync: sync, busy: !!busy, err: lastErr }; }, hash: hash,   // per le prove
-  call: call, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home };   // per gli altri moduli (amici.js)
+  call: call, raw: raw, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home };   // per gli altri moduli (amici.js)
 })();

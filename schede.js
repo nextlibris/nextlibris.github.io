@@ -30,14 +30,14 @@ function doD(card, id) {
   dActs(card);
   if (!b.t) { card.classList.add('cv-edit'); return; }   // senza titolo (da completare): i campi, nella stessa disposizione di «Modifica» (Piero, 17/11/2026: su PC era sballata)
   if (editing[id]) { card.classList.add('cv-edit'); addDone(card, id); return; }
-  var img = NL.bigImg(b), dati = [b.e, b.y, b.pg ? b.pg + ' pagine' : '', b.c != null ? NL.eur(b.c) : ''].filter(Boolean);
+  var img = NL.bigImg(b), dati = [b.e, b.y, b.pg ? b.pg + ' pagine' : ''].filter(Boolean);
   var names = NL.authorsOf(b);
   var v = document.createElement('div'); v.className = 'cv-page';
   /* copertina: toccandola si ingrandisce (come nella scheda classica); senza copertina, la cerca online o la fotografi */
   v.innerHTML = '<div class="cv-hero">' + (img ? '<button type="button" class="cv-cov" data-act="zoom" aria-label="Ingrandisci la copertina" title="Ingrandisci la copertina"><img src="' + esc(img) + '" alt="" referrerpolicy="no-referrer"></button>' :
       '<button type="button" class="cv-cov cv-ph" data-act="coverphoto" style="--h:' + NL.hue(b.t + b.a + b.i) + '" title="Cerca la copertina online; se non c\'è, la fotografi" aria-label="Aggiungi la copertina"><span>' + esc(b.t.slice(0, 1)) + '</span><small>' + NL.icon('cam') + 'Copertina</small></button>') +
     '<div class="cv-ht"><h3>' + esc(b.t) + '</h3>' +
-    (names.length ? '<p class="cv-au">' + names.map(function (n) { return '<button type="button" class="au-name" data-act="auinfo" data-n="' + esc(n) + '" title="Chi è ' + esc(n) + '">' + esc(n) + '</button>'; }).join('<span class="au-sep">, </span>') + '</p>' : '') +
+    (names.length ? '<p class="cv-au">' + names.map(function (n) { return '<button type="button" class="au-name" data-act="auinfo" data-n="' + esc(n) + '" title="Info Autore: ' + esc(n) + '">' + esc(n) + '</button>'; }).join('<span class="au-sep">, </span>') + '</p>' : '') +
     (dati.length ? '<p class="cv-meta">' + esc(dati.join(' · ')) + '</p>' : '') + '</div></div>' +
     '<div class="cv-chips"></div>' +
     (b.n ? '<p class="cv-note">' + esc(b.n) + '</p>' : '');
@@ -102,7 +102,7 @@ function doD(card, id) {
 }
 function dActs(card) {                            // in alto, solo icone: preferito, desideri, condividi, elimina; in fondo, con la scritta: presta, cerca sul web
   var main = q(card, '.acts-main'); if (!main) return;
-  var share = q(card, '.foot .tail [data-act="share"]'), del = q(main, '[data-act="del"]'), move = q(main, '[data-act="towish"], [data-act="tolib"]'), fav = q(main, '[data-act="fav"]');
+  var share = q(card, '.foot .tail [data-act="share"]'), del = q(main, '[data-act="del"]'), move = q(main, '[data-act="towish"], [data-act="tolib"]'), fav = q(main, '[data-act="lc"]') || q(main, '[data-act="fav"]');   // stella, coccarda, desideri (giro 6)
   if (move) main.insertBefore(move, fav ? fav.nextSibling : main.firstChild);
   if (share) main.insertBefore(share, del || null);
   var id = card.dataset.id, b = NL.get(id);
