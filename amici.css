@@ -183,3 +183,9 @@ html:not(.guest) header.top .top-meta .gb-icos{top:-8px;margin-top:0}
 /* togli dagli amici: in rosso, nella libreria dell'amico e nel suo profilo (Piero, giro 6) */
 .gb-key.gb-drop{color:var(--bad)}
 .gb-key.gb-drop:hover,.gb-key.gb-drop:focus-visible{background:var(--bad-bg)}
+
+/* nome utente obbligatorio (19/11/2026): sopra tutto, guida compresa */
+.nm-ask{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
+.nm-box{width:min(100%,420px);background:var(--surface);color:var(--ink);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.nm-box h2{margin:0;font-size:20px}
+.nm-box .btn{width:100%}

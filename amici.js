@@ -69,7 +69,7 @@ async function load(force) {
       lastLoad = Date.now(); err = '';
       if (me.utente && NL.name() !== me.utente) { syncing = true; NL.setName(me.utente); syncing = false; }   // il nome per gli amici vale anche nell'app
     } catch (e) { err = nice(e); }
-    loading = null; paintAll();
+    loading = null; paintAll(); askName();
     loaded.forEach(function (fn) { try { fn(); } catch (e) { if (window.nlErr) nlErr(e); } });   // la campanella si aggiorna insieme
   })();
   return loading;
@@ -96,6 +96,46 @@ NL.on('name', async function (v) {
   try { await saveMine(v); NL.toast('Nome salvato: lo vedono anche i tuoi amici.'); paintAll(); }
   catch (e) { back(nice(e) + (me.utente ? ' Resta «' + me.utente + '».' : '')); }
 });
+
+/* ---------- nome utente obbligatorio (Piero, 19/11/2026) ----------
+   Chi ha l'account ma non ha ancora il nome utente non è trovabile dagli amici:
+   a ogni apertura (e subito dopo l'accesso con Google) una finestra lo chiede, senza «Più tardi».
+   Proposta già scritta: nome e iniziale del cognome da Google («Victoria I.»). */
+var askOpen = false;
+function proposal(full) {
+  var w = tidy(full).split(' ').filter(Boolean), v = '';
+  if (w.length > 1) v = w[0] + ' ' + w[w.length - 1].charAt(0).toUpperCase() + '.';
+  else if (w.length) v = w[0];
+  v = v.slice(0, 20).trim();
+  return validName(v) ? v : (validName(w[0] || '') ? w[0].slice(0, 20) : '');
+}
+async function askName() {
+  if (askOpen || !uid() || !me || err || me.utente) return;
+  askOpen = true;
+  var full = '';
+  try { var u = await S.call('/auth/v1/user', { user: true }), md = (u && u.user_metadata) || {}; full = String(md.full_name || md.name || ''); } catch (e) { if (window.nlErr) nlErr(e); }
+  if (!uid() || me.utente) { askOpen = false; return; }
+  var v = proposal(full) || proposal(me.nome || '') || proposal(NL.name() || '');
+  var d = document.createElement('div'); d.className = 'nm-ask'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'nmAskH');
+  d.innerHTML = '<form class="nm-box" id="nmAskF" novalidate><h2 id="nmAskH">Come ti troveranno gli amici?</h2>' +
+    '<label class="field"><span>Il tuo nome</span><input type="text" id="nmAskU" autocomplete="nickname" spellcheck="false" enterkeyhint="done" maxlength="20" required value="' + esc(v) + '"></label>' +
+    '<p class="fr-small">Con questo nome gli amici ti cercano e ti riconoscono. Puoi cambiarlo quando vuoi dal profilo. ' + RULES + '</p>' +
+    '<p class="msg bad" id="nmAskE" hidden></p>' +
+    '<button class="btn primary" type="submit" id="nmAskB">Conferma</button></form>';
+  document.body.appendChild(d);
+  var inp = d.querySelector('#nmAskU'), eb = d.querySelector('#nmAskE'), btn = d.querySelector('#nmAskB');
+  function bad(m) { eb.textContent = m; eb.hidden = false; btn.disabled = false; btn.textContent = 'Conferma'; inp.focus(); }
+  d.querySelector('#nmAskF').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var n = tidy(inp.value);
+    if (!validName(n)) { bad(RULES); return; }
+    btn.disabled = true; btn.textContent = 'Salvo…'; eb.hidden = true;
+    try { await saveMine(n); d.remove(); askOpen = false; NL.toast('Nome salvato: ' + n + '.'); if (invite) await findInvite(); else paintAll(); }
+    catch (x) { bad(nice(x)); }
+  });
+  setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) { /* niente */ } }, 80);
+}
+S.onAuth && S.onAuth(function () { if (!uid()) { var o = document.querySelector('.nm-ask'); if (o) o.remove(); askOpen = false; } });
 
 /* ---------- finestra «Amici» ---------- */
 function sheet() {

@@ -41,7 +41,7 @@ var S = [
   { ico: 'towish', h: 'Desideri', go: 'wish',
     p: ['Metti nei <b>Desideri</b> i libri che vorresti leggere. Gli amici possono vederli e trovare l\'idea giusta per un regalo. Se un amico ce l\'ha già, te lo diciamo: magari ve lo prestate.'] },
   { ico: 'user', h: 'Amici e profilo', go: 'friends', mod: 'NLAmici',
-    p: ['Con <b>Accedi con Google</b> i tuoi libri si salvano anche online e puoi trovare gli amici per nome. Guarda le loro librerie, chiedi <b>Me lo presti?</b> e segui i loro desideri.',
+    p: ['Con <b>Accedi con Google</b> i tuoi libri si salvano anche online; scegli il <b>nome</b> con cui gli amici ti trovano e cercali per nome. Guarda le loro librerie, chiedi <b>Me lo presti?</b> e segui i loro desideri.',
       'La <b>campanella</b> ti avvisa delle novità; con il <b>fumetto</b> 💬 scrivi agli amici, anche in gruppo, e vi mandate i libri. Tocca il tuo nome in alto per vedere il tuo <b>profilo</b>, con i numeri del tuo anno da condividere come immagine.'] },
   { ico: 'tolib', h: 'Installala sul telefono', go: 'inst', btn: 'Installa', inst: true,   // giro 10: solo nel browser, se non è installata
     p: ['Metti Next Libris tra le app del telefono: si apre con un tocco, come le altre, e funziona anche senza internet.'],

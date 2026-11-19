@@ -4,7 +4,7 @@
    Script classico come le altre parti: usa le loro funzioni globali e viene prima di app-avvio.js.
    Tutto gratis e senza chiave: it.wikipedia.org (auLookup, per trovare la voce) e query.wikidata.org (una domanda per autore, salvata sul telefono). */
 'use strict';
-var WD_LS = 'catalogo-libri-auwd', WD_RETRY = 30 * 864e5, WD_V = 1, WD_API = 'https://query.wikidata.org/sparql?format=json&query=';
+var WD_LS = 'catalogo-libri-auwd', WD_RETRY = 30 * 864e5, WD_V = 3, WD_API = 'https://query.wikidata.org/sparql?format=json&query=';
 var wdo = null, wdBusy = false, wdFails = 0, wdTimer = 0, wdPaintT = 0, wdNames = {}, wdCodes = {}, wdDN = null;
 var WD_ISO = ('AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ ' +
   'DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP ' +
@@ -88,7 +88,7 @@ function wdQ(u) { var m = /(Q\d{1,12})$/.exec(String(u || '')); return m ? m[1] 
    Provata sul servizio vero il 18/11/2026: niente «wdt:P31/wdt:P279*» (da solo portava la risposta a 40-80 secondi) e l'opera ripetuta in ogni ramo
    dei titoli (senza, il servizio scorre tutte le etichette); l'ordine scritto e' quello giusto, quindi il servizio non lo cambia (optimizer None). Cosi': 0,5-4 secondi. */
 function wdInfoQuery(qid) {
-  var base = '?w wdt:P50 wd:' + qid + '. ?f wdt:P144 ?w. ', lang = ' FILTER(LANG(?wl) IN ("it", "en", "fr", "es", "de", "mul"))';
+  var base = '?w wdt:P50 wd:' + qid + '. { ?f wdt:P144 ?w. } UNION { ?w wdt:P4969 ?f. } ', lang = ' FILTER(LANG(?wl) IN ("it", "en", "fr", "es", "de", "mul"))';   // «tratto da» sul film oppure «opera derivata» sul libro (19/11/2026)
   return 'SELECT ?k ?iso ?end ?pref ?f ?fLabel ?t ?d ?dirLabel ?w ?wl ?art WHERE { hint:Query hint:optimizer "None". ' +
     '{ BIND("c" AS ?k) wd:' + qid + ' p:P27 ?s. ?s ps:P27 ?c. ?c wdt:P297 ?iso. FILTER NOT EXISTS { ?c wdt:P576 ?x. } FILTER NOT EXISTS { ?s wikibase:rank wikibase:DeprecatedRank. }' +
     ' OPTIONAL { ?s pq:P582 ?end. } OPTIONAL { ?s wikibase:rank wikibase:PreferredRank. BIND(1 AS ?pref) } }' +
@@ -98,6 +98,43 @@ function wdInfoQuery(qid) {
     ' UNION { BIND("w" AS ?k) ' + base + '?w skos:altLabel ?wl.' + lang + ' }' +
     ' UNION { BIND("w" AS ?k) ' + base + '?w wdt:P1476 ?wl. }' +
     ' SERVICE wikibase:label { bd:serviceParam wikibase:language "it,mul,en". } } LIMIT 5000';
+}
+/* film omonimi (19/11/2026): su Wikidata molti film non hanno «tratto da» (Io speriamo che me la cavo, 1992). Si cercano i film e le serie
+   con lo stesso titolo (italiano o inglese) di un'opera dell'autore e con una voce su it.wikipedia; valgono solo se quella voce ha un
+   collegamento alla voce dell'autore (wdSameOk). Provato il 19/11: D'Orta sì; per King scartati «Christine» 2016 ed «Es» 1966, per Dante gli «Inferno».
+   Solo le opere con almeno una voce su Wikipedia: senza, per King la domanda durava 26-60 secondi; così 0,5-6 secondi (Shakespeare il più lento). */
+function wdSameQuery(qid) {
+  return 'SELECT DISTINCT ?f ?fLabel ?t ?d ?dirLabel ?w ?wl ?art WHERE { hint:Query hint:optimizer "None". ' +
+    '?w wdt:P50 wd:' + qid + '. ?w wikibase:sitelinks ?n. FILTER(?n > 0) ?w rdfs:label ?wl. FILTER(LANG(?wl) IN ("it", "en")) ?f rdfs:label ?wl. ?f wdt:P31 ?t. ' +
+    'VALUES ?t { ' + Object.keys(WD_TY).map(function (t) { return 'wd:' + t; }).join(' ') + ' } ' +
+    '?art schema:about ?f; schema:isPartOf <https://it.wikipedia.org/>. FILTER NOT EXISTS { ?f wdt:P144 ?w. } ' +
+    'OPTIONAL { ?f wdt:P577 ?d. } OPTIONAL { ?f wdt:P580 ?d. } OPTIONAL { ?f wdt:P57 ?dir. } ' +
+    'SERVICE wikibase:label { bd:serviceParam wikibase:language "it,mul,en". } } LIMIT 400';
+}
+function wdArtTitle(u) { try { return decodeURIComponent(String(u).split('/wiki/')[1] || '').replace(/_/g, ' '); } catch (e) { return ''; } }
+async function wdSameOk(arts, auTitle) {                 // quali voci di film hanno un collegamento alla voce dell'autore (al massimo 2 domande da 50)
+  var ok = {}, ts = arts.map(wdArtTitle).filter(Boolean).slice(0, 100);
+  for (var i = 0; i < ts.length; i += 50) {
+    var j = await L.getJson(fetch, 'https://it.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&prop=links&pllimit=max&plnamespace=0&pltitles=' +
+      encodeURIComponent(auTitle) + '&titles=' + encodeURIComponent(ts.slice(i, i + 50).join('|')), { waits: [], timeout: 10000 });
+    var back = {}; ((j && j.query && j.query.normalized) || []).forEach(function (n) { back[n.to] = n.from; });
+    ((j && j.query && j.query.pages) || []).forEach(function (p) { if (p && Array.isArray(p.links) && p.links.length) ok[back[p.title] || p.title] = 1; });
+  }
+  return ok;
+}
+async function wdSameRows(qid, auTitle) {                // le righe dei film omonimi confermati, nello stesso formato della domanda principale
+  if (!auTitle) return [];
+  try {
+    var rows = wdRows(await wdAsk(wdSameQuery(qid))).filter(function (r) { return /^https:\/\/it\.wikipedia\.org\/wiki\//.test(r.art); });
+    if (!rows.length) return [];
+    var arts = []; rows.forEach(function (r) { if (arts.indexOf(r.art) < 0) arts.push(r.art); });
+    var ok = await wdSameOk(arts, auTitle), out = [];
+    rows.forEach(function (r) {
+      if (!ok[wdArtTitle(r.art)]) return;
+      r.k = 'f'; out.push(r); out.push({ k: 'w', w: r.w, wl: r.wl });
+    });
+    return out;
+  } catch (e) { if (!e || !e.status || e.status === 429 || e.status >= 500) throw e; return []; }   // rete, lentezza o «troppe domande» (rilettura di tanti autori): l'autore si riprova dopo 5 minuti, mai salvato senza i film
 }
 /* film o serie TV? Dipende dal tipo dell'opera derivata (film, film d'animazione, miniserie… ma anche videogiochi, opere liriche, altri libri).
    I tipi piu' comuni sono gia' scritti qui (letti da Wikidata il 18/11/2026); per quelli nuovi una domanda piccola, e la risposta resta salvata. */
@@ -161,7 +198,7 @@ function wdFetch(name) {
 async function wdFetchNow(name, k) {
   var r = await auLookup(auCanon(name)), x = { t: Date.now() };
   if (r && !r.none && r.qid) {
-    var info = wdParseInfo(wdRows(await wdAsk(wdInfoQuery(r.qid))));
+    var info = wdParseInfo(wdRows(await wdAsk(wdInfoQuery(r.qid))).concat(await wdSameRows(r.qid, r.title)));
     await wdClassify(info.types);
     var fl = wdFilmList(info.raw);
     x.q = r.qid; x.c = info.c; if (info.b) x.b = info.b; if (fl.length) x.f = fl;

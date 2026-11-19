@@ -3,6 +3,12 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 109 · 19/11/2026
+> **Il tuo nome per gli amici** Appena entri con Google scegli il nome con cui gli amici ti trovano: te lo proponiamo già scritto (nome e iniziale del cognome) e puoi cambiarlo quando vuoi dal profilo.
+> **Più film dai tuoi libri** Troviamo anche i film che hanno lo stesso titolo del libro e sono confermati da Wikipedia (per esempio «Io speriamo che me la cavo», 1992).
+- **Nome già usato:** se un altro ha già quel nome te lo diciamo subito, e aggiungi un'iniziale o un numero.
+- **Film:** gli autori si rileggono una volta da soli; se Wikidata è troppo occupata, l'autore si riprova più tardi.
+
 ## Versione 108 · 19/11/2026
 > **I tuoi numeri, da condividere** Nel profilo le statistiche diventano tessere colorate con i colori della stagione; con «Condividi i tuoi numeri» le mandi come immagine (storia o quadrata), e lo stesso con «La tua stagione in libri».
 > **Messaggi avvisati subito** La notifica della chat arriva appena ti scrivono; i messaggi dopo non ti disturbano finché non leggi (nei gruppi al massimo una ogni 30 minuti). Con la chat aperta, niente notifica.
