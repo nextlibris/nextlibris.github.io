@@ -28,16 +28,21 @@ async function findNews() {
   if (!authors.length) return [];
   news.busy = true;
   try {
-    for (var i = 0; i < authors.length; i++) {
+    /* giro 11B (Piero, 19/11/2026): gli autori a gruppi di 4 in una sola ricerca (inauthor:"A" OR inauthor:"B"…):
+       al massimo 2 ricerche invece di 8. Ogni risultato torna al suo autore con pickNews. */
+    var GRP = 4;
+    for (var i = 0; i < authors.length; i += GRP) {
       if (!googleLeft(true)) break;
+      var grp = authors.slice(i, i + GRP);
       try {
-        var j = await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent('inauthor:"' + authors[i].replace(/"/g, '') + '"') +
-          '&orderBy=newest&langRestrict=it&printType=books&maxResults=20&fields=items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,language,industryIdentifiers,imageLinks))' +
+        var qq = grp.map(function (a) { return 'inauthor:"' + a.replace(/"/g, '') + '"'; }).join(' OR ');
+        var j = await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(qq) +
+          '&orderBy=newest&langRestrict=it&printType=books&maxResults=40&fields=items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,language,industryIdentifiers,imageLinks))' +
           (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : ''), { waits: [900], timeout: 9000 });
-        L.pickNews(j, authors[i], own, y - 1, y + 1).slice(0, 6).forEach(function (x) { if (!seen[x.k]) { seen[x.k] = 1; found.push(x); } });
+        grp.forEach(function (au) { L.pickNews(j, au, own, y - 1, y + 1).slice(0, 6).forEach(function (x) { if (!seen[x.k]) { seen[x.k] = 1; found.push(x); } }); });
         done++;
       } catch (e) { errs++; if (errs >= 2 && !done) break; }
-      if (!$('#newsSheet').hidden) $('#newsMsg').textContent = 'Cerco… ' + (i + 1) + ' di ' + authors.length + ' autori';
+      if (!$('#newsSheet').hidden) $('#newsMsg').textContent = 'Cerco… ' + Math.min(i + GRP, authors.length) + ' di ' + authors.length + ' autori';
     }
   } finally { news.busy = false; }
   if (!done) throw { net: true };

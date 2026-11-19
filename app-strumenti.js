@@ -122,7 +122,7 @@ async function shareListFile(pack, sh, head) {
   var data = JSON.stringify({ app: 'next-libris', share: pack });
   var base = 'next-libris-lista' + (sh.name ? '-' + L.norm(sh.name).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '');
   var how = 'Per aggiungerli: salva il file allegato, poi in Next Libris apri Esporta › «Ripristina da backup o apri una lista ricevuta».';
-  var cands = [new File([data], base + '.json', { type: 'application/json' }), new File([data], base + '.txt', { type: 'text/plain' })], file = null;
+  var cands = [new File([data], base + '.txt', { type: 'text/plain' })], file = null;   // solo .txt: Chrome su Android rifiuta il .json anche se canShare dice sì (19/11/2026)
   for (var i = 0; i < cands.length && !file; i++) if (navigator.canShare && navigator.canShare({ files: [cands[i]] })) file = cands[i];
   if (file && navigator.share) {
     try { await navigator.share({ files: [file], title: head, text: L.shareText(sh, 10) + '\n\n' + how }); return; }

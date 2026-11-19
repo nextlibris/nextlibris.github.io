@@ -66,7 +66,6 @@ function wrapData(books, quotes, Q, now) {
   d.longest = lg ? { t: lg.t, a: lg.a, pg: pages(lg) } : null;
   var bs = read.filter(function (b) { return b.rt > 0; }).sort(function (x, y) { return y.rt - x.rt || (y.rd > x.rd ? 1 : -1); })[0];
   d.best = bs ? { t: bs.t, a: bs.a, rt: bs.rt } : null;
-  d.value = added.reduce(function (a, b) { return a + (b.c || 0); }, 0);
   var q1 = qs.slice().sort(function (x, y) { return y.c.d - x.c.d; })[0];
   d.quote = q1 ? { x: q1.c.x.length > 200 ? q1.c.x.slice(0, 197).replace(/\s+\S*$/, '') + '…' : q1.c.x, t: q1.b.t } : null;
   var who = {}; loans.forEach(function (b) { var k = L.norm(b.p); (who[k] || (who[k] = { name: b.p, n: 0 })).n++; });
@@ -121,7 +120,7 @@ function slides(d) {
       (d.best ? '<p class="w-kick w-gap">Quello che ti è piaciuto di più</p><p class="w-mid">«' + esc(d.best.t) + '»</p><p class="w-sub">' + esc(d.best.a) + '</p><p class="w-stars" aria-label="' + d.best.rt + ' stelle su 5">' + stars(d.best.rt) + '</p>' : '') });
   }
   if (d.added || d.quotes || d.loans) {
-    out.push({ cls: 'w-c5', html: '<p class="w-kick">In libreria</p>' + (d.added ? '<p class="w-num w-num-s">' + d.added + '</p><p class="w-unit">' + (d.added === 1 ? 'libro nuovo' : 'libri nuovi') + (d.value ? ', ' + esc(NL.eur(d.value)) : '') + '</p>' : '') +
+    out.push({ cls: 'w-c5', html: '<p class="w-kick">In libreria</p>' + (d.added ? '<p class="w-num w-num-s">' + d.added + '</p><p class="w-unit">' + (d.added === 1 ? 'libro nuovo' : 'libri nuovi') + '</p>' : '') +
       '<ul class="w-facts">' + (d.wish ? '<li><b>' + d.wish + '</b> nei Desideri</li>' : '') + (d.loans ? '<li><b>' + d.loans + '</b> ' + (d.loans === 1 ? 'libro prestato' : 'libri prestati') + (d.lender ? ', soprattutto a ' + esc(d.lender.name) : '') + '</li>' : '') +
       (d.quotes ? '<li><b>' + d.quotes + '</b> ' + (d.quotes === 1 ? 'citazione salvata' : 'citazioni salvate') + '</li>' : '') + '</ul>' +
       (d.quote ? '<blockquote class="w-q">' + esc(d.quote.x) + '<cite>' + esc(d.quote.t) + '</cite></blockquote>' : '') });
@@ -130,7 +129,7 @@ function slides(d) {
     '<dl class="w-sum">' + (d.n ? '<div><dt>letti</dt><dd>' + d.n + '</dd></div>' : '') + (d.pages ? '<div><dt>pagine</dt><dd>' + nf.format(d.pages) + '</dd></div>' : '') +
     (d.added ? '<div><dt>nuovi</dt><dd>' + d.added + '</dd></div>' : '') + (d.quotes ? '<div><dt>citazioni</dt><dd>' + d.quotes + '</dd></div>' : '') + '</dl>' +
     (d.genres[0] ? '<p class="w-sub">Genere: <b>' + esc(d.genres[0].name) + '</b>' + (d.author ? ' · Autore: <b>' + esc(d.author.name) + '</b>' : '') + '</p>' : '') +
-    '<div class="w-acts"><button type="button" class="w-btn w-pri" data-w="share">Condividi l\'immagine</button><button type="button" class="w-btn" data-w="again">Rivedi</button><button type="button" class="w-btn" data-w="close">Chiudi</button></div>' });
+    '<p class="w-shh">Condividi l\'immagine</p><div class="w-acts w-two"><button type="button" class="w-btn w-pri" data-w="share" data-f="story">Storia</button><button type="button" class="w-btn w-pri" data-w="share" data-f="square">Quadrata</button></div><div class="w-acts"><button type="button" class="w-btn" data-w="again">Rivedi</button><button type="button" class="w-btn" data-w="close">Chiudi</button></div>' });
   return out;
 }
 
@@ -151,7 +150,7 @@ function build() {
       var a = b.dataset.w;
       if (a === 'close') close();
       else if (a === 'again') go(0);
-      else if (a === 'share') share();
+      else if (a === 'share') share(b.dataset.f);
       else if (a === 'older') pickQ(W.qi + 1);
       else if (a === 'newer') pickQ(W.qi - 1);
       return;
@@ -210,42 +209,226 @@ function baseColor() {                     // il colore della palette; se e' chi
   return '#' + h(r) + h(g) + h(b);
 }
 function cssVar(n, def) { try { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || def; } catch (e) { return def; } }
-function image(d) {
-  var c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
-  var g = c.getContext('2d'), acc = baseColor(), font = cssVar('--font-display', 'sans-serif');
-  g.fillStyle = acc; g.fillRect(0, 0, 1080, 1350);
-  g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(960, 160, 340, 0, 7); g.fill();
-  g.fillStyle = '#fff'; g.textBaseline = 'top';
-  g.font = '500 40px ' + font; g.fillText(d.Q.label + (d.ongoing ? ' · finora' : ''), 90, 110);
-  g.font = '700 92px ' + font;
-  var words = d.Q.title.split(' '), line = '', y = 180;
-  words.forEach(function (w) { var t = line ? line + ' ' + w : w; if (g.measureText(t).width > 900) { g.fillText(line, 90, y); y += 104; line = w; } else line = t; });
-  g.fillText(line, 90, y); y += 170;
-  [[d.n, d.n === 1 ? 'libro letto' : 'libri letti'], [d.pages, 'pagine'], [d.added, d.added === 1 ? 'libro nuovo' : 'libri nuovi'], [d.quotes, d.quotes === 1 ? 'citazione' : 'citazioni']]
-    .filter(function (x) { return x[0]; }).slice(0, 4).forEach(function (x) {
-      g.font = '700 120px ' + font; g.fillText(nf.format(x[0]), 90, y);
-      var w = g.measureText(nf.format(x[0])).width; g.font = '500 44px ' + font; g.fillText(x[1], 90 + w + 28, y + 62); y += 160;
-    });
-  g.font = '500 40px ' + font;
-  if (d.genres[0]) { g.fillText('Genere: ' + d.genres[0].name, 90, y + 10); y += 60; }
-  if (d.author) g.fillText('Autore: ' + d.author.name, 90, y + 10);
-  g.globalAlpha = .85; g.font = '600 38px ' + font; g.fillText('Next Libris', 90, 1240); g.globalAlpha = 1;
-  return c;
+/* ---------- colori delle stagioni e immagine da condividere (giro 11C, 19/11/2026, scelte di Piero) ----------
+   Stile «Tessere»: schede colorate di misure diverse su fondo scuro, numeri grandi in Bricolage Grotesque.
+   Colori «più tenui», uno schema per stagione (q = 1 inverno, 2 primavera, 3 estate, 4 autunno). Servono anche al profilo.
+   Una sola immagine, in due formati: storia (1080×1920) e quadrata (1080×1080). La usano la stagione in libri (la stagione
+   mostrata) e il profilo (l'anno fino a oggi). Copertine: prima i libri «Lo consiglio», poi quelli col voto più alto (al massimo 4).
+   Il link non è nell'immagine come QR: c'è scritto l'indirizzo, e il link con l'invito va nel testo che accompagna l'immagine. */
+var PAL = {
+  1: { n: 'inverno', bg: '#0E1626', t: ['#3A4F73', '#9DBCCB', '#A797BF'] },
+  2: { n: 'primavera', bg: '#16241A', t: ['#6B9A68', '#D597AA', '#D9CC7A'] },
+  3: { n: 'estate', bg: '#0F2230', t: ['#3F86A3', '#DDB46A', '#CF7584'] },
+  4: { n: 'autunno', bg: '#2A1A12', t: ['#A8664A', '#C99A62', '#8A9160'] }
+};
+function lum(hex) {
+  var m = /^#([0-9a-f]{6})$/i.exec(hex); if (!m) return 0;
+  return [0, 2, 4].map(function (i) { var c = parseInt(m[1].slice(i, i + 2), 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); })
+    .reduce(function (a, c, i) { return a + c * [0.2126, 0.7152, 0.0722][i]; }, 0);
 }
-function share() {
-  var d = W.data, c = image(d), name = 'Next Libris - ' + d.Q.label.replace(/\s+–\s+/, '-') + '.png';
-  c.toBlob(function (blob) {
+function ink(hex) { return lum(hex) < 0.22 ? '#FFFFFF' : '#1B1B1B'; }        // testo bianco sui colori scuri, quasi nero su quelli chiari
+function palette(q) {
+  var p = PAL[q] || PAL[quarterOf(Date.now()).q];
+  return { q: p === PAL[q] ? q : quarterOf(Date.now()).q, name: p.n, bg: p.bg, t: p.t.slice(), ink: p.t.map(ink) };
+}
+/* i libri «più amati» di un elenco di letti: prima «Lo consiglio», poi il voto più alto; a parità i più recenti */
+function loved(read, max) {
+  return read.filter(function (b) { return b.lc || b.rt > 0; }).slice().sort(function (x, y) {
+    return (y.lc ? 1 : 0) - (x.lc ? 1 : 0) || (y.rt || 0) - (x.rt || 0) || String(y.rd || '').localeCompare(String(x.rd || ''));
+  }).slice(0, max || 4);
+}
+/* il link all'app con l'invito (?amico=Nome), se c'è l'account */
+function invite() {
+  var S = window.NLSocial, base = (S && S.home && S.home()) || 'https://nextlibris.github.io/';
+  var A = window.NLAmici, me = A && A.state && A.state().me;
+  return me && me.utente ? base + '?amico=' + encodeURIComponent(me.utente) : base;
+}
+function cardFromWrap(d) {
+  return { q: d.Q.q, title: d.Q.title.replace(/^Il tuo/, 'Il mio').replace(/^La tua/, 'La mia'), label: d.Q.label + (d.ongoing ? ' · finora' : ''),
+    name: NL.name(), alab: 'Autore della stagione', n: d.n, added: d.added, pages: d.pages, author: d.author ? { name: d.author.name, n: d.author.n } : null,
+    countries: (d.countries || []).map(function (x) { return x.c; }), books: loved(d.read, 4), goal: d.goal || null };
+}
+
+/* ---------- disegno ---------- */
+var FD = '"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif', FB = '"IBM Plex Sans", system-ui, sans-serif';
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+/* righe di testo che stanno in larghezza: se non bastano maxL righe rimpicciolisce; con cut=false non taglia mai (si va giù fino a min) */
+function lines(g, text, maxW, size, min, maxL, font, cut) {
+  text = String(text || '').trim();
+  for (var s = size; s >= min; s -= 2) {
+    g.font = font.replace('%', s + 'px');
+    var out = [], line = '';
+    text.split(/\s+/).forEach(function (w) {
+      while (g.measureText(w).width > maxW && w.length > 1) {          // parola più larga della riga: va a capo dentro la parola
+        var k = w.length - 1; while (k > 1 && g.measureText(w.slice(0, k)).width > maxW) k--;
+        if (line) { out.push(line); line = ''; } out.push(w.slice(0, k)); w = w.slice(k);
+      }
+      var t = line ? line + ' ' + w : w;
+      if (g.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
+    });
+    if (line) out.push(line);
+    if (out.length <= maxL || (s - 2 < min && !cut)) return { l: out, s: s };
+  }
+  g.font = font.replace('%', min + 'px');
+  var o2 = lines(g, text, maxW, min, min, 99, font, false).l, last = o2.slice(0, maxL);
+  if (o2.length > maxL) { var z = last[maxL - 1]; while (z && g.measureText(z + '…').width > maxW) z = z.slice(0, -1); last[maxL - 1] = z + '…'; }
+  return { l: last, s: min };
+}
+function txt(g, L, x, y, lh, col, font) { g.fillStyle = col; g.font = font.replace('%', L.s + 'px'); L.l.forEach(function (t, i) { g.fillText(t, x, y + i * L.s * lh); }); return y + L.l.length * L.s * lh; }
+function loadImg(src, cors) {
+  return new Promise(function (res) {
+    if (!src) { res(null); return; }
+    var im = new Image(), done = false, end = function (v) { if (!done) { done = true; res(v); } };
+    if (cors) im.crossOrigin = 'anonymous';
+    im.referrerPolicy = 'no-referrer'; im.decoding = 'async';
+    im.onload = function () { end(im.naturalWidth ? im : null); }; im.onerror = function () { end(null); };
+    setTimeout(function () { end(null); }, 6000);
+    im.src = src;
+  });
+}
+/* copertina: la foto (sul telefono o in rete, se il sito la lascia usare), altrimenti disegnata col titolo che va a capo, mai tagliato */
+function coverSrc(b) { var u = (NL.bigImg && NL.bigImg(b)) || b.img || ''; return /^(https:|blob:|data:)/.test(u) ? u : ''; }
+function drawCover(g, b, im, x, y, w, h) {
+  g.save(); rr(g, x, y, w, h, Math.round(w * 0.06)); g.clip();
+  if (im) {
+    var r = Math.max(w / im.naturalWidth, h / im.naturalHeight), iw = im.naturalWidth * r, ih = im.naturalHeight * r;
+    g.drawImage(im, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+  } else {
+    var hh = NL.hue ? NL.hue(b.t || '') : 150;
+    g.fillStyle = 'hsl(' + hh + ' 28% 38%)'; g.fillRect(x, y, w, h);
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x + w * 0.06, y, Math.max(2, w * 0.025), h);
+    var pad = w * 0.1, T = lines(g, b.t || 'Senza titolo', w - pad * 2, Math.round(w * 0.15), 6, 7, '600 % ' + FD, false);
+    var th = T.l.length * T.s * 1.18, A = b.a ? lines(g, b.a, w - pad * 2, Math.round(w * 0.085), 6, 2, '400 % ' + FB, false) : null;
+    var ah = A ? A.l.length * A.s * 1.25 + w * 0.06 : 0, ty = y + Math.max(pad, (h - th - ah) / 2);
+    g.textAlign = 'center';
+    ty = txt(g, T, x + w / 2, ty, 1.18, '#FFFFFF', '600 % ' + FD);
+    if (A) txt(g, A, x + w / 2, ty + w * 0.06, 1.25, 'rgba(255,255,255,.82)', '400 % ' + FB);
+    g.textAlign = 'left';
+  }
+  g.restore();
+}
+function plural(n, a, b) { return fmtN(n) + ' ' + (n === 1 ? a : b); }
+function pile(pages, books) { var cm = Math.round(pages * 0.005 + books * 0.4); return cm < 5 ? '' : 'una pila alta ' + (cm >= 100 ? (cm / 100).toFixed(1).replace('.', ',') + ' m' : cm + ' cm'); }
+function fmtN(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }   // 1.150 (Intl in italiano lascia «1150»)
+/* le tessere: ognuna sa quanta altezza le serve (need, con la larghezza) e come disegnarsi nell'altezza che riceve */
+function tiles(c, P) {
+  var T = [], k = 0;
+  function col() { var i = k++ % 3; return { bg: P.t[i], ink: P.ink[i] }; }
+  var nN = c.n || !c.added ? c.n : c.added, nL = c.n || !c.added ? (c.n === 1 ? 'libro letto' : 'libri letti') : (c.added === 1 ? 'libro nuovo' : 'libri nuovi');
+  T.push({ id: 'n', c: col(), need: function (w) { return (c.goal && c.goal.n ? 120 : 0) + Math.min(300, w * 0.42) + 120; }, draw: function (g, x, y, w, h, C) {
+    var go = c.goal && c.goal.n, small = h < 330, gh = go ? (small ? 56 : 110) : 0, big = Math.max(60, Math.min(h - 34 - 50 - gh - 16, w * 0.42, 300));
+    g.fillStyle = C.ink; g.font = '600 34px ' + FD; g.fillText(nL, x + 36, y + 34);
+    g.font = '700 ' + Math.round(big) + 'px ' + FD; g.fillText(fmtN(nN), x + 30, y + 34 + 46 - big * 0.06);
+    var st = y + 34 + 46 + big * 0.82 + 34, sb = y + h - gh - (gh ? 40 : 30);
+    if (!small && nN && sb - st > 70) {                                // lo scaffale: un dorso per libro (al massimo 30)
+      var m = Math.min(nN, 30), sw = Math.min(30, (w - 72 - (m - 1) * 8) / m), sx = x + 36, sh = Math.min(200, sb - st);
+      g.globalAlpha = 0.5; g.fillRect(x + 36, sb, w - 72, 5); 
+      for (var i = 0; i < m; i++) { g.globalAlpha = 0.55 + (i % 3) * 0.15; var ht = sh * (0.6 + ((i * 37 + 11) % 40) / 100); g.fillRect(sx, sb - ht, sw, ht); sx += sw + 8; }
+      g.globalAlpha = 1;
+    }
+    if (go && small) { var p0 = Math.min(1, c.goal.done / c.goal.n); g.font = '600 26px ' + FB; g.fillText('Obiettivo ' + fmtN(c.goal.n) + (c.goal.done >= c.goal.n ? ' · raggiunto!' : ' · ' + Math.round(p0 * 100) + '%'), x + 36, y + h - 50); }
+    else if (gh) {
+      var by = y + h - 50, pc = Math.min(1, c.goal.done / c.goal.n);
+      g.font = '600 30px ' + FB; g.fillText('Obiettivo ' + fmtN(c.goal.n) + (c.goal.done >= c.goal.n ? ' · raggiunto!' : ' · ' + Math.round(pc * 100) + '%'), x + 36, by - 46);
+      g.globalAlpha = 0.25; rr(g, x + 36, by, w - 72, 16, 8); g.fill(); g.globalAlpha = 1; if (pc > 0) { rr(g, x + 36, by, Math.max(16, (w - 72) * pc), 16, 8); g.fill(); }
+    }
+  } });
+  if (c.pages) T.push({ id: 'p', c: col(), need: function () { return 290; }, draw: function (g, x, y, w, h, C) {
+    var pl = h >= 280 ? pile(c.pages, c.n) : '', room = h - 36 - 50 - (pl ? 80 : 0) - 30, s = Math.max(40, Math.min(110, room));
+    var L = lines(g, fmtN(c.pages), w - 72, s, 40, 1, '700 % ' + FD, true);
+    var yy = txt(g, L, x + 36, y + 32, 1.0, C.ink, '700 % ' + FD);
+    g.font = '600 36px ' + FD; g.fillText('pagine', x + 36, yy + 6);
+    if (pl) txt(g, lines(g, pl, w - 72, 28, 20, 2, '400 % ' + FB, true), x + 36, yy + 58, 1.3, C.ink, '400 % ' + FB);
+  } });
+  if (c.author) T.push({ id: 'a', c: col(), need: function () { return 290; }, draw: function (g, x, y, w, h, C) {
+    g.fillStyle = C.ink; g.font = '600 30px ' + FB; g.fillText(c.alab || 'Autore preferito', x + 36, y + 36);
+    var maxL = Math.max(1, Math.min(3, Math.floor((h - 84 - 70) / 60))), L = lines(g, c.author.name, w - 72, 56, 30, maxL, '700 % ' + FD, true);
+    var yy = txt(g, L, x + 36, y + 84, 1.1, C.ink, '700 % ' + FD);
+    g.font = '400 30px ' + FB; g.fillText(plural(c.author.n, 'libro letto', 'libri letti'), x + 36, yy + 10);
+  } });
+  if (c.countries.length) T.push({ id: 'c', c: col(), flags: c.countries.slice(0, 12), need: function (w) { var per = Math.max(1, Math.floor((w - 72 + 14) / 78)); return 170 + Math.ceil(Math.min(12, c.countries.length) / per) * 62; },
+    draw: function (g, x, y, w, h, C, imgs) {
+      g.fillStyle = C.ink; g.font = '600 30px ' + FB; g.fillText('Ho viaggiato in', x + 36, y + 34);
+      g.font = '700 56px ' + FD; g.fillText(plural(c.countries.length, 'paese', 'paesi'), x + 36, y + 74);
+      var fw = 64, fh = 48, gap = 14, fx = x + 36, fy = y + 152;
+      (imgs || []).forEach(function (im) {
+        if (!im) return;
+        if (fx + fw > x + w - 36) { fx = x + 36; fy += fh + gap; }
+        if (fy + fh > y + h - 16) return;
+        g.save(); rr(g, fx, fy, fw, fh, 6); g.clip(); g.drawImage(im, fx, fy, fw, fh); g.restore(); fx += fw + gap;
+      });
+    } });
+  if (c.books.length) T.push({ id: 'b', c: col(), need: function (w, sq) { return sq ? 260 : 104 + 1.5 * (w - 72 - 72) / 4; }, draw: function (g, x, y, w, h, C, imgs) {
+    g.fillStyle = C.ink; g.font = '600 30px ' + FB; g.fillText(c.books.length === 1 ? 'Il più amato' : 'I più amati', x + 36, y + 32);
+    var gap = 24, n = c.books.length, bw = Math.min((h - 104) / 1.5, (w - 72 - gap * 3) / 4), bx = x + Math.max(36, (w - n * bw - (n - 1) * gap) / 2);
+    c.books.forEach(function (b, i) { drawCover(g, b, (imgs || [])[i], bx, y + 80, bw, bw * 1.5); bx += bw + gap; });
+  } });
+  return T;
+}
+/* fmt: 'story' (1080×1920) o 'square' (1080×1080). Restituisce una promessa con il canvas. */
+async function card(c, fmt) {
+  var W = 1080, H = fmt === 'square' ? 1080 : 1920, P = palette(c.q), M = 64;
+  try { if (document.fonts && document.fonts.load) await Promise.all(['700 80px "Bricolage Grotesque"', '600 30px "Bricolage Grotesque"', '400 30px "IBM Plex Sans"', '600 30px "IBM Plex Sans"'].map(function (f) { return document.fonts.load(f); })); } catch (e) { if (window.nlErr) nlErr(e); }
+  var T = tiles(c, P), bt = T.filter(function (t) { return t.id === 'b'; })[0], ft = T.filter(function (t) { return t.id === 'c'; })[0];
+  var covers = bt ? await Promise.all(c.books.map(function (b) { var s = coverSrc(b); return loadImg(s, /^https:/.test(s)); })) : [];
+  var flags = ft ? await Promise.all(ft.flags.map(function (cc) { return loadImg('vendor/flags/' + String(cc).toLowerCase() + '.webp', false); })) : [];
+  var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  var g = cv.getContext('2d'); g.textBaseline = 'top';
+  g.fillStyle = P.bg; g.fillRect(0, 0, W, H);
+  g.globalAlpha = 0.10; g.fillStyle = P.t[1]; g.beginPath(); g.arc(W - 90, 120, 260, 0, 7); g.fill(); g.fillStyle = P.t[2]; g.beginPath(); g.arc(80, H - 140, 200, 0, 7); g.fill(); g.globalAlpha = 1;
+  /* testata */
+  var y = M, sq = fmt === 'square';
+  g.fillStyle = 'rgba(255,255,255,.72)'; g.font = '500 ' + (sq ? 28 : 34) + 'px ' + FB; g.fillText(c.label, M, y); y += sq ? 44 : 56;
+  y = txt(g, lines(g, c.title, W - M * 2, sq ? 72 : 96, 44, sq ? 1 : 2, '700 % ' + FD, true), M, y, 1.05, '#FFFFFF', '700 % ' + FD);
+  if (c.name) { g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '500 ' + (sq ? 28 : 36) + 'px ' + FB; g.fillText('di ' + c.name, M, y + 8); y += sq ? 44 : 60; }
+  y += sq ? 18 : 30;
+  /* righe di tessere: in storia la prima a tutta larghezza, poi pagine e autore in coppia, paesi e copertine larghe; in quadrata a coppie */
+  var foot = sq ? 70 : 110, avail = H - foot - y, gap = 20, cw = W - M * 2, half = (cw - gap) / 2, rows = [];
+  var small = T.filter(function (t) { return t.id !== 'b'; });
+  if (!sq) {
+    var first = small.shift(); if (first) rows.push([first]);
+    var pair = small.filter(function (t) { return t.id === 'p' || t.id === 'a'; }); if (pair.length) rows.push(pair);
+    small.filter(function (t) { return t.id === 'c'; }).forEach(function (t) { rows.push([t]); });
+  } else {
+    for (var i = 0; i < small.length; i += 2) rows.push(small.slice(i, i + 2));
+  }
+  if (bt) rows.push([bt]);
+  rows = rows.map(function (r) { var w = r.length === 1 ? cw : half; return { items: r, w: w, h: Math.max.apply(null, r.map(function (t) { return t.need(w, sq); })) }; });
+  if (sq) rows.forEach(function (r) { if (r.items[0].id !== 'b') r.h = Math.min(r.h, r.items.length === 1 ? 200 : 230); });
+  var need = rows.reduce(function (a, r) { return a + r.h; }, 0) + gap * Math.max(0, rows.length - 1), k = need ? Math.min(1.12, avail / need) : 1;
+  y += Math.max(0, Math.floor((avail - need * k) / 2));                // se avanza spazio, le tessere stanno al centro
+  rows.forEach(function (r) {
+    var h = Math.floor(r.h * k), x = M;
+    r.items.forEach(function (t) {
+      g.fillStyle = t.c.bg; rr(g, x, y, r.w, h, 34); g.fill();
+      g.save(); rr(g, x, y, r.w, h, 34); g.clip(); t.draw(g, x, y, r.w, h, t.c, t.id === 'b' ? covers : t.id === 'c' ? flags : null); g.restore();
+      x += r.w + gap;
+    });
+    y += h + gap;
+  });
+  /* piede: nome e indirizzo dell'app (il link con l'invito va nel testo del messaggio) */
+  g.fillStyle = '#FFFFFF'; g.font = '700 ' + (sq ? 32 : 40) + 'px ' + FD; g.fillText('Next Libris', M, H - foot + (sq ? 16 : 34));
+  g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '500 ' + (sq ? 26 : 32) + 'px ' + FB; g.textAlign = 'right'; g.fillText('nextlibris.github.io', W - M, H - foot + (sq ? 20 : 40)); g.textAlign = 'left';
+  return cv;
+}
+function shareCard(c, fmt) {
+  var link = invite(), text = c.title + ' su Next Libris 📚 ' + (/amico=/.test(link) ? 'Aggiungimi tra gli amici: ' : 'È gratis: ') + link;
+  var name = 'Next Libris - ' + c.title.replace(/[^\wÀ-ÿ ]+/g, '').trim() + (fmt === 'square' ? ' (quadrata)' : '') + '.png';
+  NL.toast('Preparo l\'immagine…');
+  return card(c, fmt).then(function (cv) {
+    return new Promise(function (res) { try { cv.toBlob(res, 'image/png'); } catch (e) { if (window.nlErr) nlErr(e); res(null); } });
+  }).then(function (blob) {
     if (!blob) { NL.toast('Non riesco a preparare l\'immagine.'); return; }
     var f = null; try { f = new File([blob], name, { type: 'image/png' }); } catch (e) { if (window.nlErr) nlErr(e); }
     if (f && navigator.canShare && navigator.canShare({ files: [f] })) {
-      navigator.share({ files: [f], title: d.Q.title }).catch(function () {});
-    } else {
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-      NL.toast('Immagine salvata nei Download.');
+      return navigator.share({ files: [f], title: c.title, text: text }).catch(function () {});
     }
-  }, 'image/png');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    NL.toast('Immagine salvata nei Download.');
+  });
 }
+function share(fmt) { return shareCard(cardFromWrap(W.data), fmt); }
 
 /* ---------- invito in cima all'elenco, voce nel menu, opzione ---------- */
 function askData(evenSeen) {
@@ -310,5 +493,5 @@ NL.on('closed', function (list) {            // invito chiuso con la × ma ancor
 NL.on('menu', paintMenu);
 NL.on('options', paintOption);
 paintAsk();
-window.NLWrap = { open: open, close: close, quarters: quarters, wrapData: wrapData, quarter: quarter, cfg: function () { return cfg; }, image: image, slides: slides };
+window.NLWrap = { open: open, close: close, quarters: quarters, wrapData: wrapData, quarter: quarter, cfg: function () { return cfg; }, slides: slides, palette: palette, card: card, shareCard: shareCard, loved: loved, cardFromWrap: cardFromWrap };
 })();

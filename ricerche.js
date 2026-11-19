@@ -90,6 +90,7 @@ function sheet() {
   el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="kgH"><h2 id="kgH">Crea la tua chiave Google Libri</h2>' +
     '<p class="msg" id="kgWhy"></p>' +
     '<div class="kg-free"><b>È gratis</b><span>Non si paga niente. Google ti dà <b>1.000 ricerche al giorno, solo per te</b>. Ci vogliono circa 5 minuti, una volta sola.</span></div>' +
+    '<p class="msg kg-pc">Più comodo dal computer: apri Google Cloud lì, crea la chiave, poi mandatela (per esempio per email) e incollala qui dal telefono.</p>' +
     '<ol class="kg-steps">' +
       '<li>Apri <a href="' + LINKS.project + '" target="_blank" rel="noopener">Google Cloud</a> ed entra con il tuo account Google. Crea un progetto con il nome che vuoi (per esempio «Libri»).</li>' +
       '<li>Apri <a href="' + LINKS.api + '" target="_blank" rel="noopener">Books API</a> e tocca «Abilita».</li>' +

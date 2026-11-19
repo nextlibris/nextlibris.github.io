@@ -171,9 +171,9 @@ function sheet() {
   return el;
 }
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var el = document.getElementById('profSheet'); if (el && !el.hidden) { if (mode) { mode = ''; paint(); } else close(); } } });
-function close() { var el = document.getElementById('profSheet'); if (el) el.hidden = true; cur = null; data = null; mode = ''; photoOpen = false; goalOpen = false; }
+function close() { var el = document.getElementById('profSheet'); if (el) el.hidden = true; cur = null; data = null; mode = ''; photoOpen = false; goalOpen = false; shareOpen = false; animDone = ''; }
 async function open(id) {
-  var el = sheet(); cur = id || null; data = null; mode = ''; photoOpen = false; el.hidden = false; paint();
+  var el = sheet(); cur = id || null; data = null; mode = ''; photoOpen = false; shareOpen = false; animDone = ''; el.hidden = false; paint();
   var si = el.querySelector('.sheet-in'); if (si) si.scrollTop = 0;
   if (!cur) { push(); return; }
   if (cur === 'esempio') return;
@@ -196,69 +196,126 @@ function numsLine(st) {
   var np = (st.pa || []).length; if (np) p.push('<b>' + np + '</b> ' + (np === 1 ? 'paese' : 'paesi'));
   return '<p class="pf-nums">' + p.join(' · ') + '</p>';
 }
-/* ---------- i numeri (18/11/2026, scelta di Piero: «misto»): in cima la scheda colorata dell'anno (con l'obiettivo, facoltativo),
-   sotto le tessere con le icone. st = numeri scelti da mostrare (o null); rel = quelli tra te e l'amico ---------- */
-var goalOpen = false;
+/* ---------- i numeri (giro 11C, 19/11/2026, scelte di Piero): stile «Tessere», schede colorate di misure diverse su fondo scuro,
+   numero grande in Bricolage Grotesque, colori della stagione di oggi (gli stessi dell'immagine da condividere, da wrap.js).
+   In cima la tessera grande dell'anno (con l'obiettivo, facoltativo); poi pagine, autore e paesi dell'anno; poi «Da sempre».
+   Aprendo il profilo i numeri salgono e la barra dell'obiettivo si riempie. Nel tuo profilo «Condividi i tuoi numeri»
+   (storia o quadrata); in quello di un amico no: ognuno condivide solo i suoi. st = numeri da mostrare (o null); rel = quelli tra te e l'amico ---------- */
+var goalOpen = false, shareOpen = false, animDone = '';
+var MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 function plur(n, a, b) { return nf(n) + ' ' + (n === 1 ? a : b); }
 function flags(list, max) {
   list = (list || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); });
-  return '<span class="pf-flags">' + list.slice(0, max).map(function (c) { return '<span title="' + esc(NL.wdCName ? NL.wdCName(c) : c) + '">' + (NL.wdFlagImg ? NL.wdFlagImg(c) : NL.wdFlag ? NL.wdFlag(c) : c) + '</span>'; }).join(' ') + (list.length > max ? ' …' : '') + '</span>';
+  return '<span class="pf-flags">' + list.slice(0, max).map(function (c) { return '<span title="' + esc(NL.wdCName ? NL.wdCName(c) : c) + '">' + (NL.wdFlagImg ? NL.wdFlagImg(c) : NL.wdFlag ? NL.wdFlag(c) : c) + '</span>'; }).join(' ') + (list.length > max ? ' <span>+' + (list.length - max) + '</span>' : '') + '</span>';
 }
 function pileTxt(pages, books) {   // carta ~0,05 mm a pagina, copertina ~4 mm
   var cm = Math.round(pages * 0.005 + books * 0.4); if (cm < 5) return '';
   var cmp = cm >= 170 ? 'più di una persona' : cm >= 75 ? 'come un tavolo' : cm >= 45 ? 'come una sedia' : cm >= 30 ? 'come un righello' : cm >= 10 ? 'come una tazza' : '';
-  return ': impilati sono alti circa <b>' + (cm >= 100 ? (cm / 100).toFixed(1).replace('.', ',') + ' m' : cm + ' cm') + '</b>' + (cmp ? ', ' + cmp : '');
+  return 'impilati, circa ' + (cm >= 100 ? (cm / 100).toFixed(1).replace('.', ',') + ' m' : cm + ' cm') + (cmp ? ': ' + cmp : '');
 }
-function yearCard(st, own, name) {
+var PAL0 = { bg: '#2A1A12', t: ['#A8664A', '#C99A62', '#8A9160'], ink: ['#FFFFFF', '#1B1B1B', '#1B1B1B'] };   // se manca wrap.js: autunno
+function pal() { var W = window.NLWrap; try { return (W && W.palette && W.palette()) || PAL0; } catch (e) { return PAL0; } }
+function num(n) { return '<span class="pf-cnt" data-n="' + (Math.round(Number(n) || 0)) + '">' + nf(n) + '</span>'; }
+/* una tessera: k = colore (0-2), size = '' | 'wide' | 'big' */
+function tess(k, size, kick, big, sub, isVal) {
+  return '<div class="pf-t c' + k + (size ? ' ' + size : '') + '">' + (kick ? '<span class="pf-tk">' + kick + '</span>' : '') +
+    '<span class="' + (isVal ? 'pf-tv' : 'pf-tn') + '">' + big + '</span>' + (sub ? '<span class="pf-ts">' + sub + '</span>' : '') + '</div>';
+}
+function yearTiles(st, own, name) {
   var y = new Date().getFullYear(), ly = st.y === y ? st.ly || 0 : 0, pgy = st.y === y ? st.pgy || 0 : 0, h = '';
   var ed = own && cur !== 'esempio';   // l'obiettivo si cambia solo nel tuo profilo
-  h += '<p class="pf-yl">Nel ' + y + (own ? ' hai letto' : ' ' + esc(name || '') + ' ha letto') + '</p><b class="pf-yn">' + plur(ly, 'libro', 'libri') + '</b>';
-  var ob = Number(st.ob) || 0;
-  if (ob) h += '<div class="pf-goal"' + (ed ? ' role="button" tabindex="0" data-p="goal"' : '') + '><span>Obiettivo ' + nf(ob) + (ly >= ob ? ' · raggiunto! 🎉' : ' · ' + Math.round(ly / ob * 100) + '%') + '</span><span class="pf-gbar"><i style="width:' + Math.min(100, Math.round(ly / ob * 100)) + '%"></i></span></div>';
-  if (ed && goalOpen) h += '<div class="pf-gedit"><label class="sr" for="pfGoal">Obiettivo di libri per il ' + y + '</label><input type="number" id="pfGoal" min="1" max="365" inputmode="numeric" value="' + (ob || '') + '" placeholder="es. 24">' +
+  var ob = Number(st.ob) || 0, inner = '<span class="pf-tk">Nel ' + y + (own ? ' hai letto' : ' ' + esc(name || '') + ' ha letto') + '</span>' +
+    '<span class="pf-big">' + num(ly) + ' <small>' + (ly === 1 ? 'libro' : 'libri') + '</small></span>';
+  if (ob) inner += '<div class="pf-goal"' + (ed ? ' role="button" tabindex="0" data-p="goal"' : '') + '><span>Obiettivo ' + nf(ob) + (ly >= ob ? ' · raggiunto! 🎉' : ' · ' + Math.round(ly / ob * 100) + '%') + '</span><span class="pf-gbar"><i data-w="' + Math.min(100, Math.round(ly / ob * 100)) + '" style="width:' + Math.min(100, Math.round(ly / ob * 100)) + '%"></i></span></div>';
+  if (ed && goalOpen) inner += '<div class="pf-gedit"><label class="sr" for="pfGoal">Obiettivo di libri per il ' + y + '</label><input type="number" id="pfGoal" min="1" max="365" inputmode="numeric" value="' + (ob || '') + '" placeholder="es. 24">' +
     '<button class="btn sm" type="button" data-p="goalok">Salva</button>' + (ob ? '<button class="link" type="button" data-p="goaloff">Togli</button>' : '') + '</div>';
-  else if (ed && !ob) h += '<button class="link pf-gadd" type="button" data-p="goal">Metti un obiettivo per il ' + y + '</button>';
-  if (pgy) h += '<p class="pf-yt">cioè <b>' + nf(pgy) + ' pagine</b>' + pileTxt(pgy, ly) + '.</p>';
+  else if (ed && !ob) inner += '<button class="link pf-gadd" type="button" data-p="goal">Metti un obiettivo per il ' + y + '</button>';
   if (ly) {
     var sp = '', n = Math.min(ly, 40), seed = (name || 'me').length;
-    for (var i = 0; i < n; i++) { var hh = (seed * 47 + i * 67) % 360, ht = 55 + ((i * 37 + seed * 13) % 45); sp += '<i style="height:' + ht + '%;background:hsl(' + hh + ' 55% ' + (62 + (i % 3) * 8) + '%)"></i>'; }
-    h += '<div class="pf-shelf" aria-hidden="true">' + sp + '</div>';
-  } else h += '<p class="pf-yt">' + (own ? 'Quando finisci un libro, segnalo «Letto»: lo trovi qui.' : 'Ancora nessun libro finito quest\'anno.') + '</p>';
-  var bits = [];
-  if (st.auy && st.y === y) bits.push((own ? 'Il tuo autore dell\'anno' : 'Il suo autore dell\'anno') + ' è <b>' + esc(st.auy) + '</b> (' + plur(st.auyn, 'libro', 'libri') + ')');
+    for (var i = 0; i < n; i++) { var ht = 55 + ((i * 37 + seed * 13) % 45); sp += '<i style="height:' + ht + '%;opacity:' + (0.55 + (i % 3) * 0.15) + '"></i>'; }
+    inner += '<div class="pf-shelf" aria-hidden="true">' + sp + '</div>';
+  } else inner += '<span class="pf-ts">' + (own ? 'Quando finisci un libro, segnalo «Letto»: lo trovi qui.' : 'Ancora nessun libro finito quest\'anno.') + '</span>';
+  h += '<div class="pf-t c0 big">' + inner + '</div>';
+  var two = !!pgy && !!(st.auy && st.y === y);              // pagine e autore dell'anno in coppia; se ce n'è uno solo, è largo
+  if (pgy) h += tess(1, two ? '' : 'wide', 'Pagine dell\'anno', num(pgy), pileTxt(pgy, ly));
+  if (st.auy && st.y === y) h += tess(2, two ? '' : 'wide', own ? 'Il tuo autore dell\'anno' : 'Il suo autore dell\'anno', esc(st.auy), plur(st.auyn, 'libro', 'libri'), true);
   var py = (st.pay || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); });
-  if (py.length) bits.push((own ? 'hai viaggiato in ' : 'ha viaggiato in ') + '<b>' + plur(py.length, 'paese', 'paesi') + '</b> ' + flags(py, 6));
-  if (bits.length) h += '<p class="pf-yt">' + bits.join(' e ') + '.</p>';
-  return '<div class="pf-year">' + h + '</div>';
-}
-function tile(ico, big, txt, wide, val) {
-  return '<div class="pf-tile' + (wide ? ' wide' : '') + '"><span class="pf-ti" aria-hidden="true">' + ico + '</span>' + (val ? '<span class="pf-tv">' + big + '</span>' : '<span class="pf-tn">' + big + '</span>') + '<span class="pf-tt">' + txt + '</span></div>';
+  if (py.length) h += tess(pgy && st.auy ? 1 : 2, 'wide', (own ? 'Quest\'anno hai viaggiato in' : 'Quest\'anno ha viaggiato in'), plur(py.length, 'paese', 'paesi'), flags(py, 24));
+  return h;
 }
 function statsHTML(st, own, rel) {
-  var t = [], card = '';
+  var t = [], P = pal(), year = '';
+  function add(size, kick, big, sub, isVal) { t.push({ size: size, kick: kick, big: big, sub: sub, val: isVal }); }
   if (st) {
-    card = yearCard(st, own, own ? '' : (cur && A() && A().friendName ? A().friendName(cur) : ''));
-    t.push(tile('📚', nf(st.n), st.n === 1 ? 'libro in libreria' : 'libri in libreria'));
-    t.push(tile('📖', nf(st.pg), 'pagine lette' + (st.l ? ' · ' + plur(st.l, 'libro', 'libri') : '')));
-    if (st.au) t.push(tile('✍️', esc(st.au), 'autore più letto · ' + plur(st.aun, 'libro', 'libri'), false, true));
-    if (st.ge) t.push(tile('🏷️', esc(st.ge), 'genere più letto · ' + plur(st.gen, 'libro', 'libri'), false, true));
-    if (st.ul && st.ul.t) t.push(tile('🏁', '«' + esc(st.ul.t) + '»', 'ultimo libro letto' + (st.ul.a ? ' · ' + esc(st.ul.a) : ''), false, true));
-    if (st.lu && st.lu.t) t.push(tile('🐘', '«' + esc(st.lu.t) + '»', 'il più lungo' + (st.lu.pg ? ' · ' + nf(st.lu.pg) + ' pagine' : ''), false, true));
+    year = yearTiles(st, own, own ? '' : (cur && A() && A().friendName ? A().friendName(cur) : ''));
+    add('', '', num(st.n), st.n === 1 ? 'libro in libreria' : 'libri in libreria');
+    add('', '', num(st.pg), 'pagine lette' + (st.l ? ' · ' + plur(st.l, 'libro', 'libri') : ''));
+    if (st.au) add(st.au.length > 18 ? 'wide' : '', 'Autore più letto', esc(st.au), plur(st.aun, 'libro', 'libri'), true);
+    if (st.ge) add(st.ge.length > 18 ? 'wide' : '', 'Genere più letto', esc(st.ge), plur(st.gen, 'libro', 'libri'), true);
+    if (st.ul && st.ul.t) add('wide', 'Ultimo libro letto', '«' + esc(st.ul.t) + '»', st.ul.a ? esc(st.ul.a) : '', true);
+    if (st.lu && st.lu.t) add('wide', 'Il più lungo', '«' + esc(st.lu.t) + '»', st.lu.pg ? nf(st.lu.pg) + ' pagine' : '', true);
     var pa = (st.pa || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); });
-    if (pa.length) t.push(tile('🌍', plur(pa.length, 'paese', 'paesi'), flags(pa, 60), true, true));
-    t.push(tile('🤝', nf(st.pr), st.pr === 1 ? 'libro prestato adesso' : 'libri prestati adesso'));
+    if (pa.length) add('wide', 'Paesi degli autori letti', plur(pa.length, 'paese', 'paesi'), flags(pa, 60));
+    add('', '', num(st.pr), st.pr === 1 ? 'libro prestato adesso' : 'libri prestati adesso');
   }
   if (rel) {
     if (rel.comuni != null) {
       var pc = st && st.n ? Math.min(100, Math.round(rel.comuni / st.n * 100)) : 0;
-      t.push(tile('🔗', nf(rel.comuni), (rel.comuni === 1 ? 'libro' : 'libri') + ' in comune con te' + (rel.comuni && pc ? ' · il ' + pc + '% dei suoi' : '')));
+      add('', 'In comune con te', num(rel.comuni), (rel.comuni === 1 ? 'libro' : 'libri') + (rel.comuni && pc ? ' · il ' + pc + '% dei suoi' : ''));
     }
     var d = Number(rel.tra && rel.tra.dati) || 0, v = Number(rel.tra && rel.tra.avuti) || 0;
-    if (d + v) t.push(tile('⇄', nf(d + v), (d + v === 1 ? 'prestito' : 'prestiti') + ' tra voi · ' + nf(d) + ' da te, ' + nf(v) + ' a te'));
+    if (d + v) add('', 'Prestiti tra voi', num(d + v), nf(d) + ' da te, ' + nf(v) + ' a te');
   }
-  if (!t.length && !card) return '';
-  if (t.length % 2) { var k = t.length - 1; t[k] = t[k].replace('class="pf-tile"', 'class="pf-tile wide"'); }   // niente buco in fondo
-  return '<section class="fr-sec pf-num"><h3 class="fr-h">' + (own ? 'I tuoi numeri' : 'I suoi numeri') + '</h3>' + card + '<div class="pf-tiles">' + t.join('') + '</div></section>';
+  if (!t.length && !year) return '';
+  var half = 0; t.forEach(function (x, i) {                  // niente buco: una mezza rimasta sola diventa larga
+    if (x.size) { if (half % 2) t[i - 1].size = 'wide'; half = 0; } else half++;
+  });
+  if (half % 2) t[t.length - 1].size = 'wide';
+  var tiles = t.map(function (x, i) { return tess(i % 3, x.size, x.kick, x.big, x.sub, x.val); }).join('');
+  var vars = '--pf-bg:' + P.bg + ';' + P.t.map(function (c, i) { return '--pf-c' + i + ':' + c + ';--pf-i' + i + ':' + P.ink[i]; }).join(';');
+  var sh = '';
+  if (own && cur !== 'esempio' && st && window.NLWrap && window.NLWrap.shareCard) {
+    sh = shareOpen ? '<div class="pf-share"><span>Condividi i tuoi numeri:</span><button class="btn" type="button" data-p="shs">Storia</button><button class="btn" type="button" data-p="shq">Quadrata</button></div>'
+      : '<div class="pf-share"><button class="btn" type="button" data-p="share">Condividi i tuoi numeri</button></div>';
+  }
+  return '<section class="fr-sec pf-num"><h3 class="fr-h">' + (own ? 'I tuoi numeri' : 'I suoi numeri') + '</h3><div class="pf-board" style="' + vars + '">' +
+    (year ? '<div class="pf-grid">' + year + '</div>' : '') + (tiles ? '<p class="pf-sep">Da sempre</p><div class="pf-grid">' + tiles + '</div>' : '') + '</div>' + sh + '</section>';
+}
+/* i numeri salgono e la barra si riempie, una volta per apertura del profilo (non a ogni aggiornamento) */
+function animate(body) {
+  var key = (cur || 'me') + (mode || ''); if (animDone === key) return;
+  var box = body.querySelector('.pf-board'); if (!box) return;
+  animDone = key;
+  try { if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { return; }
+  var els = [].slice.call(box.querySelectorAll('.pf-cnt[data-n]')), bars = [].slice.call(box.querySelectorAll('.pf-gbar i[data-w]')), t0 = 0, D = 900;
+  bars.forEach(function (b) { b.style.transition = 'none'; b.style.width = '0'; });
+  els.forEach(function (e) { e.textContent = '0'; });
+  function step(ts) {
+    if (!t0) t0 = ts;
+    var k = t0 < 0 ? 1 : Math.min(1, (ts - t0) / D), ease = 1 - Math.pow(1 - k, 3);
+    els.forEach(function (e) { if (e.isConnected) e.textContent = nf(Number(e.dataset.n) * ease); });
+    if (k < 1) requestAnimationFrame(step);
+  }
+  setTimeout(function () { t0 = -1e9; els.forEach(function (e) { e.textContent = nf(Number(e.dataset.n)); }); }, D + 150);   // alla fine, sempre il numero giusto
+  requestAnimationFrame(function () {
+    bars.forEach(function (b) { void b.offsetWidth; b.style.transition = 'width .9s cubic-bezier(.2,.7,.2,1)'; b.style.width = b.dataset.w + '%'; });
+    requestAnimationFrame(step);
+  });
+}
+/* i dati dell'immagine dell'anno (il tuo profilo) */
+function yearCardData() {
+  var st = stats(), now = new Date(), y = now.getFullYear(), m = now.getMonth(), W = window.NLWrap;
+  var readY = mine().filter(function (b) { return !b.w && b.rs === 'ok' && String(b.rd || '').slice(0, 4) === String(y); });
+  return { q: W && W.palette ? W.palette().q : 4, title: 'Il mio ' + y + ' in libri', label: (m ? 'gennaio – ' + MESI[m] + ' ' + y : 'gennaio ' + y) + ' · finora',
+    name: NL.name(), alab: 'Autore dell\'anno', n: st.ly || 0, added: 0, pages: st.pgy || 0, author: st.auy ? { name: st.auy, n: st.auyn } : null,
+    countries: (st.pay || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); }), books: W && W.loved ? W.loved(readY, 4) : [], goal: st.ob ? { n: st.ob, done: st.ly || 0 } : null };
+}
+/* copertine disegnate nelle file: il titolo va a capo e si rimpicciolisce finché entra, mai tagliato */
+function fitCovers(body) {
+  [].slice.call(body.querySelectorAll('.pf-bk.noimg .pf-cvt')).forEach(function (el) {
+    var s = 11; el.style.fontSize = s + 'px';
+    while (s > 6 && el.scrollHeight > el.clientHeight + 1) { s -= 0.5; el.style.fontSize = s + 'px'; }
+  });
 }
 function head(id, name, when) {
   var av = avatar(id, name, true);
@@ -343,6 +400,7 @@ function paint() {
     }
   }
   body.innerHTML = h;
+  animate(body); fitCovers(body);
 }
 /* ---------- scorciatoie alle impostazioni personali (Piero, 18/11/2026): Account, Amici e privacy, Notifiche, Chiave Google e worker.
    La finestra si apre sopra e, quando si chiude, torna il profilo. ---------- */
@@ -389,6 +447,8 @@ async function onClick(e) {
   if (a === 'back') { mode = ''; paint(); }
   else if (a === 'photo') { photoOpen = !photoOpen; paint(); }
   else if (a === 'bigfoto') { var bf = okFoto((pics[id] || {}).f); if (bf) { NL.openPh(bf, (data && data.utente) || ''); var pv = document.getElementById('phView'); if (pv) pv.classList.add('au'); } }
+  else if (a === 'share') { shareOpen = true; paint(); }
+  else if ((a === 'shs' || a === 'shq') && !cur && window.NLWrap) { shareOpen = false; paint(); window.NLWrap.shareCard(yearCardData(), a === 'shq' ? 'square' : 'story'); }
   else if (a === 'goal') { goalOpen = !goalOpen; paint(); if (goalOpen) setTimeout(function () { var g = document.getElementById('pfGoal'); if (g) g.focus(); }, 30); }
   else if (a === 'goalok' || a === 'goaloff') {
     var gv = a === 'goaloff' ? 0 : Math.round(Number((document.getElementById('pfGoal') || {}).value) || 0);

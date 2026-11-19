@@ -311,8 +311,8 @@
     try { var u = new URL(str(base)); if (u.protocol !== 'https:') return ''; u.searchParams.set('isbn', isbn); return u.href; } catch (e) { return ''; }
   }
   var SRC_ORDER = ['g', 'o', 's', 'c'];   // per i campi contesi vince la prima fonte; quelli vuoti si riempiono con le altre
-  /* Cerca un ISBN-13 su Google Libri e Open Library INSIEME (piu' veloce) e somma i dati: Google ha la precedenza,
-     i campi che mancano (editore, anno, autore...) vengono presi dalle altre fonti. Crossref si aggiunge solo se ancora
+  /* Cerca un ISBN-13 prima su Open Library e SBN, poi su Google Libri solo se manca il libro o la copertina (giro 11B),
+     e somma i dati: per i campi contesi Google ha la precedenza, i campi che mancano vengono presi dalle altre fonti. Crossref si aggiunge solo se ancora
      manca qualcosa. Ritorna il libro, oppure null SOLO se le banche dati principali hanno risposto e non lo conoscono.
      Se non lo trova e Google o Open Library hanno dato errore, rifiuta con {code:'rate'|'network', detail:[...]}:
      cosi' l'app propone "Riprova" invece di scrivere "Non trovato". */
@@ -367,12 +367,12 @@
       return exact[0] || (strict ? null : list[0]) || null;
     }
 
-    // 1) Google Libri e Open Library, insieme
-    // Le tre fonti partono insieme. Se Google da' gia' titolo, autore, editore e anno, le altre hanno ancora
-    // un margine breve (piu' lungo per SBN sui libri italiani, che ha l'ultima parola su editore e anno), poi si va avanti.
-    var pG = google('isbn:' + isbn, false).catch(function (e) { note('Google Libri', e); gFailed = true; return null; });
+    // 1) giro 11B (Piero, 19/11/2026): prima Open Library e le biblioteche (SBN), insieme; Google solo se manca il libro
+    //    o la copertina. La descrizione non conta: si cerca a richiesta dalla scheda. Open Library ha 2,5 secondi,
+    //    poi Google parte comunque (le biblioteche intanto continuano).
     var pO = tryOl().then(function (v) { got.o = v; }), pS = trySbn().then(function (v) { got.s = v; });
-    got.g = await pG;
+    await Promise.race([pO, sleep(opts.olWait != null ? opts.olWait : 2500)]);
+    if (!(got.o && got.o.img)) got.g = await google('isbn:' + isbn, false).catch(function (e) { note('Google Libri', e); gFailed = true; return null; });
     var grace = complete() ? ((italian && opts.sbnUrl) ? (opts.graceSbn != null ? opts.graceSbn : 3000) : (opts.grace != null ? opts.grace : 1500)) : 0;
     if (grace) await Promise.race([Promise.all([pO, pS]), new Promise(function (r) { setTimeout(r, grace); })]);
     else await Promise.all([pO, pS]);

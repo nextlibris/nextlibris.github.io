@@ -323,7 +323,9 @@ function paintSheet() {
       'Il telefono resta la copia principale; senza rete l\'app funziona come sempre.</p>';
     var gOn = prov && prov.google && CFG.gClient;    // senza Client ID niente Google (la riserva mostrerebbe supabase.co)
     if (!EMAIL) step = 'email';
+    var iosApp = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);   // giro 11F: su iPhone la finestra di Google a volte non torna all'app
     if (step === 'email' && gOn) h += '<div class="acc-g" id="accG"></div>' +
+      (iosApp ? '<p class="acc-links acc-ios"><button class="link" type="button" data-acc="google">La finestra di Google non si apre o non torna qui? Entra da questo link</button></p>' : '') +
       '<p class="msg bad" id="accErr" hidden></p>' + (EMAIL ? '<p class="acc-or">oppure con la tua email</p>' : '');
     if (!EMAIL) {
       /* dopo l'uscita dall'account i servizi di accesso non erano mai stati letti: prima si leggono, poi si decide il messaggio

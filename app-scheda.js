@@ -406,8 +406,9 @@ function descBody(b) {
       '<button type="button" class="link quiet" data-act="descdel">Non è questo libro: rimuovila</button></div>';
   }
   if (b.dsn) return '<p class="desc-none">Descrizione non disponibile.</p>';
+  if (descErr[b.id]) return '<p class="desc-none">' + esc(descErr[b.id]) + '</p><div class="desc-acts"><button type="button" class="link" data-act="descfind">Riprova</button></div>';
   if (navigator.onLine === false) return '<p class="desc-none">Senza connessione: la cerco appena riapri il riquadro con la rete.</p>';
-  return '';
+  return '<div class="desc-acts"><button type="button" class="link" data-act="descfind">Cerca la descrizione</button></div>';
 }
 function paintDesc(id) {
   var b = get(id);
@@ -417,11 +418,36 @@ function paintDesc(id) {
     if (b && b.ds && hint) hint.remove();
   });
 }
-/* Descrizione (scelta di Piero, 16/11/2026): arriva solo con la prima ricerca del libro (o dall'archivio comune).
-   Se non c'e': «Descrizione non disponibile» e nessun'altra richiesta, per risparmiare le ricerche di Google. */
+/* Descrizione a richiesta (giro 11B, Piero 19/11/2026): la ricerca del libro chiama Google solo se mancano il libro o la copertina,
+   quindi spesso la descrizione non arriva. Aprendo il riquadro «Descrizione» («tocca per cercarla») si fa UNA ricerca Google
+   (per ISBN, oppure per titolo e autore); trovata, resta nel libro e va nell'archivio comune; se non c'e', «non disponibile». */
 function noDesc(id) { var b = get(id); if (!b || b.ds || b.dsn) return; b.dsn = Date.now(); b.dsq = 0; touch(); paintDesc(id); }
-function queueDesc(id) { noDesc(id); }
-function loadDesc(id) { noDesc(id); }
+function queueDesc(id) { }                              // niente piu' «non disponibile» in automatico: si cerca quando la apri
+async function loadDesc(id) {
+  var b = get(id);
+  if (!b || b.ds || b.dsn || descBusy[id]) return;
+  delete descErr[id];
+  if (navigator.onLine === false) { paintDesc(id); return; }
+  if (!googleLeft(true)) { descErr[id] = 'Per oggi le ricerche di Google sono finite: riprova domani.'; paintDesc(id); return; }
+  var isbn = L.toIsbn13(b.i), aut = authorsOf(b)[0] || '';
+  if (!isbn && !b.t) { noDesc(id); return; }
+  var qq = isbn ? 'isbn:' + isbn : 'intitle:"' + b.t.replace(/"/g, '') + '"' + (aut ? ' inauthor:"' + aut.replace(/"/g, '') + '"' : '');
+  descBusy[id] = true; paintDesc(id);
+  try {
+    var j = await L.getJson(apiFetch, 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(qq) + '&maxResults=5&printType=books' +
+      '&fields=items(id,volumeInfo(title,subtitle,authors,language,industryIdentifiers,description))' + (settings.gbKey ? '&key=' + encodeURIComponent(settings.gbKey) : ''), { waits: [900], timeout: 9000 });
+    var tk = L.titleKey(b.t), list = L.parseGoogle(j).filter(function (c) { return c.ds; });
+    var hit = isbn ? (list.filter(function (c) { return c.isbns.indexOf(isbn) >= 0; })[0] || list[0]) : list.filter(function (c) { return L.titleKey(c.t) === tk || L.titleKey(c.t.split(':')[0]) === tk; })[0];
+    var x = get(id);
+    if (x && hit) {
+      takeDesc(x, hit.ds, L.guessLang(hit.ds) || L.str(hit.lang).slice(0, 2).toLowerCase());
+      if (isbn && window.NL && NL.archive && NL.archive.put) NL.archive.put(isbn, { t: x.t, ds: x.ds, dsl: x.dsl });
+    } else if (x) { x.dsn = Date.now(); x.dsq = 0; }
+    touch();
+  } catch (e) { descErr[id] = e && e.status === 429 ? 'Google non risponde (limite di ricerche): riprova più tardi.' : 'Non sono riuscito a cercarla: riprova più tardi.'; }
+  delete descBusy[id];
+  paintDesc(id);
+}
 function runDescQueue() { state.books.forEach(function (b) { if (b.dsq && !b.ds) { b.dsq = 0; b.dsn = Date.now(); touch(); } }); }   // in sospeso dalle versioni vecchie
 /* ---- serie e collane: quali volumi hai, quali mancano ---- */
 function serNums(a) { return a.join(', '); }

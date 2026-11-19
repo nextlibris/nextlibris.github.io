@@ -3,6 +3,17 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 108 · 19/11/2026
+> **I tuoi numeri, da condividere** Nel profilo le statistiche diventano tessere colorate con i colori della stagione; con «Condividi i tuoi numeri» le mandi come immagine (storia o quadrata), e lo stesso con «La tua stagione in libri».
+> **Messaggi avvisati subito** La notifica della chat arriva appena ti scrivono; i messaggi dopo non ti disturbano finché non leggi (nei gruppi al massimo una ogni 30 minuti). Con la chat aperta, niente notifica.
+> **Su iPhone** Se apri Next Libris in Safari ti mostriamo come metterla nella schermata Home, dove i libri restano al sicuro e arrivano le notifiche.
+> **Descrizione con un tocco** Nella pagina del libro tocchi «Descrizione» e la cerchiamo: così Google si usa solo quando serve.
+- **Ricerca dei libri:** prima l'archivio comune, Open Library e le biblioteche; Google solo se mancano il libro o la copertina. Le novità dei tuoi autori costano meno ricerche.
+- **Worker prestato:** al massimo 3.000 ricerche al giorno per amico; poi l'app cerca nelle altre fonti fino al giorno dopo.
+- **Tablet e computer:** copertine di misura giusta anche sugli schermi grandi.
+- **Backup:** si manda come file .txt, che tutti i telefoni accettano.
+- **iPhone:** i campi non ingrandiscono più la pagina; se la finestra di Google non torna all'app c'è un link di riserva per entrare.
+
 ## Versione 107 · 18/11/2026
 > **Chiave e worker solo tuoi** Il worker prestato da un amico ora passa dal server, come la chiave: sul tuo telefono non se ne vede l'indirizzo. Puoi prestare agli amici solo chiave e worker tuoi.
 - **Pulizia:** se sul telefono era rimasta la chiave o il worker di un amico (ricevuti prima della versione 105), l'app li toglie da sola; se quell'amico te li presta ancora, continui a usarli dal server.

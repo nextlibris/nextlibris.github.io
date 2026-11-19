@@ -136,6 +136,7 @@ list.addEventListener('click', function (e) {
   else if (act === 'quoteshare') shareQuote(id, +btn.dataset.i);
   else if (act === 'quotedel') { var qb = get(id), qi = +btn.dataset.i; if (qb && qb.qs && qb.qs[qi]) { var qold = qb.qs.splice(qi, 1)[0]; touch(); paintQuotes(id); toast('Citazione eliminata.', { label: 'Annulla', fn: function () { var x = get(id); if (x) { x.qs.splice(Math.min(qi, x.qs.length), 0, qold); touch(); paintQuotes(id); } } }); } }
   else if (act === 'quoteedit') openQuote(id, +btn.dataset.i);
+  else if (act === 'descfind') { loadDesc(id); }
   else if (act === 'descmore') { descFull[id] = true; paintDesc(id); }
   else if (act === 'descdel') { var dd = get(id); if (dd) { dd.ds = ''; dd.dsf = ''; dd.dsl = ''; dd.dsn = Date.now(); touch(); paintDesc(id); toast('Descrizione rimossa'); } }
   else if (act === 'rs' || act === 'rt') setRead(id, act, btn.dataset.v);
@@ -424,7 +425,7 @@ function openExport() {
 $('#btnExport').addEventListener('click', openExport);
 $('#exportClose').addEventListener('click', function () { $('#exportSheet').hidden = true; });
 $('#btnXlsx').addEventListener('click', saveXLSX);
-$('#btnShareBackup').addEventListener('click', shareBackup);
+$('#btnShareBackup').addEventListener('click', function () { shareBackup(false); });
 $('#loanCancel').addEventListener('click', closeLoan);
 $('#loanSave').addEventListener('click', saveLoan);
 $('#loanBack').addEventListener('click', returnLoan);
@@ -627,7 +628,7 @@ $('#btnClearGuess').addEventListener('click', function () {
 /* indirizzo dell'app: quello da cui gira (cosi' link e condivisioni seguono un eventuale cambio di nome); di riserva quello pubblicato */
 var APP_URL = /\.github\.io$/.test(location.hostname) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://nextlibris.github.io/';
 var APP_SCOPE = location.pathname.replace(/[^/]*$/, '');      // es. /next-libris/: l'app installata e' legata a questa cartella
-var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. Aprilo con Chrome e premi «Installa».';
+var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. È gratis: apri il link e mettila tra le app del telefono.';
 var deferred = null;
 function isStandalone() {
   try {
@@ -637,7 +638,11 @@ function isStandalone() {
 }
 function browserKind() {
   var ua = navigator.userAgent || '';
-  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {   // iPhone (giro 11F): Safari, Chrome/Firefox/Edge per iPhone, o dentro un'altra app
+    if (/FBAN|FBAV|Instagram|Line\/|Telegram|WhatsApp|GSA\/|Snapchat/i.test(ua)) return 'iosinapp';
+    if (/CriOS|FxiOS|EdgiOS/.test(ua)) return 'iosother';
+    return 'ios';
+  }
   if (/; wv\)|FBAN|FBAV|Instagram|Line\/|Telegram|WhatsApp|GSA\/|Snapchat/i.test(ua)) return 'inapp';
   if (/SamsungBrowser/i.test(ua)) return 'samsung';
   if (/Firefox/i.test(ua)) return 'firefox';
@@ -664,9 +669,15 @@ var INST_STEPS = {
   inapp: { lead: 'Il link si è aperto dentro un\'altra app, che non può installarla. Serve Chrome.',
     steps: ['Tocca <b>⋮</b> (i tre puntini) in alto a destra.', 'Scegli <b>Apri in Chrome</b> o <b>Apri nel browser</b>.', 'In Chrome premi <b>Installa</b> nella scheda in alto.'],
     note: 'Se non trovi la voce, copia il link e incollalo nella barra degli indirizzi di Chrome.', copy: true, chrome: true },
-  ios: { lead: 'Su iPhone e iPad si aggiunge alla schermata Home da Safari.',
-    steps: ['Tocca <b>Condividi</b> (il quadrato con la freccia in su).', 'Scorri e scegli <b>Aggiungi alla schermata Home</b>.', 'Tocca <b>Aggiungi</b>.'],
+  ios: { lead: 'Su iPhone si mette nella schermata Home da Safari: un minuto e hai l\'icona come le altre app.',
+    steps: ['Tocca <b>···</b> in basso a destra (oppure il tasto <b>Condividi</b>, il quadrato con la freccia, se lo vedi).', 'Scegli <b>Condividi</b>, poi scorri e tocca <b>Aggiungi alla schermata Home</b>.', 'Lascia acceso <b>Apri come app web</b> e tocca <b>Aggiungi</b>. Poi apri Next Libris dall\'icona.'],
+    note: 'Su iPhone l\'app nella schermata Home e Safari tengono i libri separati: usa sempre l\'icona.', copy: true },
+  iosother: { lead: 'Su iPhone si mette nella schermata Home anche da questo browser.',
+    steps: ['Tocca il tasto <b>Condividi</b> (il quadrato con la freccia, in alto o in basso).', 'Scegli <b>Aggiungi alla schermata Home</b> (se non c\'è, tocca prima <b>Altro</b>).', 'Tocca <b>Aggiungi</b>, poi apri Next Libris dall\'icona.'],
     note: 'Se la voce non c\'è, copia il link e aprilo in Safari.', copy: true },
+  iosinapp: { lead: 'Il link si è aperto dentro un\'altra app, che non può metterla nella schermata Home. Serve Safari.',
+    steps: ['Tocca <b>···</b> o il tasto <b>Condividi</b> in questa finestra.', 'Scegli <b>Apri in Safari</b> (o <b>Apri nel browser</b>).', 'In Safari segui i passi che ti mostriamo lì.'],
+    note: 'Se non trovi la voce, copia il link e incollalo in Safari.', copy: true },
   samsung: { lead: 'In Samsung Internet si fa dal menu in basso.',
     steps: ['Tocca il menu <b>≡</b> in basso a destra.', 'Scegli <b>Aggiungi pagina a</b>, poi <b>Schermata Home</b>.', 'Conferma con <b>Aggiungi</b>.'],
     note: 'In alternativa apri il link in Chrome: lì basta premere «Installa».', copy: true },
@@ -709,6 +720,34 @@ async function doInstall() {
   deferred = null;
   if (out && out.outcome === 'dismissed') toast('Va bene. Quando vuoi: Menu › Impostazioni › Installazione sul telefono.');
   updateInstallUi();
+}
+/* iPhone nel browser (giro 11F, Piero 19/11/2026): prima si mette nella schermata Home, poi si comincia.
+   Su iPhone l'app della schermata Home e Safari tengono i dati separati, Safari puo' cancellarli dopo settimane senza aperture
+   e le notifiche arrivano solo all'app: per questo si chiede di installarla subito. «Continua nel browser» resta, con l'avviso. */
+function iosGate() {
+  var k = browserKind();
+  if (!/^ios/.test(k) || isStandalone() || settings.iosWeb) return;
+  if (document.getElementById('iosGate')) return;
+  var h = INST_STEPS[k], d = document.createElement('div');
+  d.id = 'iosGate'; d.className = 'ios-gate'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'iosGateH');
+  d.innerHTML = '<div class="ig-in"><img class="ig-ico" src="icons/next-libris-192.png" alt="" width="72" height="72">' +
+    '<h2 id="iosGateH">Prima mettila sul tuo iPhone</h2>' +
+    '<p class="ig-lead">Su iPhone Next Libris si usa dalla <b>schermata Home</b>: così i tuoi libri restano al sicuro, funziona anche senza internet e ti arrivano le notifiche.</p>' +
+    '<p class="ig-sub">' + h.lead + '</p><ol class="ig-steps">' + h.steps.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' +
+    '<p class="ig-note">' + h.note + '</p>' +
+    (h.copy ? '<button class="btn" type="button" data-ig="copy">Copia il link</button>' : '') +
+    '<button class="link ig-web" type="button" data-ig="web">Continua nel browser</button></div>';
+  document.body.appendChild(d); document.documentElement.classList.add('ios-gated');
+  d.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ig]'); if (!b) return;
+    if (b.dataset.ig === 'copy') { try { navigator.clipboard.writeText(APP_URL).then(function () { toast('Link copiato: incollalo in Safari.'); }); } catch (x) { nlErr(x); } return; }
+    if (b.dataset.ig === 'web') {
+      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Continua lo stesso'; var w = document.createElement('p'); w.className = 'ig-warn';
+        w.textContent = 'Nel browser le notifiche non arrivano e, se non apri Next Libris per qualche settimana, Safari può cancellare i tuoi libri. Quando la metterai nella schermata Home, lì l\'app ripartirà vuota (con l\'account i libri tornano da soli, le foto no).';
+        b.parentNode.insertBefore(w, b); return; }
+      settings.iosWeb = true; saveSettings(); d.remove(); document.documentElement.classList.remove('ios-gated');
+    }
+  });
 }
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; updateInstallUi(); });
 window.addEventListener('appinstalled', function () {
@@ -853,6 +892,12 @@ applyCols();
 loadQuota();
 applyLook(false);
 updateInstallUi();
+try { iosGate(); } catch (e) { nlErr(e); }
+/* iPhone (giro 11F): la luce della fotocamera non si accende dall'app (Safari non lo permette) e il pizzico sulle copertine non deve ingrandire la pagina */
+if (/^ios/.test(browserKind())) {
+  try { $('#lightRun').hidden = true; } catch (e) { nlErr(e); }
+  document.addEventListener('gesturestart', function (e) { if (e.target && e.target.closest && e.target.closest('#list')) e.preventDefault(); }, { passive: false });
+}
 setTimeout(function () {
   checkVersion().then(function (j) {
     if (j && j.v > APP_VERSION.v) notice('È disponibile la versione ' + j.v + ' dell\'app (stai usando la ' + APP_VERSION.v + ').', 'Aggiorna adesso', updateNow);
@@ -892,7 +937,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
    Un modulo si toglie cancellando i suoi file e le sue righe in index.html e sw.js (vedi togli_modulo.py nel ramo prove). ---- */
 window.NL = {
   openPh: function (src, cap) { openPh(src, cap); },   // foto dell'amico a tutto schermo (giro 10)
-  inst: { standalone: isStandalone, kind: browserKind, go: doInstall },   // per la guida (giro 10)
+  inst: { standalone: isStandalone, kind: browserKind, go: doInstall, ios: function () { return /^ios/.test(browserKind()); } },   // per la guida (giro 10)
   setKey: function (v) { setSvc('key', v); }, svcAll: function () { return svcAll(); }, svcPurge: function (v) { svcPurge(v); }, openDon: function () { openDon(); },   // dalla guida della chiave (18/11/2026)
   ownKey: function () { return mine('key'); },
   qThumb: function (c) { return qThumb(c); },   // miniatura della foto di una citazione (profilo, 18/11/2026)   // la TUA chiave, anche mentre usi quella di un amico (giro 8)

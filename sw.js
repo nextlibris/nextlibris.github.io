@@ -2,7 +2,7 @@
 // le copie parallele (…/next-libris-prova/, in generale …/next-libris-NOME/) stanno allo stesso indirizzo di base: copie offline con un prefisso
 // loro, e ognuna cancella solo le proprie (la versione vera non tocca quelle che cominciano con «nome-catalogo-libri-»)
 const COPIA = (self.registration.scope.match(/\/next-libris-([a-z]+)\//) || [])[1] || '';
-const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v107';
+const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v108';
 const MINE = (k) => (COPIA ? k.startsWith(COPIA + '-') : !/^[a-z]+-catalogo-libri-/.test(k));
 const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app.js', 'app-aggiungi.js', 'app-vista.js', 'app-scheda.js', 'app-per-te.js', 'app-elenco.js', 'app-finestre.js', 'app-filtri.js', 'app-strumenti.js', 'app-wiki.js', 'app-avvio.js',   // app.js divisa in parti (17/11/2026)
   'lib.js', 'manifest.json',

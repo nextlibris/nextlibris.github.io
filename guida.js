@@ -27,11 +27,11 @@ var S = [
     p: ['Tocca il <b>+</b> in basso e scegli come: <b>Scansiona</b> il codice a barre sul retro, <b>Fotografa</b> la copertina o <b>Digita</b> il titolo.',
       'Con <b>Per autore</b> trovi tutti i libri di uno scrittore. In negozio, <b>Ce l\'ho già?</b> ti dice se un libro ce l\'hai già.'] },
   { ico: 'gear', h: 'Trova più libri (facoltativo)', go: 'key', btn: 'Crea la chiave',   // schermata nuova: chiave e worker (giro 5)
-    p: ['Next Libris cerca i libri in archivi gratuiti. Se vuoi trovarne di più, con copertine e descrizioni, puoi creare gratis una <b>chiave Google Libri</b>: ci vogliono 5 minuti e ti guidiamo passo passo.',
+    p: ['Next Libris cerca i libri in archivi gratuiti. Se vuoi trovarne di più, con copertine e descrizioni, puoi creare gratis una <b>chiave Google Libri</b>: ci vogliono 5 minuti e ti guidiamo passo passo (dal computer è ancora più comodo).',
       'Se un amico ti presta la sua, non devi crearla.'] },   // giro 10: niente parole tecniche (via il worker)
   { ico: 'fav', h: 'La pagina del libro', go: 'book',
     p: ['Tocca un libro per aprirlo. Segna se lo stai leggendo o l\'hai già letto, dagli un voto con i <b>libricini</b> e tieni il segno con il <b>segnalibro</b>. Con la <b>stella</b> dici che lo consigli: gli amici lo vedono nel tuo profilo.',
-      'La <b>matita</b> serve a correggere i dati. Se dal libro hanno tratto un film o una serie, lo trovi qui.'] },
+      'La <b>matita</b> serve a correggere i dati. Tocca <b>Descrizione</b> per leggere di cosa parla. Se dal libro hanno tratto un film o una serie, lo trovi qui.'] },
   { ico: 'search', h: 'Trova e ordina', go: 'sort', sel: '#q, #sortBar',
     p: ['Cerca per titolo o autore, usa i <b>Filtri</b> e <b>Ordina · Raggruppa</b> (per autore, genere, paese…). Scegli tra copertine ed elenco.',
       'Le copertine partono da <b>3 per riga</b>: allarga o stringi <b>due dita</b> sulle copertine per farle più grandi o più piccole (da 2 a 5 per riga). Lo trovi anche in Menu › Aspetto.',
@@ -42,10 +42,10 @@ var S = [
     p: ['Metti nei <b>Desideri</b> i libri che vorresti leggere. Gli amici possono vederli e trovare l\'idea giusta per un regalo. Se un amico ce l\'ha già, te lo diciamo: magari ve lo prestate.'] },
   { ico: 'user', h: 'Amici e profilo', go: 'friends', mod: 'NLAmici',
     p: ['Con <b>Accedi con Google</b> i tuoi libri si salvano anche online e puoi trovare gli amici per nome. Guarda le loro librerie, chiedi <b>Me lo presti?</b> e segui i loro desideri.',
-      'La <b>campanella</b> ti avvisa delle novità; con il <b>fumetto</b> 💬 scrivi agli amici, anche in gruppo, e vi mandate i libri. Tocca il tuo nome in alto per vedere il tuo <b>profilo</b>.'] },
+      'La <b>campanella</b> ti avvisa delle novità; con il <b>fumetto</b> 💬 scrivi agli amici, anche in gruppo, e vi mandate i libri. Tocca il tuo nome in alto per vedere il tuo <b>profilo</b>, con i numeri del tuo anno da condividere come immagine.'] },
   { ico: 'tolib', h: 'Installala sul telefono', go: 'inst', btn: 'Installa', inst: true,   // giro 10: solo nel browser, se non è installata
     p: ['Metti Next Libris tra le app del telefono: si apre con un tocco, come le altre, e funziona anche senza internet.'],
-    ios: ['Metti Next Libris tra le app del telefono: si apre con un tocco, come le altre, e funziona anche senza internet.', 'Tocca <b>Condividi</b> in basso, poi <b>Aggiungi alla schermata Home</b>.'] },
+    ios: ['Metti Next Libris tra le app del telefono: si apre con un tocco, come le altre, e funziona anche senza internet.', 'In Safari tocca <b>···</b> in basso e poi <b>Condividi</b> (o il tasto <b>Condividi</b>, se lo vedi), poi <b>Aggiungi alla schermata Home</b> e <b>Aggiungi</b>. Da lì in poi apri Next Libris dall\'icona.'] },
   { ico: 'chart', h: 'Per te', go: 'don', btn: 'Sostieni Next Libris',   // Sostieni (Piero, 18/11/2026)
    
     p: ['Suggerimenti sui tuoi autori, novità, film tratti dai tuoi libri, statistiche e <b>La tua stagione in libri</b>.', 'Ogni tanto ti ricordiamo di fare una <b>copia di sicurezza</b> dei tuoi libri: con un tocco la mandi su Drive, WhatsApp o email, foto comprese.', 'Next Libris è gratis per tutti: se ti piace, puoi sostenerla.'],

@@ -1803,7 +1803,7 @@ html[data-look="nuovo"] .gc-face.sm .gc-ph::before,html[data-look="nuovo"] .gc-f
 .au-cut .auc-auto{display:block;margin:4px 10px 6px;padding:0}
 /* dimensione delle copertine (giro 1, 18/11/2026): N per riga sul telefono, stessa grandezza sugli schermi larghi; due dita sulle copertine */
 @media (max-width:699px){ body.cols #list .grid{grid-template-columns:repeat(var(--cols),minmax(0,1fr))} }
-@media (min-width:700px){ body.cols #list .grid{grid-template-columns:repeat(auto-fill,minmax(calc(600px / var(--cols)),1fr))} }
+@media (min-width:700px){ body.cols #list .grid{grid-template-columns:repeat(auto-fill,minmax(calc(480px / var(--cols)),1fr))} }   /* tablet e PC (giro 11D): copertine non più grandi di un telefono */
 body.cols-sm #list .grid{gap:12px 8px}
 body.cols-sm #list .cover .cap{font-size:12px}
 body.cols-sm #list .cover .ph{padding:6px 5px}
@@ -1914,3 +1914,18 @@ html.guest body header.top .top-meta,html.esempio body header.top .top-meta{marg
   .top h1 .prova-tag{margin-left:3px;padding:1px 4px;font-size:8.5px;letter-spacing:0}
   .sortbar .sb-dot{display:none}          /* «Ordina» e «Raggruppa» vanno su due righe: niente puntino in fondo alla prima */
 }
+/* iPhone (giro 11F): nel browser si chiede prima di metterla nella schermata Home */
+html.ios-gated body{overflow:hidden}
+.ios-gate{position:fixed;inset:0;z-index:2147483000;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+.ios-gate .ig-in{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.ios-gate .ig-ico{width:72px;height:72px;border-radius:18px;align-self:center;box-shadow:0 2px 10px #0002}
+.ios-gate h2{margin:4px 0 0;text-align:center;font:600 24px/1.2 var(--font-display)}
+.ios-gate .ig-lead{margin:0;text-align:center}
+.ios-gate .ig-sub{margin:6px 0 0;font-weight:600}
+.ios-gate .ig-steps{margin:0;padding:0 0 0 22px;display:flex;flex-direction:column;gap:10px}
+.ios-gate .ig-steps li{padding-left:4px}
+.ios-gate .ig-note,.ios-gate .ig-warn{margin:0;color:var(--muted);font-size:14.5px}
+.ios-gate .ig-warn{color:var(--bad,#a33)}
+.ios-gate .ig-web{align-self:center;margin-top:8px}
+/* iPhone: un campo con caratteri sotto i 16 px fa ingrandire tutta la pagina quando lo tocchi */
+@supports (-webkit-touch-callout: none){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea{font-size:max(16px,1em)!important}}
