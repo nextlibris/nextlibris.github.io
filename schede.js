@@ -28,15 +28,15 @@ function doD(card, id) {
   var b = NL.get(id), head = q(card, '.head');
   if (!b || !head) return;
   dActs(card);
-  if (!b.t) { card.classList.add('cv-edit'); return; }   // senza titolo (da completare): i campi, nella stessa disposizione di «Modifica» (Piero, 17/11/2026: su PC era sballata)
+  /* senza titolo: la stessa pagina di tutti i libri (Piero, 19/11/2026: niente piu' i campi da riempire, nemmeno negli amici); si completa con la matita */
   if (editing[id]) { card.classList.add('cv-edit'); addDone(card, id); return; }
-  var img = NL.bigImg(b), dati = [b.e, b.y, b.pg ? b.pg + ' pagine' : ''].filter(Boolean);
+  var tit = b.t || 'Senza titolo', img = NL.bigImg(b), dati = [b.e, b.y, b.pg ? b.pg + ' pagine' : '', b.t ? '' : (b.i ? 'ISBN ' + b.i : '')].filter(Boolean);
   var names = NL.authorsOf(b);
   var v = document.createElement('div'); v.className = 'cv-page';
   /* copertina: toccandola si ingrandisce (come nella scheda classica); senza copertina, la cerca online o la fotografi */
   v.innerHTML = '<div class="cv-hero">' + (img ? '<button type="button" class="cv-cov" data-act="zoom" aria-label="Ingrandisci la copertina" title="Ingrandisci la copertina"><img src="' + esc(img) + '" alt="" referrerpolicy="no-referrer"></button>' :
       '<button type="button" class="cv-cov cv-ph" data-act="coverphoto" style="--h:' + NL.hue(b.t + b.a + b.i) + '" title="Cerca la copertina online; se non c\'è, la fotografi" aria-label="Aggiungi la copertina"><span>' + esc(b.t.slice(0, 1)) + '</span><small>' + NL.icon('cam') + 'Copertina</small></button>') +
-    '<div class="cv-ht"><h3>' + esc(b.t) + '</h3>' +
+    '<div class="cv-ht"><h3' + (b.t ? '' : ' class="cv-not"') + '>' + esc(tit) + '</h3>' +
     (names.length ? '<p class="cv-au">' + names.map(function (n) { return '<button type="button" class="au-name" data-act="auinfo" data-n="' + esc(n) + '" title="Info Autore: ' + esc(n) + '">' + esc(n) + '</button>'; }).join('<span class="au-sep">, </span>') + '</p>' : '') +
     (dati.length ? '<p class="cv-meta">' + esc(dati.join(' · ')) + '</p>' : '') + '</div></div>' +
     '<div class="cv-chips"></div>' +
@@ -106,7 +106,7 @@ function dActs(card) {                            // in alto, solo icone: prefer
   if (move) main.insertBefore(move, fav ? fav.nextSibling : main.firstChild);
   if (share) main.insertBefore(share, del || null);
   var id = card.dataset.id, b = NL.get(id);
-  if (b && b.t) {                                 // Modifica: icona della matita in alto, accanto alle altre
+  if (b) {                                        // Modifica (anche per i libri senza titolo): icona della matita in alto, accanto alle altre
     var ed = document.createElement('button'); ed.type = 'button'; ed.className = 'ico act cv-editb' + (editing[id] ? ' on' : '');
     ed.title = editing[id] ? 'Fatto: torna alla pagina del libro' : 'Modifica i dati del libro'; ed.setAttribute('aria-label', ed.title); ed.setAttribute('aria-pressed', editing[id] ? 'true' : 'false');
     ed.innerHTML = NL.icon('pen') + '<span class="al" aria-hidden="true">Modifica</span>';
@@ -114,6 +114,7 @@ function dActs(card) {                            // in alto, solo icone: prefer
     main.insertBefore(ed, del || null);
   }
   var low = ['loan', 'websearch'].map(function (a) { return q(main, '[data-act="' + a + '"]'); }).filter(Boolean);
+  var redo = q(card, '.foot .tail [data-act="lookup"]'); if (redo) low.unshift(redo);   // senza titolo: «Cerca di nuovo» resta raggiungibile
   if (!low.length) return;
   var row = document.createElement('div'); row.className = 'cv-acts2';
   low.forEach(function (x) { row.appendChild(x); });

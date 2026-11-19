@@ -68,7 +68,7 @@ function flagsHTML(b, dups) {
   if (b.g.length) o += '<span class="tag warn tap" data-act="verify" role="button" tabindex="0" title="Dati dedotti (dalla copertina o dal codice ISBN): controllali, potrebbero non coincidere con il tuo libro. Toccalo quando hai controllato.">Da verificare ✓</span>';
   o += dupTag(dups && dups[b.id]);
   if (b.i && !L.toIsbn13(b.i)) o += '<span class="tag bad" title="La cifra di controllo non torna: ricontrolla le cifre">ISBN non valido</span>';
-  else if (!b.t && b.i && !s.st) o += b.nf ? '<span class="tag warn" title="Nessuna banca dati conosce questo codice: scrivi i dati a mano">Non trovato</span>' : '<span class="tag" title="Titolo ancora da cercare">Da completare</span>';
+  else if (!guest && !b.t && b.i && !s.st) o += b.nf ? '<span class="tag warn" title="Nessuna banca dati conosce questo codice: scrivi i dati a mano">Non trovato</span>' : '<span class="tag" title="Titolo ancora da cercare">Da completare</span>';
   return o;
 }
 /* Scheda chiusa (solo titolo e autore) o aperta (tutti i campi). Di regola chiusa; aperta da sola se manca il titolo

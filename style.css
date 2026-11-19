@@ -1812,12 +1812,11 @@ body.cols-sm #list .cover .ph small{font-size:10.5px}
 body.cols-sm #list .cover .badge{left:3px;bottom:3px;font-size:10px;padding:1px 5px}
 body.gridview #list{touch-action:pan-x pan-y}
 /* copertine piccole (Piero, 18/11/2026, scelta C): la scritta sulla copertina si rimpicciolisce fino a entrare (larghezza della copertina = 100cqi);
-   da 4 per riga in su sparisce la scritta sotto le copertine che hanno già il nome disegnato (senza foto né immagine) */
+   la scritta sotto le copertine resta sempre, a ogni numero per riga (Piero, 19/11/2026: tolta la parte che la nascondeva da 4 in su) */
 #list .gc-face:not(.sm){container-type:inline-size}
 #list .gc-face .gc-nm{font-size:min(11.5px,12cqi);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:normal;word-break:normal}
 #list .gc-face .gc-ph .gc-gn{font-size:min(14px,16cqi)!important}
 #list .gc-face .gc-ico{width:min(52px,42cqi);height:min(52px,42cqi)}
-body.cols-sm #list .cover:not(:has(.art>img,.gc-img))>.cap,body.cols-sm #list .cover:not(:has(.art>img,.gc-img))>.cap2{display:none}
 body.cols-sm #list .cover .cap{-webkit-line-clamp:2;overflow-wrap:anywhere}
 
 .cols-row{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--muted)}

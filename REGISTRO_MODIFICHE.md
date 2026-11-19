@@ -3,6 +3,10 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 110 · 19/11/2026
+> **Ogni libro con la sua pagina** Anche un libro con solo il codice ISBN si apre come gli altri, con la sua pagina; lo completi con la matita. Nelle librerie degli amici niente più campi da riempire.
+- **Copertine:** il titolo e l'autore sotto le copertine restano sempre, qualunque numero per riga scegli.
+
 ## Versione 109 · 19/11/2026
 > **Il tuo nome per gli amici** Appena entri con Google scegli il nome con cui gli amici ti trovano: te lo proponiamo già scritto (nome e iniziale del cognome) e puoi cambiarlo quando vuoi dal profilo.
 > **Più film dai tuoi libri** Troviamo anche i film che hanno lo stesso titolo del libro e sono confermati da Wikipedia (per esempio «Io speriamo che me la cavo», 1992).
