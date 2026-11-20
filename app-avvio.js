@@ -101,9 +101,9 @@ list.addEventListener('click', function (e) {
   if (!btn) return;
   if (btn.dataset.act === 'clearflt') { clearFilters(); return; }
   if (btn.dataset.act === 'typeadd') { openIsbnSheet(); return; }
-  if (btn.dataset.act === 'way-scan') { $('#btnScan').click(); return; }
-  if (btn.dataset.act === 'way-photo') { $('#btnPhoto').click(); return; }
-  if (btn.dataset.act === 'way-type') { $('#btnType').click(); return; }
+  if (btn.dataset.act === 'way-scan') { startScan(); return; }
+  if (btn.dataset.act === 'way-photo') { openPhoto(); return; }
+  if (btn.dataset.act === 'way-type') { openIsbnSheet(); return; }
   if (btn.dataset.act === 'restore') { $('#fileBackup').click(); return; }
   var row = btn.closest('.row');
   if (!row) return;
@@ -184,12 +184,10 @@ $('#priceUndo').addEventListener('click', function () {
 });
 $('#priceAskIn').addEventListener('input', function () { $('#priceAskErr').hidden = true; });
 bindFile('#fileBackup', function (f) { restore(f[0]); });
-$('#btnScan').addEventListener('click', startScan);
-$('#btnPhoto').addEventListener('click', function () { $('#photoSheet').hidden = false; });
+function openPhoto() { $('#photoSheet').hidden = false; }   // «Fotografa» della finestra del +
 $('#photoCam').addEventListener('click', function () { $('#photoSheet').hidden = true; snapPhoto('Foto del libro', '#fileCam').then(function (f) { if (f) addPhotos([f], true); }); });
 $('#photoGal').addEventListener('click', function () { $('#photoSheet').hidden = true; $('#fileGal').click(); });
 $('#photoClose').addEventListener('click', function () { $('#photoSheet').hidden = true; });
-$('#btnType').addEventListener('click', openIsbnSheet);
 $('#scanClose').addEventListener('click', function () { stopScan(false); });
 $('#scanDone').addEventListener('click', function () { stopScan(false); });
 $('#scanTorch').addEventListener('click', toggleTorch);
@@ -378,28 +376,26 @@ pickSync();
 $('#sort').addEventListener('change', function (e) { sortBy = e.target.value; if (!guest && SORTS.indexOf(sortBy) >= 0) { settings.sortBy = sortBy; saveSettings(); } renderList(); });   // l'ultimo ordine resta (giro 1)
 $('#grp').addEventListener('change', function (e) { settings.grp = GRP_TXT[e.target.value] ? e.target.value : ''; saveSettings(); renderList(); if (drawerOpen) { updateDrawerFoot(); renderDrawer(); } });
 $('#fltGuess').addEventListener('click', function () { flt = flt === 'guess' ? '' : 'guess'; collapseCards(); updateSummary(); renderList(); });
-$('#fltLoan').addEventListener('click', function () {
+/* «N sono in prestito» nella frase sotto il titolo: mostra solo i libri in prestito; un altro tocco li rimette tutti */
+function loanFilter() {
   collapseCards();
   var on = !(flt === 'loan' && tab === 'lib');
   if (tab !== 'lib') setTab('lib');
   flt = on ? 'loan' : '';
   updateSummary(); renderList();
   if (on) toast(allLoansText());
-});
+}
+function loanCount() { return state.books.filter(function (b) { return !b.w && isLoan(b); }).length; }   // prestati e ricevuti, come il filtro (Piero, 17/11/2026)
 function allLoansText() {
   var n = state.books.filter(function (b) { return !b.w && !b.xs && isLoan(b); }).length;
-  return n ? (n === 1 ? '1 libro in prestito.' : n + ' libri in prestito: prestati a e prestati da, per persona.') + (document.querySelector('#fltLoan') && document.querySelector('#fltLoan').offsetParent ? ' Tocca di nuovo «Prestati» per vederli tutti.' : ' Tocca di nuovo «in prestito» per vederli tutti.') : 'Nessun libro in prestito.';
+  return n ? (n === 1 ? '1 libro in prestito.' : n + ' libri in prestito: prestati a e prestati da, per persona.') + ' Tocca di nuovo «in prestito» per vederli tutti.' : 'Nessun libro in prestito.';
 }
-$('#tabLib').addEventListener('click', function () { if (guest) guestExit(true); setTab('lib'); });   // Libreria e Desideri: sempre i tuoi (Piero, 17/11/2026 sera)
-$('#tabWish').addEventListener('click', function () { if (guest) guestExit(true); setTab('wish'); });
 $('#btnView').addEventListener('click', function () {
   gridRet = null;
   setView(settings.view === 'grid' ? 'list' : 'grid');
   if (!guest) { settings.viewDef = settings.view; saveSettings(); }   // l'app ricorda l'ultima vista (giro 1, 18/11/2026)
   renderList();
 });
-$('#btnCheck').addEventListener('click', function () { startScan('check'); });
-$('#btnStats').addEventListener('click', openStats);
 $('#statsClose').addEventListener('click', function () { $('#statsSheet').hidden = true; });
 $('#statsBody').addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'goalIn') { e.preventDefault(); saveGoal(); } });
 $('#statsBody').addEventListener('click', function (e) {
@@ -423,7 +419,6 @@ function openExport() {
   prepBackup();
   $('#exportSheet').hidden = false;
 }
-$('#btnExport').addEventListener('click', openExport);
 $('#exportClose').addEventListener('click', function () { $('#exportSheet').hidden = true; });
 $('#btnXlsx').addEventListener('click', saveXLSX);
 $('#btnShareBackup').addEventListener('click', function () { shareBackup(false); });
@@ -669,7 +664,7 @@ var INST_STEPS = {
     note: 'In alternativa apri il link in Chrome: lì basta premere «Installa».', copy: true },
   desktop: { lead: 'Sul computer si installa da Chrome o Edge.',
     steps: ['Nella barra dell\'indirizzo, a destra, clicca l\'icona <b>Installa</b>.', 'Se non c\'è: menu <b>⋮</b> › <b>Trasmetti, salva e condividi</b> › <b>Installa pagina come app</b>.', 'Conferma con <b>Installa</b>.'],
-    note: 'Sul telefono è più comoda: apri Menu › Info e aiuto › Condivisione e inquadra il QR code.' }
+    note: 'Sul telefono è più comoda: apri Indice › Info e aiuto › Condivisione e inquadra il QR code.' }
 };
 var instPushed = false;
 function openInstallHelp() {
@@ -701,7 +696,7 @@ async function doInstall() {
   d.prompt();
   try { out = await d.userChoice; } catch (e) { nlErr(e); }
   deferred = null;
-  if (out && out.outcome === 'dismissed') toast('Va bene. Quando vuoi: Menu › Impostazioni › Installazione sul telefono.');
+  if (out && out.outcome === 'dismissed') toast('Va bene. Quando vuoi: Indice › Impostazioni › Installazione sul telefono.');
   updateInstallUi();
 }
 /* iPhone nel browser (giro 11F, Piero 19/11/2026): prima si mette nella schermata Home, poi si comincia.
@@ -741,7 +736,7 @@ $('#btnInstall').addEventListener('click', doInstall);
 $('#instGo').addEventListener('click', doInstall);
 $('#instLater').addEventListener('click', function () {
   settings.instSnooze = Date.now(); saveSettings(); updateInstallUi();
-  toast('Quando vuoi: Menu › Impostazioni › Installazione sul telefono.', { label: 'Annulla', fn: function () { settings.instSnooze = 0; saveSettings(); updateInstallUi(); } });
+  toast('Quando vuoi: Indice › Impostazioni › Installazione sul telefono.', { label: 'Annulla', fn: function () { settings.instSnooze = 0; saveSettings(); updateInstallUi(); } });
 });
 $('#instOk').addEventListener('click', function () { closeInstallHelp(); });
 $('#instSheet').addEventListener('click', function (e) { if (e.target === e.currentTarget) closeInstallHelp(); });
@@ -815,56 +810,6 @@ $('#lightYes').addEventListener('click', function () { lightAnswer(true); });
 $('#lightNo').addEventListener('click', function () { lightAnswer(false); });
 $('#optCamNative').addEventListener('change', function (e) { settings.camNative = e.target.checked; saveSettings(); toast(settings.camNative ? 'Foto con la fotocamera del telefono.' : 'Foto con la fotocamera dell\'app.'); });
 $('#optSound').addEventListener('change', function (e) { setSound(e.target.checked, true); });
-/* Avvisi chiusi ma ancora validi (prestiti lunghi, backup, «Hai finito…», e quelli dei moduli): un triangolino nel riepilogo li riapre */
-function closedNotices() {
-  var out = [], DAY = 864e5, now = Date.now();
-  var showing = $('#notice').hidden ? '' : noticeKind;
-  var longLoans = state.books.some(function (b) { return !b.w && b.p && b.pd && now - Date.parse(b.pd) > 30 * DAY; });
-  if (longLoans && showing !== 'loan' && now - settings.loanSnooze < 7 * DAY) out.push({ k: 'loan', reopen: function () { settings.loanSnooze = 0; saveSettings(); if (!$('#notice').hidden && noticeKind !== 'loan') $('#notice').hidden = true; noticeKind = ''; checkLoanNag(); } });
-  var n = storable().length;
-  if (backupDue(true) && !backupDue() && showing !== 'backup')   // giro 7: stessa regola del promemoria (45 giorni o 40 libri nuovi)
-    out.push({ k: 'backup', reopen: function () { settings.snooze = 0; saveSettings(); if ($('#notice').hidden) checkBackupNag(); } });
-  var last = nxJustRead();
-  if (last && settings.nxSeen === last.id && !state.books.some(function (b) { return !b.w && b.rs === 'in'; }) && nextList().length)
-    out.push({ k: 'next', reopen: function () { settings.nxSeen = ''; saveSettings(); nxBoxPaint(); } });
-  emit('closed', out);                            // i moduli aggiungono i loro
-  return out;
-}
-/* avvisi aperti in cima (prestiti, backup, «Hai finito…», trimestre, installazione, sostieni, avvisi dei moduli) */
-var OPEN_NOTES = '#notice, #nxBox, #wrapAsk, #donAsk, #instCard, #donRow, .lay-note';
-function openNotices() { return Array.prototype.filter.call(document.querySelectorAll(OPEN_NOTES), function (e) { return !e.hidden && e.isConnected && !e.closest('[hidden]'); }); }
-function alertBtn() {                             // il triangolino c'e' quando ci sono avvisi, aperti o chiusi (Piero, 16/11/2026)
-  if (tab !== 'lib') return '';
-  var c = closedNotices().length, o = openNotices().length, n = c + o;
-  var lbl = c ? (c === 1 ? 'Riapri l\'avviso chiuso' : 'Riapri i ' + c + ' avvisi chiusi') : (o === 1 ? 'Vai all\'avviso' : 'Vai ai ' + o + ' avvisi');
-  return n ? ' <button type="button" class="sum-alert" data-sum="alert" aria-label="' + lbl + '" title="' + (c ? 'Riapri gli avvisi' : 'Vai agli avvisi') + '">' +
-    '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4.5M12 17.2v.01"/></svg></button>' : '';
-}
-function reopenNotices() {
-  closedNotices().forEach(function (x) { try { x.reopen(); } catch (e) { nlErr(e); } });
-  emit('reopen');
-  updateSummary(); window.scrollTo({ top: 0, behavior: 'smooth' });
-  setTimeout(function () {                        // l'avviso in vista lampeggia un attimo, per far vedere dove sono
-    var e = openNotices().filter(function (x) { return !x.classList.contains('lay-later'); })[0];
-    if (e) { e.classList.remove('flash'); void e.offsetWidth; e.classList.add('flash'); setTimeout(function () { e.classList.remove('flash'); }, 1400); }
-  }, 350);
-}
-(function () {                                   // un avviso compare o sparisce: il triangolino si aggiorna
-  var t = null, last = -1;
-  new MutationObserver(function () {
-    clearTimeout(t);
-    t = setTimeout(function () { var n = openNotices().length; if (n !== last) { last = n; updateSummary(); } }, 120);
-  }).observe(document.querySelector('main') || document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
-})();
-/* riepilogo in alto: cosa mostrare (valore e «non più in libreria» spenti di predefinito) */
-function paintSumOpts() {
-  [['#optSumEur', 'sumEur'], ['#optSumLoan', 'sumLoan'], ['#optSumGone', 'sumGone'], ['#optShowSync', 'showSync']].forEach(function (x) { var e = $(x[0]); if (e) e.checked = settings[x[1]] !== false && (x[1] === 'sumLoan' || x[1] === 'showSync' || settings[x[1]] === true); });
-}
-[['#optSumEur', 'sumEur'], ['#optSumLoan', 'sumLoan'], ['#optSumGone', 'sumGone'], ['#optShowSync', 'showSync']].forEach(function (x) {
-  var e = $(x[0]); if (!e) return;
-  e.addEventListener('change', function () { settings[x[1]] = e.checked; saveSettings(); updateSummary(); persist(); emit('list'); });
-});
-$('#summary').addEventListener('click', function (e) { if (e.target.closest('[data-sum="loan"]')) $('#fltLoan').click(); else if (e.target.closest('[data-sum="alert"]')) reopenNotices(); });
 $('#scanSound').addEventListener('click', function () { setSound(settings.sound === false, true); });
 (function () {                                   // ?vista=elenco / ?vista=copertine nell'indirizzo: quella vista per questa apertura (comodo per i link e per le prove)
   var m = /[?&]vista=(elenco|copertine)\b/.exec(location.search);
@@ -889,7 +834,6 @@ setTimeout(function () {
 }, 2500);
 confirmLearnedPublishers();
 if (state.books.filter(markKdp).length) touch();      // libri 979-8 gia' «non trovati»: casa editrice «Amazon (pubblicazione in proprio)»
-if (!settings.swiped) setTimeout(function () { var t = $('#edgeTab'); t.classList.add('nudge'); setTimeout(function () { t.classList.remove('nudge'); }, 3000); }, 1500);
 setTab('lib');
 updateBackupInfo();
 loadCovers();
@@ -934,7 +878,8 @@ window.NL = {
   guest: function () { return guest ? guest.name : null; }, showBook: showBook, guestEnter: guestEnter, guestExit: function () { guestExit(); }, myBooks: myBooks, addMine: addMine, removeMine: removeMine, restoreMine: restoreMine, isMine: isMine,
   setFlt: function (v) { flt = v; collapseCards(); renderList(); updateSummary(); if (typeof updateActiveFilters === 'function') updateActiveFilters(); }, flt: function () { return flt; }, goal: function () { return settings.goal || 0; },
   closeDrawer: function () { closeDrawer(); }, fromMenu: fromMenu, refresh: function () { renderList(); updateSummary(); },
-  icon: icon, setTab: function (t) { setTab(t); }, openMenu: function () { openDrawer('opt'); }, openSugg: function (t) { openSugg(t); },
+  icon: icon, setTab: function (t) { setTab(t); }, openMenu: function (sets) { openDrawer('opt'); if (sets) setsOpen(true); },   // dalla testatina: dritto alle impostazioni, come faceva l'ingranaggio
+  scan: function (m) { startScan(m); }, photo: openPhoto, typeIsbn: function () { openIsbnSheet(); }, loanFilter: loanFilter, loans: loanCount, openSugg: function (t) { openSugg(t); },
   wdBookCountry: wdBookCountry, wdCountry: wdCountry, wdFlag: wdFlag, wdFlagImg: wdFlagImg, wdCName: wdCName, films: function () { return filmsMine(); }, openFilms: function () { openFilms(); }, openWorks: function () { openWorks('', '', true); },   // Wikidata (giro 2)
   openQuotes: function () { openAllQuotes(); }, openStats: function () { openStats(); }, openExport: function () { openExport(); }, nQuotes: function () { return allQuotes().length; },
   updateStick: function () { updateStick(); }, summary: function () { updateSummary(); }, autosize: function (el) { autosizeAll(el); },

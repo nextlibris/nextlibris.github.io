@@ -2,7 +2,7 @@
    Amicizia reciproca: chiedi, l'altro accetta o rifiuta. Il nome dell'app («Libreria di Piero») e' anche il nome per gli amici:
    unico (senza badare alle maiuscole), 3-20 caratteri (lettere anche accentate, numeri, spazi, punto, trattino, apostrofo).
    Ci si trova cercando il nome (da 3 lettere: uguale o che comincia cosi') o con il link d'invito (…/?amico=Nome).
-   Dove si vede: parte «Amici» nel Menu, icona accanto all'ingranaggio; le novità (richieste, prestiti, consigli…) nella campanella (notifiche.js).
+   Dove si vede: segnalibro Amici e parte «Amici» dell'Indice; le novità (richieste, prestiti, consigli…) nella campanella (notifiche.js).
    In cima restano solo gli avvisi che chiedono una risposta: «Me lo presti?» e il reso da confermare.
    Le richieste si leggono all'apertura e tornando all'app (niente email, niente Realtime: limiti del piano gratuito di Supabase).
    Desideri: «Gli amici vedono i miei desideri» (spento di partenza); la pagina di un amico mostra i suoi desideri e «Te lo regalo io»
@@ -348,21 +348,6 @@ async function shareInvite() {
   catch (e) { NL.toast(link); }
 }
 
-/* ---------- icona in alto, accanto all'ingranaggio (il numero delle novità sta sulla campanella) ---------- */
-function paintTop() {
-  var b = document.getElementById('btnFri');
-  if (!b) {
-    var gear = document.getElementById('btnOpts'); if (!gear) return;
-    b = document.createElement('button'); b.type = 'button'; b.id = 'btnFri'; b.className = 'ico fri-top';
-    b.innerHTML = ICON;
-    gear.parentNode.insertBefore(b, gear);
-    document.documentElement.classList.add('has-fri');
-    b.addEventListener('click', function () { open(); });
-  }
-  b.setAttribute('aria-label', 'Amici');
-  b.title = 'Amici';
-}
-
 /* ---------- parte «Amici» nel Menu, subito sotto Filtri, Suggerimenti, Statistiche ---------- */
 function paintMenu() {
   var m = document.getElementById('friMenu');
@@ -384,7 +369,7 @@ function paintMenu() {
   else t = (rec ? rec + (rec === 1 ? ' richiesta per te' : ' richieste per te') + ' · ' : '') + (fr ? fr + (fr === 1 ? ' amico' : ' amici') : 'Ancora nessun amico');
   document.getElementById('goFriTxt').textContent = t;
 }
-function paintAll() { paint(); paintMenu(); paintTop(); paintSet(); }
+function paintAll() { paint(); paintMenu(); paintSet(); }
 function paintSet() {
   var set = document.getElementById('setList'); if (!set) return;
   var b = document.getElementById('goFriOpt');
@@ -483,7 +468,7 @@ var entering = false;
 function guestBar() {
   var g = NL.guest && NL.guest(), bar = document.getElementById('guestBar');
   if (g && NL.esempio && NL.esempio()) { if (bar) bar.hidden = true; return; }   // libreria di esempio della guida: la sua striscia la mette guida.js (giro 4)
-  if (!g) { if (bar) bar.hidden = true; ['guestKey', 'guestSwap', 'guestDrop'].forEach(function (i) { var k0 = document.getElementById(i); if (k0) k0.hidden = true; }); ownKeyIco(); return; }
+  if (!g) { if (bar) bar.hidden = true; ownKeyIco(); return; }
   if (!bar) {
     var top = document.querySelector('header.top'); if (!top) return;
     bar = document.createElement('section'); bar.id = 'guestBar'; bar.className = 'guest-bar';
@@ -524,45 +509,9 @@ function guestBar() {
       (inComune ? '<button type="button" class="chip todo" data-g="common" aria-pressed="' + (NL.flt() === 'common') + '">In comune</button>' : '') : '') +
     (fromHim && !(b0 && b0.da === gId) ? '<button type="button" class="chip todo" data-g="usekey">Usa la sua API</button>' : '') + '</div>';
   bar.innerHTML = h;
-  /* icone in alto a destra, sulla riga «Libreria di …»: ⇄ prestiti e regali tra voi, poi API Google e worker (Piero, 17/11/2026) */
-  var meta = document.querySelector('header.top .top-meta'), box = document.getElementById('guestIcos'), kb = document.getElementById('guestKey'), sw = document.getElementById('guestSwap');
-  if (!box && meta) { box = document.createElement('span'); box.id = 'guestIcos'; box.className = 'gb-icos'; meta.appendChild(box); }
-  if (swapsWith(gId).length) {   // solo se tra voi c'è almeno un prestito o un regalo
-    if (!sw && box) { sw = document.createElement('button'); sw.type = 'button'; sw.id = 'guestSwap'; sw.className = 'ico gb-key gb-swap'; box.insertBefore(sw, box.firstChild); sw.addEventListener('click', function () { swapSheet(gId); }); }
-    if (sw) {
-      var st = 'Prestiti e regali tra te e ' + NL.guest();
-      sw.hidden = false; sw.title = st; sw.setAttribute('aria-label', st);
-      sw.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg>';
-    }
-  } else if (sw) sw.hidden = true;
-  /* API (Piero, 17/11/2026): sempre l'icona se ne hai una da prestare; accesa con ✓ se gliela presti; il tocco apre la scelta */
-  if (own.gb) {
-    if (!kb && box) { kb = document.createElement('button'); kb.type = 'button'; kb.id = 'guestKey'; kb.className = 'ico gb-key'; kb.addEventListener('click', function () { keySheet(gId); }); }
-    if (kb && box) {
-      if (kb.parentNode !== box) box.appendChild(kb);
-      var tl = out ? lentLabel(out) + ' ' + aNome(NL.guest()) : 'Presta la tua API Google ' + aNome(NL.guest());
-      kb.hidden = false; kb.classList.toggle('on', !!out); kb.title = tl; kb.setAttribute('aria-label', tl);
-      kb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>' + (out ? '<span class="gk-ok" aria-hidden="true">✓</span>' : '');
-    }
-  } else if (kb) kb.hidden = true;
-  /* togli dagli amici: icona con la persona e il segno meno, poi la conferma (Piero, 17/11/2026) */
-  var dr = document.getElementById('guestDrop');
-  if (!dr && box) { dr = document.createElement('button'); dr.type = 'button'; dr.id = 'guestDrop'; dr.className = 'ico gb-key gb-drop'; box.appendChild(dr); dr.addEventListener('click', function () { dropSheet(gId); }); }
-  if (dr) {
-    var dl = 'Togli ' + NL.guest() + ' dagli amici';
-    if (dr.parentNode === box && box.lastChild !== dr) box.appendChild(dr);
-    dr.hidden = false; dr.title = dl; dr.setAttribute('aria-label', dl);
-    dr.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M16 11h6"/></svg>';
-  }
-  var ok0 = document.getElementById('ownKey'); if (ok0) ok0.hidden = true;
-  if (meta && box) meta.style.paddingRight = (box.offsetWidth + 8) + 'px';   // il nome dell'amico va a capo, non sotto le icone
 }
-/* nella propria libreria (e nei Desideri): icona dell’API sempre in alto a destra sulla riga «Libreria di …»; apre la finestra dell’API,
-   accesa se hai un’API (tua o prestata). Senza API: la finestra porta alla guida «Crea la tua API Google» (giro 1, 18/11/2026) */
-/* 18/11/2026 (Piero): l’API esce dalla testata; sta in Impostazioni, nel Menu (sotto «I tuoi amici») e nel tuo profilo */
+/* «API Google Libri» nell'Indice, sotto «I tuoi amici» (18/11/2026); le icone nella vecchia testata non ci sono più (20/11/2026) */
 function ownKeyIco() {
-  var kb0 = document.getElementById('ownKey'); if (kb0) kb0.remove();
-  if (!(NL.guest && NL.guest())) { var mt = document.querySelector('header.top .top-meta'); if (mt) mt.style.paddingRight = ''; }
   var g = document.getElementById('goKeys');
   if (!g) {
     var fm = document.getElementById('friMenu'); if (!fm) return;
@@ -1125,7 +1074,7 @@ function keySheet(id) {
     });
   }
   var cur = outKey(id), opt = function (iid, on, has, t, sub) {
-    return '<label class="check fr-wish"><input type="checkbox" id="' + iid + '"' + (has && on ? ' checked' : '') + (has ? '' : ' disabled') + '><span>' + t + '<small>' + (has ? sub : 'Non ce l\'hai: si imposta in Menu › Impostazioni › Ricerca dei libri.') + '</small></span></label>';
+    return '<label class="check fr-wish"><input type="checkbox" id="' + iid + '"' + (has && on ? ' checked' : '') + (has ? '' : ' disabled') + '><span>' + t + '<small>' + (has ? sub : 'Non ce l\'hai: si imposta in Indice › Impostazioni › Ricerca dei libri.') + '</small></span></label>';
   };
   document.body.appendChild(el);   // sopra la finestra da cui si apre
   document.getElementById('keyH').textContent = 'Presta a ' + friendName(id);
@@ -1362,7 +1311,7 @@ S.onAuth(function () {
 });
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && uid() && Date.now() - lastLoad > 60000) load(true); });
 setInterval(function () { if (document.visibilityState === 'visible' && uid() && !loading && Date.now() - lastLoad > 170000) load(true); }, 60000);   // richieste e avvisi senza chiudere l'app
-paintTop(); okRefresh();
+okRefresh();
 if (uid()) setTimeout(function () { load(true); }, 1500);
 window.NLAmici = { ownPart: ownPart, open: open, ff: openFF, keys: keyWin, askState: askState, ask: askKey, lends: function (id) { return !!outKey(id); }, hasOwn: function () { var o = ownKeys(); return !!(o.gb || o.sbn); }, hasAny: function () { var o = ownKeys(), b = borrowed(); return !!(o.gb || (b && b.gb)); }, lentCount: function () { return uid() && list ? lentCount() : -1; }, lentText: lentText, offers: function () { var b = borrowed(); return keys.filter(function (k) { return k.a === uid() && !(b && b.da === k.da); }).map(function (k) { return { nome: k.nome, gb: !!k.gb_key, sbn: !!k.sbn }; }); }, load: load, onLoad: function (fn) { loaded.push(fn); }, friend: openFriend, guest: openGuest, swapSheet: swapSheet, keySheet: keySheet, dropSheet: dropSheet, nums: function (id) { return nums[id] || null; },
   acts: function (id) { var own = ownKeys(); return { swap: swapsWith(id).length > 0, key: !!(own.gb || own.sbn), lent: outKey(id) ? lentLabel(outKey(id)) : '' }; },   // icone del profilo dell'amico (giro 6)

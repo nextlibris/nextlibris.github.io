@@ -29,8 +29,7 @@
 .prof .pf-flags{font-size:18px;line-height:1.5;font-weight:400}
 .prof .pf-fol .btn{justify-self:start}
 /* testata: il nome apre il profilo */
-.owner .owner-n{all:unset;cursor:pointer;border-radius:6px}
-.owner .owner-n:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
 /* elenco degli amici: foto e «Segui» */
 .fri .fr-go.fr-av{gap:10px}
 @media (max-width:420px){                 /* telefoni: il nome ha più spazio (Piero, 18/11/2026) */
@@ -67,10 +66,10 @@ html.guest .tag.loan.recv{pointer-events:none}
 .prof .pf-st dd small.w{display:block;white-space:normal;overflow-wrap:anywhere}
 .prof .pf-bk.noimg .pf-cap{display:none}
 /* giro 7 (in prova): profilo più facile da trovare — foto tonda in testata e «Il mio profilo» in cima al Menu */
-.owner .owner-av{float:left;display:grid;margin:1px 10px 0 0;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;min-width:0;min-height:0}   /* a sinistra delle due righe (nome e numeri) */
-.owner .owner-av .pf-av{width:40px;height:40px;font-size:17px}
-.owner .owner-av .pf-av:not(.has)::before{content:attr(data-ch)}   /* l'iniziale non entra nel testo della testata */
-.owner .owner-av:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+   /* a sinistra delle due righe (nome e numeri) */
+
+   /* l'iniziale non entra nel testo della testata */
+
 .pf-menu{align-items:center;justify-content:flex-start}
 .pf-menu > span:nth-child(2){flex:1;min-width:0}
 .pf-menu .pf-menu-av{flex:none;display:grid;margin-right:12px}

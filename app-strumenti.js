@@ -89,22 +89,13 @@ function saveName(v) {
   renderOwner();
   emit('name', v);                           // il modulo «amici» lo usa come nome per gli amici (16/11/2026)
 }
-/* in testata, sotto «Next Libris»: «Libreria di Piero»; senza nome, l'invito a scriverlo */
+/* la scritta nella ricerca segue la scheda (il nome e i numeri della vecchia testata non ci sono più: titolo e frase li disegna stile-g.js) */
 function renderOwner() {
-  var el = $('#owner');
-  /* testata sobria (Piero, 19/11/2026): il titolo grande dice dove sei; i numeri stanno sotto; nome e foto nel Profilo */
-  var h1 = document.querySelector('header.top h1'), ht = esempio() ? (tab === 'wish' ? 'Desideri' : 'Libreria') + ' di esempio' : guest ? guest.name : tab === 'wish' ? 'Desideri' : 'Libreria';
-  if (h1) { var tn = h1.firstChild; if (tn && tn.nodeType === 3) tn.nodeValue = ht + ' '; else h1.insertBefore(document.createTextNode(ht + ' '), h1.firstChild); h1.classList.toggle('h1-long', ht.length > 12); }
-  var qi = $('#q'); if (qi) { var ph = guest || esempio() ? 'Cerca nell\'elenco' : tab === 'wish' ? 'Cerca nei Desideri' : 'Cerca nei tuoi libri'; qi.placeholder = ph; qi.setAttribute('aria-label', ph); }
-  var pf = window.NLProfilo ? ['<button type="button" class="owner-n" id="ownerProf" title="Apri il profilo">', '</button>'] : ['', ''];   // il nome apre la pagina del profilo (giro 3)
-  if (esempio()) { el.innerHTML = (tab === 'wish' ? 'Desideri' : 'Libreria') + ' di <b>esempio</b>'; return; }   // guida di primo avvio (giro 4)
-  var av = window.NLProfilo ? '<button type="button" class="owner-av" id="ownerAv" aria-label="Apri il profilo">' + window.NLProfilo.avatar(guest && window.NLAmici ? window.NLAmici.guestId() : null, guest ? guest.name : settings.name).replace(/>[^<>]*<\/span>$/, '></span>') + '</button>' : '';   // giro 7: foto tonda in testata
-  if (guest) { el.innerHTML = av + 'Libreria di ' + pf[0] + '<b>' + esc(guest.name) + '</b>' + pf[1]; return; }
-  el.innerHTML = settings.name ? av + (tab === 'wish' ? 'Desideri di ' : 'Libreria di ') + pf[0] + '<b>' + esc(settings.name) + '</b>' + pf[1]   // «Libreria di Piero R. · 120 libri», nei Desideri «Desideri di Piero R.» (Piero, 17/11/2026)
-    : '<button type="button" class="link" id="ownerSet">Scrivi il tuo nome</button>';
+  var qi = $('#q'); if (!qi) return;
+  var ph = guest || esempio() ? 'Cerca nell\'elenco' : tab === 'wish' ? 'Cerca nei Desideri' : 'Cerca nei tuoi libri';
+  qi.placeholder = ph; qi.setAttribute('aria-label', ph);
 }
 (function () { var h = document.querySelector('header.top h1'); if (h) h.addEventListener('click', function () { if (guest && window.NLProfilo && window.NLAmici && window.NLAmici.guestId) window.NLProfilo.open(window.NLAmici.guestId()); }); })();   // nella libreria di un amico il suo nome apre il suo profilo
-$('#owner').addEventListener('click', function (e) { if (e.target.closest('#ownerProf, #ownerAv') && window.NLProfilo) { window.NLProfilo.open(guest && window.NLAmici ? window.NLAmici.guestId() : null); return; } if (e.target.closest('#ownerSet')) { openOptions('share'); setTimeout(function () { try { $('#optName').focus(); } catch (x) {} }, 80); } });
 async function sendShare(copyOnly) {
   if (!shareCtx) return;
   var pack = sharePack(), sh = L.parseShare(pack);
@@ -438,9 +429,6 @@ function setTab(t) {
   if (selOn) endSel(false);
   tab = t === 'wish' ? 'wish' : 'lib';
   flt = ''; shFlt = ''; genFlt = ''; autFlt = ''; autName = ''; edFlt = ''; frFlt = ''; paFlt = '';
-  $('#tipTxt').textContent = tab === 'wish'
-    ? 'Sei nei Desideri: Scansiona, Foto e Digita aggiungono qui i libri da comprare. Un amico ti consiglia un libro? Digita e scrivi il titolo.'
-    : 'Scansiona il codice a barre: è il modo più preciso. Dopo ogni libro puoi scrivere il prezzo (facoltativo). Digita per scrivere il titolo o l\'ISBN.';
   document.body.classList.toggle('wishtab', tab === 'wish');
   renderList(); updateSummary();
 }

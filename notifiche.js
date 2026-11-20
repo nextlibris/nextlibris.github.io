@@ -99,18 +99,18 @@ function ago(t) {
   return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 }
 
-/* ---------- campanella in alto, prima dell'icona Amici ---------- */
+/* ---------- campanella nella testatina ---------- */
 function paintTop() {
   var b = document.getElementById('btnBell');
-  if (!uid()) { if (b) b.hidden = true; document.documentElement.classList.remove('has-bell'); return; }
+  if (!uid()) { if (b) b.hidden = true; return; }
   if (!b) {
-    var next = document.getElementById('btnFri') || document.getElementById('btnOpts'); if (!next) return;
+    var box = document.getElementById('gIcs'); if (!box) return;
     b = document.createElement('button'); b.type = 'button'; b.id = 'btnBell'; b.className = 'ico nt-top'; b.title = 'Notifiche';
     b.innerHTML = BELL + '<span class="nt-badge" id="btnBellN" hidden></span>';
-    next.parentNode.insertBefore(b, next);
+    box.appendChild(b);
     b.addEventListener('click', open);
   }
-  b.hidden = false; document.documentElement.classList.add('has-bell');
+  b.hidden = false;
   var n = unread(), badge = document.getElementById('btnBellN');
   badge.hidden = !n; badge.textContent = n > 9 ? '9+' : n || '';
   b.setAttribute('aria-label', n ? 'Notifiche: ' + n + (n === 1 ? ' nuova' : ' nuove') : 'Notifiche');

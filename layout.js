@@ -1,29 +1,14 @@
-/* Next Libris · modulo «Disposizione dello schermo»: Classico oppure A (barra in basso). (B, C e D provate e tolte il 15/11/2026.)
-   Modulo a parte: usa solo window.NL. Toglierlo (togli_modulo.py layout) riporta l'app alla disposizione classica.
-   La scelta sta in 'catalogo-libri-layout'. Nella A gli avvisi stanno sopra la ricerca e (di predefinito) si vedono uno alla volta. */
+/* Next Libris · modulo «layout»: finestra del «+», pagina «Per te», icone dell'Indice e avvisi in cima, uno alla volta.
+   Usa solo window.NL. Le disposizioni dello schermo (Classico, A con la barra in basso, B, C, D) non ci sono più: l'aspetto è lo stile G
+   (stile-g.js / stile-g.css), che chiama NLLayout.act(...) dalle linguette e da «+ Aggiungi» (20/11/2026). */
 (function () {
 'use strict';
 var NL = window.NL;
 if (!NL) return;
 var $ = NL.$, esc = NL.esc;
-var LS = 'catalogo-libri-layout';
-/* la A e' la disposizione dell'app (Piero, 16/11/2026); la classica resta solo per le prove automatiche, che girano su localhost */
-var DEF = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'classico' : 'a';
-var LAYOUTS = [
-  { k: 'classico', t: 'Classico', d: 'Tasti grandi in alto, Scansiona, Foto e Digita in basso.' },
-  { k: 'a', t: 'A · Barra in basso', d: 'Libreria, Desideri, + per aggiungere, Per te e Menu sempre sotto il pollice.' }
-];
-var cur = DEF, one = true;   // avvisi in cima sempre uno alla volta (l'opzione e' stata tolta il 16/11/2026)
-try { var c0 = JSON.parse(NL.ls.get(LS) || '{}'); if (DEF === 'classico' && LAYOUTS.some(function (x) { return x.k === c0.v; })) cur = c0.v; } catch (e) { if (window.nlErr) nlErr(e); }   // fuori dalle prove: sempre la A
-var root = document.documentElement;
+NL.ls.del('catalogo-libri-layout');   // la scelta della disposizione, salvata dalle versioni vecchie
 function svg(p, w) { return '<svg viewBox="0 0 24 24" width="' + (w || 22) + '" height="' + (w || 22) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
 var I = {
-  books: '<path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="M16.5 5l3.5-.8 2.6 15.4-3.5.8z"/>',
-  heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
-  spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
-  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   quote: '<path d="M7 7h4v4c0 3-2 5-4 6M14 7h4v4c0 3-2 5-4 6"/>',
   stats: '<path d="M5 20V10M12 20V4M19 20v-7"/>',
   out: '<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/><path d="M5 19h14"/>',
@@ -32,19 +17,12 @@ var I = {
   film: '<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 9l1-4 16.5-2.2.8 3.6L3 9zM8 4.4l2.6 3.5M13 3.7l2.6 3.5"/>',
   pen: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.6-3.6 3.4-5.5 7-5.5s6.4 1.9 7 5.5"/>'
 };
-function save() { NL.ls.set(LS, JSON.stringify({ v: cur })); }
 
-/* ---------- barra in basso (A), pulsante tondo (C), tasto menu nella barra di D ---------- */
+/* ---------- finestra del «+» e pagina «Per te» ---------- */
 var built = false;
 function el(html) { var t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
 function build() {
   if (built) return; built = true;
-  document.body.appendChild(el('<nav class="lay-nav" id="layNav" aria-label="Navigazione">' +
-    '<button type="button" data-l="lib">' + svg(I.books) + '<span>Libreria</span></button>' +
-    '<button type="button" data-l="wish">' + svg(I.heart) + '<span>Desideri</span></button>' +
-    '<button type="button" class="lay-plus" data-l="add" aria-label="Aggiungi un libro">' + svg(I.plus, 28) + '</button>' +
-    '<button type="button" data-l="you">' + svg(I.spark) + '<span>Per te</span></button>' +
-    '<button type="button" data-l="prof">' + svg(I.user) + '<span>Profilo</span></button></nav>'));   // 5 tasti (Piero, 18/11/2026): il Menu resta sull'ingranaggio in alto e nel profilo
   document.body.appendChild(el('<div class="sheet" id="layAdd" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layAddH">' +
     '<h2 id="layAddH">Aggiungi un libro</h2>' +
     '<div class="tabs lay-dest" role="tablist" aria-label="Dove aggiungerlo"><button type="button" role="tab" data-dest="lib">In Libreria</button><button type="button" role="tab" data-dest="wish">Nei Desideri</button></div>' +
@@ -123,7 +101,7 @@ function paintYou() {
 function paintDest() { var t = NL.tab ? NL.tab() : 'lib'; Array.prototype.forEach.call(document.querySelectorAll('#layAdd [data-dest]'), function (b) { b.setAttribute('aria-selected', b.dataset.dest === t ? 'true' : 'false'); }); }
 document.addEventListener('click', function (e) {
   var b = e.target.closest && e.target.closest('#layAdd [data-dest]'); if (!b) return;
-  if (NL.tab && NL.tab() !== b.dataset.dest) { NL.setTab(b.dataset.dest); window.scrollTo({ top: 0 }); paintNav(); }
+  if (NL.tab && NL.tab() !== b.dataset.dest) { NL.setTab(b.dataset.dest); window.scrollTo({ top: 0 }); }
   paintDest();
 });
 function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') paintYou(); if (id === '#layAdd') paintDest(); setTimeout(function () { try { (s.querySelector('.lay-big3 .pri') || s.querySelector('button')).focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); } }, 30); }
@@ -133,19 +111,18 @@ function act(l) {
   if (l !== 'prof' && window.NLProfilo && window.NLProfilo.close) { var ps = document.getElementById('profSheet'); if (ps && !ps.hidden && ['lib', 'wish', 'add', 'you'].indexOf(l) >= 0) window.NLProfilo.close(); }   // il profilo è una pagina: gli altri tasti della barra lo chiudono (stile C, 19/11/2026)
   // libreria di esempio (guida): la barra resta dentro l'esempio (Piero, 18/11/2026)
   if (NL.esempio && NL.esempio()) {
-    if (l === 'lib' || l === 'wish') { NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); NL.emit('guest'); return; }
+    if (l === 'lib' || l === 'wish') { NL.setTab(l); window.scrollTo({ top: 0 }); NL.emit('guest'); return; }
     if (l === 'prof') { if (window.NLProfilo) window.NLProfilo.open('esempio'); return; }
     if (l === 'add' || l === 'you') { NL.toast('È solo un esempio: prova con i tuoi libri.'); return; }
   }
-  if (l === 'lib' || l === 'wish') { if (NL.guest && NL.guest()) NL.guestExit(); NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); }   // sempre i tuoi, anche dalla libreria di un amico (17/11/2026 sera)
+  if (l === 'lib' || l === 'wish') { if (NL.guest && NL.guest()) NL.guestExit(); NL.setTab(l); window.scrollTo({ top: 0 }); }   // sempre i tuoi, anche dalla libreria di un amico (17/11/2026 sera)
   else if (l === 'add') sheetOpen('#layAdd');
   else if (l === 'you') sheetOpen('#layYou');
-  else if (l === 'menu') NL.openMenu();
   else if (l === 'prof') { if (NL.guest && NL.guest()) NL.guestExit(); if (window.NLProfilo) window.NLProfilo.open(); }
-  else if (l === 'scan') $('#btnScan').click();
-  else if (l === 'photo') $('#btnPhoto').click();
-  else if (l === 'type') $('#btnType').click();
-  else if (l === 'check') $('#btnCheck').click();
+  else if (l === 'scan') NL.scan();
+  else if (l === 'photo') NL.photo();
+  else if (l === 'type') NL.typeIsbn();
+  else if (l === 'check') NL.scan('check');
   else if (l === 'author') NL.openWorks();
   else if (l === 'films') NL.openFilms();
   else if (l === 'sugg') NL.openSugg('next');
@@ -159,7 +136,7 @@ function onClick(e) {
   var sh = t.closest('#layAdd, #layYou');
   if (sh && t === sh) { sheetsClose(); return; }
   var b = t.closest('[data-l]');
-  if (!b || !b.closest('#layNav, #layAdd, #layYou')) return;
+  if (!b || !b.closest('#layAdd, #layYou')) return;
   if (b.dataset.l === 'close') { sheetsClose(); return; }
   act(b.dataset.l);
 }
@@ -168,12 +145,6 @@ window.addEventListener('keydown', function (e) {
   var open = ['#layAdd', '#layYou'].some(function (k) { var s = $(k); return s && !s.hidden; });
   if (open) { e.stopImmediatePropagation(); sheetsClose(); }
 }, true);
-function paintNav() {
-  var n = $('#layNav'); if (!n) return;
-  var t = NL.guest && NL.guest() ? '' : NL.tab();   // nella libreria di un amico non sei nella tua Libreria ne' nei tuoi Desideri
-  Array.prototype.forEach.call(n.querySelectorAll('[data-l="lib"],[data-l="wish"]'), function (b) { var on = b.dataset.l === t; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
-}
-
 /* ---------- avvisi in cima: uno alla volta ---------- */
 var NOTES = ['#notice', '#nxBox', '#wrapAsk', '#donAsk', '#instCard', '#donRow'], noteIdx = 0, mo = null;
 function notes() {
@@ -182,7 +153,6 @@ function notes() {
     .concat(Array.prototype.slice.call(document.querySelectorAll('.lay-note:not(.lay-first)')));   // .lay-note: avvisi aggiunti da altri moduli
   all.forEach(function (x) { x.classList.remove('lay-later', 'lay-has-dots'); x.removeAttribute('data-noswipe'); x.removeAttribute('data-lay-swipe'); x.style.transform = ''; x.style.opacity = ''; x.style.transition = ''; });
   var more = $('#layMore');
-  if (cur === 'classico' || !one) { if (more) more.hidden = true; return; }
   var vis = all.filter(function (x) { return !x.hidden; });
   if (!more) {
     more = el('<button type="button" class="lay-more" id="layMore" hidden></button>');
@@ -248,30 +218,16 @@ document.addEventListener('touchend', function () { swEnd(false); }, { passive: 
 document.addEventListener('touchcancel', function () { swEnd(true); }, { passive: true });
 window.NLLayoutSwipe = { next: function () { var el = document.querySelector('[data-lay-swipe]'); if (el) slide(1, el, -100); }, prev: function () { var el = document.querySelector('[data-lay-swipe]'); if (el) slide(-1, el, 100); } };
 
-/* ---------- applica ---------- */
-function apply() {
-  root.setAttribute('data-layout', cur);
-  if (cur !== 'classico') build();
-  place(); loans0();
-  paintNav(); notes(); sheetsClose();
-  setTimeout(function () { try { NL.updateStick(); } catch (e) { if (window.nlErr) nlErr(e); } }, 0);
-}
-function loans0() {                        // nella A la riga «Prestati» serve solo se il riepilogo non li mostra gia' (toccandoli)
-  var c = document.getElementById('cntLoan');
-  root.classList.toggle('lay-loans0', !c || !(parseInt(c.textContent, 10) > 0) || NL.settings.sumLoan !== false);
-}
-/* nella A gli avvisi che stanno sotto la ricerca salgono sopra; nella classica tornano al loro posto */
+/* ---------- avvio ---------- */
+/* gli avvisi che nella pagina stanno sotto la ricerca salgono sopra */
 var MOVE = ['#wrapAsk', '#nxBox', '#donAsk', '#donRow'];
 function place() {
-  var a = cur === 'a', ref = a ? document.getElementById('stickSentinel') : document.getElementById('thead');
+  var ref = document.getElementById('stickSentinel');
   if (!ref) return;
   MOVE.forEach(function (k) { var e = document.querySelector(k); if (e) ref.parentNode.insertBefore(e, ref); });
 }
-NL.on('list', function () { paintNav(); notes(); setTimeout(loans0, 0); });
-NL.on('reopen', function () { noteIdx = 0; notes(); });   // avvisi riaperti dal triangolino: si riparte dal primo
-apply();
-window.NLLayout = { get: function () { return cur; }, set: function (v) { cur = v; save(); apply(); }, list: LAYOUTS };
+NL.on('list', function () { notes(); });
+build(); place(); notes();
+setTimeout(function () { try { NL.updateStick(); } catch (e) { if (window.nlErr) nlErr(e); } }, 0);
+window.NLLayout = { act: act };
 })();
-
-/* stile «C · Schede» (19/11/2026): «Filtri» sta nella riga di «Ordina · Raggruppa», come pillola; la ricerca ha la riga tutta per sé */
-(function () { var sb = document.getElementById('sortBar'), f = document.getElementById('btnFilters'); if (sb && f && f.parentNode !== sb) sb.insertBefore(f, sb.firstChild); })();

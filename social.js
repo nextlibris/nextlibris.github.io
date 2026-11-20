@@ -63,7 +63,7 @@ async function call(path, opt) {
   try { j = txt ? JSON.parse(txt) : null; } catch (e) { if (window.nlErr) nlErr(e); }
   if (!r.ok) {
     var m = (j && (j.msg || j.message || j.error_description || j.error)) || ('errore ' + r.status);
-    if (r.status === 401 && opt.user) throw Err('Accesso scaduto: entra di nuovo da Menu › Account.', 'auth');
+    if (r.status === 401 && opt.user) throw Err('Accesso scaduto: entra di nuovo da Indice › Account.', 'auth');
     throw Err(String(m), r.status);
   }
   return j;
@@ -73,7 +73,7 @@ async function token() {
   if (auth.exp && Date.now() < auth.exp - 60000) return auth.at;
   var j;
   try { j = await call('/auth/v1/token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: auth.rt } }); }
-  catch (e) { if (e.code !== 'net') { logoutLocal(); throw Err('Accesso scaduto: entra di nuovo da Menu › Account.', 'auth'); } throw e; }
+  catch (e) { if (e.code !== 'net') { logoutLocal(); throw Err('Accesso scaduto: entra di nuovo da Indice › Account.', 'auth'); } throw e; }
   setAuth(j);
   return auth.at;
 }

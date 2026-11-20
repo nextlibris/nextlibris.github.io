@@ -347,7 +347,7 @@ function paint() {
       '<div class="pf-go"><button class="btn" type="button" data-p="lib">Libreria</button><button class="btn" type="button" data-p="wish">Desideri</button></div></section>' +
       strip('In lettura', els.let) + strip('Consigliati', els.cons);   // via i Preferiti (Piero, 18/11/2026)
     if (eq.length) h += '<section class="fr-sec"><h3 class="fr-h">Citazioni in evidenza</h3><div class="pf-qlist">' + eq.map(quoteHTML).join('') + '</div></section>';
-    h += statsHTML(est, true) + '<p class="fr-small">È un profilo inventato: il tuo lo trovi nel Menu, con la tua foto e i tuoi numeri.</p>';
+    h += statsHTML(est, true) + '<p class="fr-small">È un profilo inventato: il tuo lo trovi nell\'Indice, con la tua foto e i tuoi numeri.</p>';
   } else if (cur) {                                     /* ----- il profilo di un amico ----- */
     var name = A().friendName(cur);
     document.getElementById('profH').textContent = 'Profilo di ' + name;

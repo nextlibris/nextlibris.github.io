@@ -373,11 +373,10 @@ $('#donAskGo').addEventListener('click', function () { openDon(); });
 $('#donAskLater').addEventListener('click', function () { donSnooze(DON_SNOOZE); });
 $('#donAskNever').addEventListener('click', function () {
   settings.donNever = true; settings.donMs = Math.floor(donCount() / DON_STEP) * DON_STEP; saveSettings(); donPaint();
-  toast('Non te lo chiederò più a ogni traguardo. Resta «Sostieni Next Libris» nel menu.');
+  toast('Non te lo chiederò più a ogni traguardo. Resta «Sostieni Next Libris» nell\'Indice.');
 });
 $('#donMenu').addEventListener('click', function () { fromMenu(function () { openDon(); }); });
 $('#donOpt').addEventListener('click', function () { openDon(); });
-$('#btnBeer').addEventListener('click', function () { openDon(); });   // boccale nella testata (Piero, 17/11/2026)
 $('#donSheet').addEventListener('click', function (e) {
   if (e.target === e.currentTarget) { closeDon(); return; }
   var x = e.target.closest('.don-amt'); if (x) { donAmt = x.dataset.amt; paintDonAmt(); }

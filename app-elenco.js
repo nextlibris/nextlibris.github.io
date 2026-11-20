@@ -704,26 +704,11 @@ function refreshRow(id) {
   autosizeAll(fresh);
 }
 function eur(n) { return eurFmt.format(n); }
+/* aggiorna i contorni dell'elenco (pillole, filtri, ordine): il vecchio riepilogo in testata non c'è più (20/11/2026);
+   titolo, nastro e frase li disegna stile-g.js all'evento «list» */
 function updateSummary() {
-  renderOwner();                                   // «Libreria di» / «Desideri di» segue la scheda
-  var all = tabBooks().filter(hasData), done = all.filter(function (b) { return !b.xs; });
-  var gone = all.length - done.length;
-  var g = all.filter(function (b) { return b.g.length; }).length;
-  var loans = tab === 'lib' ? done.filter(isLoan).length : 0;
-  var n = done.length;
-  /* pezzi che non si spezzano: si va a capo solo tra un pezzo e l'altro, e il triangolino resta attaccato all'ultimo (Piero, 18/11/2026) */
-  var parts = tab === 'wish'
-    ? [n ? '<b>' + n + '</b> da comprare' : 'Nessun libro da comprare']   /* giro 7: niente somme in euro */
-    : n ? ['<b>' + n + '</b> ' + (n === 1 ? 'libro' : 'libri'), g ? g + ' da verificare' : '',
-        loans && settings.sumLoan ? '<button type="button" class="sum-link" data-sum="loan" aria-pressed="' + (flt === 'loan' ? 'true' : 'false') + '">' + loans + ' in prestito</button>' : '',
-        gone && settings.sumGone ? gone + ' non più in libreria' : ''].filter(Boolean)
-      : [gone ? gone + ' non più in libreria' : 'Ancora nessun libro'];
-  parts[parts.length - 1] += alertBtn();
-  $('#summary').innerHTML = parts.map(function (x) { return '<span class="sum-i">' + x + '</span>'; }).join(' · ');
-  var nl = state.books.filter(function (b) { return !b.w && !b.xs && hasData(b); }).length, nw = state.books.filter(function (b) { return b.w && hasData(b); }).length;
-  $('#cntLib').textContent = nl; $('#cntWish').textContent = nw;
-  $('#tabLib').setAttribute('aria-selected', tab === 'lib' ? 'true' : 'false');
-  $('#tabWish').setAttribute('aria-selected', tab === 'wish' ? 'true' : 'false');
+  renderOwner();                                   // la scritta nella ricerca segue la scheda
+  var g = tabBooks().filter(hasData).filter(function (b) { return b.g.length; }).length;
   $('#sort').value = sortBy; $('#grp').value = settings.grp || ''; pickSync();   // riga «Ordina · Raggruppa» sempre in vista
   nxBoxPaint(); emit('list');
   $('#btnNews').hidden = tab !== 'wish' || !state.books.some(function (b) { return !b.w && b.a; });
@@ -733,9 +718,6 @@ function updateSummary() {
   fg.textContent = 'Da verificare · ' + g;
   fg.hidden = g === 0 && flt !== 'guess';
   fg.setAttribute('aria-pressed', flt === 'guess' ? 'true' : 'false');
-  var allLoans = state.books.filter(function (b) { return !b.w && b.p; }).length;
-  $('#cntLoan').textContent = allLoans;
-  $('#fltLoan').setAttribute('aria-pressed', flt === 'loan' ? 'true' : 'false');
   var td = todoRows().length;
   var bt = $('#btnTodo');
   bt.hidden = td === 0;

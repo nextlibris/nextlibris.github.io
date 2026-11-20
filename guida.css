@@ -45,11 +45,9 @@ html[data-theme="dark"] .guida .gd-try{color:#111}
 .ex-bar .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 .ex-bar .ex-go{display:flex;align-items:center;gap:14px;margin-left:auto}
 .ex-bar .ex-go .btn{min-height:36px;padding:0 16px;font-size:14px}
-html.esempio header.top #summary{display:none}
-html.esempio header.top .top-meta .owner::after{content:none}
-html.esempio #btnNews,html.esempio #guestIcos,html.esempio #guestBar{display:none!important}
+
+html.esempio #btnNews,html.esempio #guestBar{display:none!important}
 html.esempio #notice,html.esempio #nxBox,html.esempio #wrapAsk,html.esempio #donAsk,html.esempio #instCard,html.esempio #donRow,html.esempio .lay-note,html.esempio #layMore,
-html.esempio #fltLoan,html.esempio #btnCheck,html.esempio #btnExport,html.esempio #tipTxt,html.esempio #layNav [data-l="add"],html.esempio .dock,
 html.esempio .notice-tri,html.esempio #btnShareWish,html.esempio #btnTodo,html.esempio #fltGuess,html.esempio .ret-btn{display:none!important}
 #sortBar.gd-flash{border-radius:12px;box-shadow:0 0 0 3px var(--accent);transition:box-shadow .3s}
 

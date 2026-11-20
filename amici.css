@@ -31,9 +31,7 @@
 .fri .fr-conf .fr-who{font-weight:400}
 .fri .fr-inv{border:2px solid var(--accent);border-radius:14px;padding:8px 12px;display:grid;gap:2px}
 /* icona in alto, accanto all'ingranaggio (il numero delle novità è sulla campanella, notifiche.css) */
-html.has-fri .top{padding-right:96px}
-.fri-top{position:absolute;top:0;right:38px;color:var(--muted)}
-.fri-top svg{width:24px;height:24px}
+
 /* avviso in cima */
 .fri-note{display:flex;align-items:center;gap:4px;margin:4px 0 12px;padding:4px 4px 4px 6px;border-radius:14px;background:var(--accent);color:var(--accent-ink,#fff)}
 .fri-note[hidden]{display:none}
@@ -88,8 +86,7 @@ body.selecting .fri-note,body.scanning .fri-note{display:none}
 .guest-bar[hidden]{display:none}
 .guest-bar p{margin:0;line-height:1.4}
 /* riga in testata: solo «Libreria di Anna» (i numeri sono già sui tasti Libreria/Desideri; Piero, 17/11/2026 notte) */
-html.guest header.top #summary{display:none}
-html.guest header.top .top-meta .owner::after{content:none}
+
 html.guest #btnNews{display:none!important}
 .guest-bar .gb-num{font-size:14px;color:var(--muted)}
 .guest-bar .gb-line{font-size:14px;overflow-wrap:anywhere}
@@ -98,7 +95,6 @@ html.guest #btnNews{display:none!important}
 .guest-bar .gb-chips .chip{min-height:36px;padding:5px 12px;font-size:13.5px;font-weight:500;border-color:var(--line);background:var(--surface);color:var(--ink)}
 .guest-bar .gb-chips .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
 html.guest #notice,html.guest #nxBox,html.guest #wrapAsk,html.guest #donAsk,html.guest #instCard,html.guest #donRow,html.guest .lay-note,html.guest #layMore,
-html.guest #fltLoan,html.guest #btnCheck,html.guest #btnExport,html.guest #tipTxt,html.guest #layNav [data-l="add"],html.guest .dock,
 html.guest .notice-tri,html.guest #btnShareWish,html.guest #btnTodo,html.guest #fltGuess,html.guest .ret-btn{display:none!important}
 /* scheda: si guarda, non si cambia (restano copertina, autore, etichette-filtro, descrizione, cerca sul web, chiudi) */
 html.guest #list .row :is(button,input,select,textarea,label,[data-act]){pointer-events:none}
@@ -168,16 +164,15 @@ html.guest #list .g-read .g-rs{margin:0;font-size:14.5px;color:var(--muted)}
 html.guest #list .g-read .g-rs b{color:var(--ink);font-weight:600}
 /* libreria e desideri dell'amico (17/11/2026 sera): due tasti nella sua striscia; chiave e worker con un'icona sulla riga del nome */
 .guest-bar .gb-tabs{margin:6px 0 2px}
-header.top .top-meta .gb-icos{position:absolute;right:max(4px,env(safe-area-inset-right));margin-top:-8px;display:flex;gap:2px}   /* in alto a destra, sulla riga del nome: ⇄ prestiti e regali, chiave (17/11/2026) */
-.gb-icos:empty{display:none}
+   /* in alto a destra, sulla riga del nome: ⇄ prestiti e regali, chiave (17/11/2026) */
+
 .gb-key{position:relative;width:36px;height:36px;min-width:36px;padding:0;border-radius:50%;color:var(--muted)}
 .gb-key svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .gb-key.on{color:var(--accent)}
 .gb-key .gk-ok{position:absolute;right:1px;bottom:2px;min-width:14px;height:14px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:700 9px/14px var(--font-body);text-align:center}
 .gb-key[hidden]{display:none}
 /* nella propria libreria: icona della chiave in alto a destra, sulla riga «Libreria di …» (giro 1, 18/11/2026) */
-html:not(.guest) header.top .top-meta{position:relative}
-html:not(.guest) header.top .top-meta .gb-icos{top:-8px;margin-top:0}
+
 .fri .kw-intro{color:var(--ink);font-size:14px}
 
 /* togli dagli amici: in rosso, nella libreria dell'amico e nel suo profilo (Piero, giro 6) */

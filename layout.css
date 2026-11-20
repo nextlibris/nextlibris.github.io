@@ -1,5 +1,5 @@
-/* Next Libris · modulo «Disposizione dello schermo» (si toglie insieme a layout.js). Con «classico», o senza modulo, nulla cambia. */
-.lay-nav{display:none}
+/* Next Libris · modulo «layout»: finestra del «+», pagina «Per te», avvisi in cima uno alla volta (vedi layout.js). */
+
 .lay-later{display:none!important}
 .lay-has-dots{position:relative;padding-bottom:26px!important}
 .lay-more{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);display:flex;gap:7px;align-items:center;padding:6px 10px;border:0;background:none;color:inherit;cursor:pointer;line-height:0}
@@ -7,70 +7,38 @@
 .lay-more i.on{opacity:.85;transform:scale(1.15)}
 .lay-more[hidden]{display:none}
 /* finestre del modulo */
-.lay-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:6px 0 4px}
-.lay-big{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:104px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;font:inherit}
-.lay-big svg{width:26px;height:26px;color:var(--accent)}
-.lay-big b{font:600 17px/1.2 var(--font-display)}
-.lay-big small{font-size:13px;line-height:1.3;color:var(--muted)}
-.lay-big.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.lay-big.pri svg,.lay-big.pri small{color:inherit}
 .lay-yi{flex:none;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent)}
 .dmenu .dopt.lay-you{justify-content:flex-start;gap:12px}
 .dmenu .dopt.lay-you>.lay-yi{flex:0 0 40px;width:40px;height:40px}
 .dmenu .dopt.lay-you>span:nth-child(2){flex:1 1 auto;text-align:left;min-width:0}
-.lay-opt .lay-o{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}
-.lay-opt .lay-o input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
-.lay-opt .lay-o b{display:block;font-size:15px}
-.lay-opt .lay-o small{display:block;font-size:13px;line-height:1.35;color:var(--muted);margin-top:2px}
 
-/* A · barra in basso */
-html[data-layout="a"] .dock{display:none}
+/* base della pagina (era la disposizione «A»; l'attributo data-layout="a" sta fisso in index.html) */
 html[data-layout="a"] main{padding-bottom:120px}
 html[data-layout="a"] h1{font-size:30px}
 html[data-layout="a"] .top{margin-bottom:12px}
-html[data-layout="a"] .tabbar .tabs{display:none}
-html[data-layout="a"] .tabbar{justify-content:flex-end;margin-bottom:6px}
-html.lay-loans0[data-layout="a"] .tabbar{display:none}
+
 html[data-layout="a"] .tools{flex-wrap:nowrap}
-html[data-layout="a"] .acts{display:contents}
+
 html[data-layout="a"] #btnFilters,html[data-layout="a"] #btnView{font-size:0;gap:0;min-width:46px;min-height:46px;padding:0 11px;flex:none;position:relative}
 html[data-layout="a"] #btnFilters .badge{font-size:11px;position:absolute;top:2px;right:2px;margin:0}
-html[data-layout="a"] #btnCheck,html[data-layout="a"] #btnStats,html[data-layout="a"] #btnExport{display:none}
-html[data-layout="a"] .lay-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:6;justify-content:space-around;align-items:flex-end;
-  background:var(--surface);border-top:1px solid var(--line);padding:4px 6px calc(4px + env(safe-area-inset-bottom))}
-.lay-nav button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:4px 0;border:0;background:none;color:var(--muted);font:600 12px var(--font-body);cursor:pointer}
-.lay-nav button.on{color:var(--accent)}
-.lay-nav button.on svg{stroke-width:2.4}
-.lay-nav .lay-plus{flex:0 0 60px;width:60px;height:60px;min-height:0;margin:-22px 6px 4px;border-radius:50%;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 14px #0003}
+
 html[data-layout="a"] .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
-html[data-layout="a"] body.selecting .lay-nav,html[data-layout="a"] body.scanning .lay-nav{display:none}
+
 /* avvisi da scorrere col dito */
 [data-lay-swipe]{touch-action:pan-y;will-change:transform}
 html[data-layout="a"] main{overflow-x:clip}   /* l'avviso che scivola via non deve allargare la pagina */
-html[data-layout="a"] .stick.stuck #btnView svg{display:inline}   /* nella A il pulsante ha solo l'icona: in alto, bloccato, non deve restare vuoto */
+html[data-layout="a"] .stick.stuck #btnView svg{display:inline}   /* il pulsante ha solo l'icona: in alto, bloccato, non deve restare vuoto */
 html[data-layout="a"] .stick.stuck #btnView{min-height:46px;padding:0 11px}
 
-/* schermi larghi: la barra in basso non si allarga a tutto schermo, le voci restano raccolte al centro (16/11/2026) */
-@media (min-width:760px){
-  html[data-layout="a"] .lay-nav{justify-content:center;padding-left:max(6px,calc(50% - 340px));padding-right:max(6px,calc(50% - 340px))}
-  .lay-nav button{min-height:52px;font-size:12.5px}
-}
-/* schermi bassi (telefono sdraiato): barra in basso sottile, con icona e scritta affiancate, per lasciare spazio ai libri */
+/* schermi bassi (telefono sdraiato) */
 @media (max-height:480px){
-  html[data-layout="a"] .lay-nav{align-items:center;padding-top:2px;padding-bottom:calc(2px + env(safe-area-inset-bottom))}
-  .lay-nav button{flex-direction:row;gap:6px;min-height:40px;padding:2px 0}
-  .lay-nav button svg{width:20px;height:20px}
-  .lay-nav .lay-plus{flex:0 0 44px;width:44px;height:44px;margin:-2px 10px}
   html[data-layout="a"] main{padding-bottom:70px}
   html[data-layout="a"] .toast{bottom:calc(56px + env(safe-area-inset-bottom))}
 }
-@media (max-height:480px) and (min-width:600px){ .lay-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
 
 /* «Aggiungi un libro»: In Libreria | Nei Desideri (16/11/2026) */
 #layAdd .lay-dest{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:auto;margin:0}
 #layAdd .lay-dest button{justify-content:center}
 
 /* «Per autore» nel + (giro 2, 18/11/2026): una riga larga sotto i quattro tasti */
-.lay-big.lay-wide{grid-column:1 / -1;flex-direction:row;align-items:center;gap:12px;min-height:64px}
-.lay-big.lay-wide span{display:flex;flex-direction:column;gap:2px}
-@media (max-height:480px) and (min-width:600px){ .lay-big.lay-wide{grid-column:auto;flex-direction:column;align-items:flex-start;min-height:104px} }
+

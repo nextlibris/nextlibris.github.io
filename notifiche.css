@@ -1,5 +1,5 @@
 /* Next Libris · modulo «Notifiche»: campanella in alto e finestra. Colori e componenti dell'app: qui solo la disposizione. */
-html.has-bell .top{padding-right:134px}
+
 .nt-top{position:absolute;top:0;right:76px;color:var(--muted)}
 .nt-top[hidden]{display:none}
 .nt-top svg{width:24px;height:24px}

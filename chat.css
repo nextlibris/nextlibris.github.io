@@ -4,15 +4,7 @@
 .ch-top[hidden]{display:none}
 .ch-top svg{width:24px;height:24px}
 .top .ch-top{top:calc(var(--h1-fs,31px) * .52 - 22px)}
-html.has-chat .top .nt-top{right:114px}
-html.has-chat.has-bell header.top{padding-right:166px}
-html.has-chat.has-bell body header.top .top-meta{margin-right:-166px}
-@media (max-width:380px){
-  html.has-chat .top .ch-top{right:68px}
-  html.has-chat.has-bell .top .nt-top{right:104px}
-  html.has-chat.has-bell body header.top{padding-right:142px}
-  html.has-chat.has-bell body header.top .top-meta{margin-right:-142px}
-}
+
 html.esempio .ch-top{display:none}
 
 /* finestra: alta quasi tutto lo schermo, testata e casella fisse, messaggi che scorrono */

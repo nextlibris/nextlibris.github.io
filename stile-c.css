@@ -17,22 +17,13 @@ html[data-look="nuovo"] body header.top{display:flex;flex-wrap:wrap;align-items:
 html[data-look="nuovo"] body header.top>div:first-child{display:contents}
 html[data-look="nuovo"] body header.top h1{order:1;flex:1 1 auto;min-width:0;margin:0;font:700 21px/1.1 var(--font-display);letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
 html[data-look="nuovo"] body header.top h1 .prova-tag{margin:0;padding:3px 7px;font-size:10px;letter-spacing:.04em;border-radius:999px}
-html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){order:2;position:relative;top:auto;right:auto;left:auto;flex:none;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;
-  display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh)}
-html[data-look="nuovo"] body header.top>.ico:not(.beer-pill) svg{width:20px;height:20px}
+
 html[data-look="nuovo"] body header.top>.ico .nt-badge{top:-2px;right:-2px}
-html[data-look="nuovo"] body header.top .top-meta{order:3;flex:1 1 calc(100% - 140px);min-width:0;margin:6px 0 0!important;font-size:13.5px;color:var(--muted);position:relative}
-html[data-look="nuovo"]:not(.guest):not(.esempio) body header.top .top-meta{padding-right:0}
-html[data-look="nuovo"] body header.top .owner{font:600 15px/1.25 var(--font-body);color:var(--ink)}
-html[data-look="nuovo"] body header.top .owner .link{font-size:15px}
-html[data-look="nuovo"] body header.top .owner .owner-av .pf-av{width:40px;height:40px}
-html[data-look="nuovo"] body header.top .beer-top.beer-pill{order:4;position:static;align-self:center;margin:6px 0 0 auto;height:34px;padding:0 12px 0 9px;border:0;border-radius:999px;
-  background:var(--warn-bg);color:var(--warn);box-shadow:none}
-html[data-look="nuovo"] body header.top .sync{order:5;flex:1 1 100%}
+
 @media (max-width:380px){
   html[data-look="nuovo"] body header.top{gap:4px}
   html[data-look="nuovo"] body header.top h1{font-size:19px}
-  html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){width:36px;height:36px;min-width:36px;min-height:36px}
+  
 }
 
 /* ---------- 3. ricerca, ordine, chip ---------- */
@@ -59,8 +50,8 @@ html[data-look="nuovo"] .stick.stuck .sortbar .dpick,html[data-look="nuovo"] .st
 html[data-look="nuovo"] .stick{background:var(--bg)}
 html[data-look="nuovo"] .stick.stuck{box-shadow:0 6px 14px -10px rgba(0,0,0,.3)}
 /* pillole (avvisi e scelte) */
-html[data-look="nuovo"] .chips .chip,html[data-look="nuovo"] .quick{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh);font:500 13.5px var(--font-body)}
-html[data-look="nuovo"] .chips .chip[aria-pressed="true"],html[data-look="nuovo"] .quick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .chips .chip{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh);font:500 13.5px var(--font-body)}
+html[data-look="nuovo"] .chips .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 html[data-look="nuovo"] .chips .chip.share,html[data-look="nuovo"] .chips #btnNews{background:var(--accent-soft);color:var(--accent);box-shadow:none;font-weight:600}
 
 /* ---------- 4. riquadri in pagina ---------- */
@@ -92,21 +83,10 @@ html[data-look="nuovo"] .sum-t{font:600 15px/1.25 var(--font-body)}
 html[data-look="nuovo"] #list>.shelf .grow{border-radius:0}
 
 /* ---------- 7. barra in basso sospesa ---------- */
-html[data-look="nuovo"][data-layout="a"] .lay-nav{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));padding:6px 4px;border:0;border-radius:24px;background:var(--surface);
-  box-shadow:0 8px 24px rgba(0,0,0,.14);align-items:center}
-html[data-look="nuovo"] .lay-nav button{min-height:52px;font:500 11px var(--font-body);gap:3px}
-html[data-look="nuovo"] .lay-nav button.on{font-weight:700}
-html[data-look="nuovo"] .lay-nav .lay-plus{flex:0 0 46px;width:46px;height:46px;min-height:0;margin:0 6px;border-radius:16px;box-shadow:none}
+
 html[data-look="nuovo"][data-layout="a"] .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
-@media (min-width:760px){ html[data-look="nuovo"][data-layout="a"] .lay-nav{left:max(12px,calc(50% - 280px));right:max(12px,calc(50% - 280px));padding-left:4px;padding-right:4px} }
-@media (max-height:480px){
-  html[data-look="nuovo"][data-layout="a"] .lay-nav{bottom:calc(6px + env(safe-area-inset-bottom));padding:2px 4px}
-  html[data-look="nuovo"] .lay-nav button{min-height:40px}
-  html[data-look="nuovo"] .lay-nav .lay-plus{flex:0 0 40px;width:40px;height:40px}
-}
+
 /* profilo aperto: la voce «Profilo» è quella accesa */
-html:has(#profSheet:not([hidden])) .lay-nav [data-l="lib"].on,html:has(#profSheet:not([hidden])) .lay-nav [data-l="wish"].on{color:var(--muted);font-weight:500}
-html:has(#profSheet:not([hidden])) .lay-nav [data-l="prof"]{color:var(--accent);font-weight:700}
 
 /* ---------- 8. libreria di un amico: stesso layout della tua ---------- */
 html[data-look="nuovo"] .guest-bar{gap:6px;margin:0 0 12px;padding:0;border-bottom:0}
@@ -126,7 +106,7 @@ html[data-look="nuovo"] #profSheet>.sheet-in::before{display:none}
 html[data-look="nuovo"] #profSheet>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;margin:0 0 -38px;font-size:24px;box-shadow:var(--c-sh)}
 html[data-look="nuovo"] #profSheet>.sheet-in>.row-btns{display:none}
 /* la barra in basso resta sopra il profilo (non sopra le altre finestre) */
-html[data-look="nuovo"]:has(#profSheet:not([hidden])):not(:has(.sheet:not([hidden]):not(#profSheet))) .lay-nav{z-index:31}
+
 html[data-look="nuovo"] .prof #profBody{gap:12px}
 html[data-look="nuovo"] .prof .pf-card{display:grid;justify-items:center;gap:10px;padding:20px 14px 16px;border-radius:24px;background:var(--surface);text-align:center}
 html[data-look="nuovo"] .prof .pf-card .pf-top{flex-direction:column;gap:10px}
@@ -177,8 +157,7 @@ html[data-look="nuovo"] .row.open.cv-full{position:fixed;inset:0;z-index:20;disp
 @keyframes cvIn{from{opacity:.4;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){html[data-look="nuovo"] .row.open.cv-full{animation:none}}
 html[data-look="nuovo"]:has(.row.open.cv-full){overflow:hidden}
-html[data-look="nuovo"]:has(.row.open.cv-full) .edge-tab{display:none}
-html[data-look="nuovo"]:has(.row.open.cv-full):not(:has(.sheet:not([hidden]))) .lay-nav{z-index:21}
+
 html[data-look="nuovo"] .row.open.cv-full>*{max-width:none}
 /* barra: ‹ a sinistra, ⋯ a destra */
 html[data-look="nuovo"] .cv-bar{position:sticky;top:calc(-6px - env(safe-area-inset-top));z-index:2;display:flex;align-items:center;gap:8px;margin:0 -4px;padding:6px 4px 8px;background:var(--bg)}
@@ -400,7 +379,7 @@ html[data-look="nuovo"] .drawer{left:0;right:0;width:auto;max-width:none;z-index
 html[data-look="nuovo"] .drawer.open{transform:none;opacity:1}
 @media (prefers-reduced-motion:reduce){html[data-look="nuovo"] .drawer{transition:none;transform:none}}
 html[data-look="nuovo"] .drawer-scrim{display:none}
-html[data-look="nuovo"]:has(.drawer.open):not(:has(.sheet:not([hidden]))) .lay-nav{z-index:21}
+
 html[data-look="nuovo"] .drawer-head{width:100%;max-width:624px;margin:0 auto;justify-content:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 6px}
 html[data-look="nuovo"] .drawer-head h2{order:2;flex:1;margin:0;font:700 21px/1.1 var(--font-display)}
 html[data-look="nuovo"] .drawer-head .ico{order:1;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:24px;box-shadow:var(--c-sh)}
@@ -453,8 +432,7 @@ html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet)>.sheet-in::before{displa
 html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;min-height:38px;margin:0 0 -38px;font-size:24px}
 html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>h2{margin:2px 48px 4px 0;font:700 26px/1.15 var(--font-display)}
 html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.row-btns:last-child{display:none}
-html[data-look="nuovo"]:has(:is(#layYou,#friSheet,#chSheet:not([data-v="conv"])):not([hidden])):not(:has(.sheet:not([hidden]):not(#profSheet,#layYou,#friSheet,#chSheet))) .lay-nav{z-index:31}
-html[data-look="nuovo"]:has(#layYou:not([hidden])) .lay-nav [data-l="you"]{color:var(--accent);font-weight:700}
+
 /* Per te: scheda della stagione nei suoi colori, poi le righe */
 html[data-look="nuovo"] .lay-season{display:flex;align-items:center;gap:12px;width:100%;min-height:84px;padding:18px;border:0;border-radius:var(--c-r);text-align:left;cursor:pointer;
   background:var(--sz-bg,var(--accent));color:var(--sz-ink,#fff);box-shadow:var(--c-sh);position:relative;overflow:hidden}
@@ -573,29 +551,24 @@ html[data-look="nuovo"] .guida .gd-later{display:block;margin:14px auto 0;border
 /* titolo «Libreria» / «Desideri» (app-strumenti.js renderOwner); foto e nome stanno nel Profilo; Amici in testata, nel Profilo e nel Menu */
 html[data-look="nuovo"] body header.top{align-items:flex-start;gap:6px;margin:0 0 16px;padding-top:4px!important}
 html[data-look="nuovo"] body header.top h1{order:1;flex:1 1 auto;display:block;font:800 30px/1.05 var(--font-display);letter-spacing:-.02em;padding-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html[data-look="nuovo"] body header.top h1.h1-long{font-size:23px;padding-top:7px}
+
 html[data-look="nuovo"] body header.top h1 .prova-tag{display:inline-block;vertical-align:6px;margin-left:2px}
-html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){width:36px;height:36px;min-width:36px;min-height:36px}
-html[data-look="nuovo"] body header.top>.ico:not(.beer-pill) svg{width:19px;height:19px}
+
 html[data-look="nuovo"] body header.top>.nt-top{order:3}
 html[data-look="nuovo"] body header.top>.ch-top{order:4}
-html[data-look="nuovo"] body header.top>.fri-top{order:5}   /* Amici torna in testata (Piero, 19/11/2026) */
-html[data-look="nuovo"] body header.top>#btnOpts{order:6}
+   /* Amici torna in testata (Piero, 19/11/2026) */
+
 /* Sostieni: tasto tondo col boccale, nel colore caldo */
-html[data-look="nuovo"] body header.top .beer-top.beer-pill{order:2;width:36px;min-width:36px;height:36px;min-height:36px;margin:0;padding:0;display:grid;place-items:center;border-radius:50%;background:var(--warn-bg);color:var(--warn)}
-html[data-look="nuovo"] body header.top .beer-top.beer-pill .beer-t{display:none}
-html[data-look="nuovo"] body header.top .beer-top.beer-pill svg{width:19px;height:19px}
+
 /* sotto il titolo solo i numeri; nome e foto si vedono nella libreria di un amico e nell'esempio? no: il titolo li dice già */
-html[data-look="nuovo"] body header.top .top-meta{order:10;flex:1 1 100%;margin:2px 0 0!important;font-size:14px;color:var(--muted)}
-html[data-look="nuovo"] body header.top .top-meta .owner{display:none}
-html[data-look="nuovo"] body header.top .top-meta .summary{font-size:14px}
+
 @media (max-width:380px){
   html[data-look="nuovo"] body header.top{gap:4px}
   html[data-look="nuovo"] body header.top h1{font-size:26px;position:relative;overflow:visible}
-  html[data-look="nuovo"] body header.top h1.h1-long{font-size:20px}
+  
   /* con Amici in testata il titolo ha meno posto: «PROVA» piccola sopra il titolo, così «Libreria» si legge tutta */
   html[data-look="nuovo"] body header.top h1 .prova-tag{position:absolute;left:0;top:-11px;margin:0;padding:1px 5px;font-size:8.5px;vertical-align:0}
-  html[data-look="nuovo"] body header.top>.ico:not(.beer-pill),html[data-look="nuovo"] body header.top .beer-top.beer-pill{width:34px;height:34px;min-width:34px;min-height:34px}
+  
 }
 /* pillole: una riga sola, leggere (solo il bordo), scorrono di lato se non entrano */
 html[data-look="nuovo"] .sortbar{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;gap:6px;margin:0 -16px 12px;padding:0 16px}

@@ -1,7 +1,19 @@
 # Registro delle modifiche di Next Libris
 
-Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
+Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
+
+## Versione 113 · 20/11/2026
+> **Più pulita e più leggera** Tolti i resti del vecchio aspetto: resta quello nuovo, con le pagine color carta e i segnalibri.
+> **Avvisi dove servono** Se un libro non si trova o manca la rete lo leggi anche nella sua pagina; se il telefono non riesce a salvare, l'app te lo dice e ti propone il backup.
+> **Correzioni** Il campo aperto con + Genere, + Nota o + Costo non sparisce più; il titolo è allineato al margine.
+- **Segnalibro Indice:** l'Indice si apre dal primo segnalibro a lato, in cima agli altri; in alto resta solo la campanella. Un altro tocco sul segnalibro lo richiude.
+- **Pagina del libro:** l'avviso «Senza connessione», «Non ho trovato questo libro online» o «Cerco nelle banche dati» sta sotto i tasti tondi, con il suo tasto al centro.
+- **Salvataggio:** al posto della riga «Salvato su questo telefono», un avviso in cima alla libreria solo se il salvataggio non riesce, con «Fai il backup».
+- **Aspetto:** tolte le opzioni «Riepilogo in alto», che non servivano più; i libri non più in libreria si contano in Statistiche.
+- **Avvisi in cima:** tolto il triangolino che riapriva gli avvisi chiusi: tornano da soli quando è di nuovo il momento.
+- **Testi:** i messaggi dicono «Indice» al posto di «Menu».
+- **Sotto il cofano:** tolto il codice delle vecchie disposizioni e della vecchia scheda a campi; corretti alcuni difetti del nuovo aspetto (ritorno all'Indice da «Chiudi», colore della barra in alto, conto dei libri in prestito).
 
 ## Versione 112 · 20/11/2026
 > **Il catalogo delle biblioteche è incluso** I dati delle biblioteche italiane (SBN: editore, anno e pagine più precisi) arrivano a tutti, senza creare niente: non serve più il «worker». Con l'account 500 ricerche al giorno, senza 50.

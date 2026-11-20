@@ -11,6 +11,7 @@
 .pu-hours{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:0}
 .pu-hours label{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--ink)}
 .pu-hours select{min-height:44px;padding:8px 6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+@media (max-width:420px){.pu-hours{flex-wrap:nowrap;gap:8px}.pu-hours label{gap:6px;min-width:0}.pu-hours select{min-width:0;padding:8px 2px 8px 6px}}   /* stile G: «Dalle … alle …» su una riga anche accanto ai segnalibri (20/11/2026) */
 .pu-hours.pu-off{opacity:.5}
 .pu .choice .hint{margin:0}
 /* riga dopo l'accesso: stessi colori del riquadro «Installa» */

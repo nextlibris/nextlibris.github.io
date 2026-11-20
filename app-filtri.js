@@ -49,8 +49,6 @@ function updateActiveFilters() {
   var n = activeCount(), bd = $('#fltBadge');
   bd.hidden = !n; bd.textContent = n;
   $('#btnFilters').setAttribute('aria-pressed', n ? 'true' : 'false');
-  $('#edgeTab').classList.toggle('on', !!n);
-  $('#edgeTab').setAttribute('aria-label', 'Apri il menu' + (n ? ' (' + n + (n === 1 ? ' attivo)' : ' attivi)') : ''));
   $('#btnFilters').setAttribute('aria-label', 'Filtri' + (n ? ' (' + n + (n === 1 ? ' filtro attivo)' : ' filtri attivi)') : ''));
 }
 $('#activeFlt').addEventListener('click', function (e) {
@@ -220,8 +218,6 @@ function closeDrawer(fromPop) {
   if (was && drawerReturn && drawerReturn.focus && drawerEl.contains(document.activeElement)) { try { drawerReturn.focus({ preventScroll: true }); } catch (e) { nlErr(e); } }
 }
 $('#btnFilters').addEventListener('click', function () { drawerOpen ? closeDrawer() : openDrawer('flt'); });
-$('#edgeTab').addEventListener('click', function () { openDrawer('opt'); });
-$('#btnOpts').addEventListener('click', function () { openDrawer('opt'); setsOpen(true); });   // l'ingranaggio porta dritto alle impostazioni
 /* menu: le impostazioni stanno tutte sotto «Impostazioni», chiuse finche' non le apri (Piero, 16/11/2026) */
 var setsShown = false;
 function setsOpen(on) {
@@ -345,7 +341,6 @@ function applyLook(rerender) {
     Array.prototype.forEach.call(document.querySelectorAll('input[name="' + k + '"]'), function (r) { r.checked = r.value === settings[k]; });
   });
   Array.prototype.forEach.call(document.querySelectorAll('input[name="auInv"]'), function (r) { r.checked = Number(r.value) === settings.auInv; });
-  $('#icoLoan').innerHTML = icon('loan');
   if (rerender) { renderList(); updateSummary(); }
 }
 if (darkMQ) { var onDark = function () { if (settings.theme === 'auto') applyLook(false); }; if (darkMQ.addEventListener) darkMQ.addEventListener('change', onDark); else if (darkMQ.addListener) darkMQ.addListener(onDark); }
@@ -398,7 +393,6 @@ var optOpen = false, optPushed = false;
 function openOptions(sec, reuse) {
   try { paintLensState(); } catch (e) { nlErr(e); }                 // stato dell'obiettivo con la luce, sempre aggiornato
   emit('options', sec);
-  paintSumOpts();
   var found = false;
   Array.prototype.forEach.call(document.querySelectorAll('#optSheet .opt-sec'), function (s) {
     var on = s.dataset.sec === sec; s.hidden = !on;

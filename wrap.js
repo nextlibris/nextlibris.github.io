@@ -527,20 +527,16 @@ function paintOption(sec) {
   if (sec !== 'look') return;
   var box = document.getElementById('optWrap');
   if (!box) {
-    var lab = document.querySelector('#optSheet .sum-opts'); if (!lab) return;   // in Aspetto, subito dopo «Riepilogo in alto» (16/11/2026)
+    var lab = document.querySelector('#optSheet .opt-sec[data-sec="look"]'); if (!lab) return;   // in fondo ad Aspetto
     var l = document.createElement('label'); l.className = 'check';
     l.innerHTML = '<input type="checkbox" id="optWrap"><span>Riepilogo di ogni stagione<small>«La tua estate in libri», «Il tuo autunno in libri»…: cosa hai letto, i generi, gli autori, i libri nuovi. All\'inizio di ogni stagione compare l\'invito in cima all\'elenco; si apre anche dal menu.</small></span>';
-    lab.parentNode.insertBefore(l, lab.nextSibling);
+    lab.appendChild(l);
     box = l.querySelector('input');
     box.addEventListener('change', function () { cfg.on = box.checked; save(); paintAsk(); paintMenu(); });
   }
   box.checked = cfg.on;
 }
 NL.on('list', paintAsk);
-NL.on('closed', function (list) {            // invito chiuso con la × ma ancora nel suo mese: il triangolino del riepilogo lo riapre
-  var d = askData(true);
-  if (d && cfg.seen === d.Q.key) list.push({ k: 'wrap', reopen: function () { cfg.seen = ''; save(); paintAsk(); } });
-});
 NL.on('menu', paintMenu);
 NL.on('options', paintOption);
 paintAsk();

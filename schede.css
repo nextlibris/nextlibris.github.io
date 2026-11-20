@@ -1,20 +1,16 @@
 /* Next Libris · modulo «Scheda aperta del libro» (si toglie insieme a schede.js). Con «Classica», o senza modulo, nulla cambia. */
-#optCard .lay-o{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}
-#optCard .lay-o input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--accent)}
-#optCard .lay-o b{display:block;font-size:15px}
-#optCard .lay-o small{display:block;font-size:13px;line-height:1.35;color:var(--muted);margin-top:2px}
 
 /* pagina del libro: azioni in alto solo icone, rotonde, in una riga; campi piu' stretti (quando si modifica) */
-html[data-card]:not([data-card="attuale"]) .row.open .acts-main{flex-wrap:nowrap;gap:6px}
-html[data-card]:not([data-card="attuale"]) .row.open .acts-main .ico.act{width:42px;min-width:42px;height:42px;min-height:42px;padding:0;justify-content:center;border-radius:50%}
-html[data-card]:not([data-card="attuale"]) .row.open .acts-main .ico.act .al{display:none}
-html[data-card]:not([data-card="attuale"]) .row.open .acts-main .ico.act.danger{margin-left:auto}
-html[data-card]:not([data-card="attuale"]) .row.open .card-top{margin-bottom:4px}
-html[data-card]:not([data-card="attuale"]) .row.open .f textarea,html[data-card]:not([data-card="attuale"]) .row.open .f input{padding:3px 4px}
-html[data-card]:not([data-card="attuale"]) .row.open .lbl{font-size:10.5px;margin-bottom:0}
-html[data-card]:not([data-card="attuale"]) .row.open .meta,html[data-card]:not([data-card="attuale"]) .row.open .more,html[data-card]:not([data-card="attuale"]) .row.open .ser{row-gap:4px;margin-top:2px}
-html[data-card]:not([data-card="attuale"]) .row.open .serbox{padding:8px 10px;font-size:13.5px}
-html[data-card]:not([data-card="attuale"]) .row.open .facets .fchip{min-height:34px;padding:3px 10px;font-size:13px}
+html[data-card][data-card="d"] .row.open .acts-main{flex-wrap:nowrap;gap:6px}
+html[data-card][data-card="d"] .row.open .acts-main .ico.act{width:42px;min-width:42px;height:42px;min-height:42px;padding:0;justify-content:center;border-radius:50%}
+html[data-card][data-card="d"] .row.open .acts-main .ico.act .al{display:none}
+html[data-card][data-card="d"] .row.open .acts-main .ico.act.danger{margin-left:auto}
+html[data-card][data-card="d"] .row.open .card-top{margin-bottom:4px}
+html[data-card][data-card="d"] .row.open .f textarea,html[data-card][data-card="d"] .row.open .f input{padding:3px 4px}
+html[data-card][data-card="d"] .row.open .lbl{font-size:10.5px;margin-bottom:0}
+html[data-card][data-card="d"] .row.open .meta,html[data-card][data-card="d"] .row.open .more,html[data-card][data-card="d"] .row.open .ser{row-gap:4px;margin-top:2px}
+html[data-card][data-card="d"] .row.open .serbox{padding:8px 10px;font-size:13.5px}
+html[data-card][data-card="d"] .row.open .facets .fchip{min-height:34px;padding:3px 10px;font-size:13px}
 
 /* D · pagina del libro */
 .row.cv-view .head,.row.cv-view .meta,.row.cv-view .more,.row.cv-view .ser,.row.cv-view .foot,.row.cv-view .serbox,.row.cv-view .facets,.row.cv-view .links{display:none}

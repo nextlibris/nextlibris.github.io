@@ -1,8 +1,9 @@
 /* Next Libris · stile G «Pagina con l'Indice» (Piero, 20/11/2026; tela https://claude.ai/artifact/Tqa6XajvQCK2CVZdSSSimq, documento
    claude/nuovo-stile-proposte.md). L'app come un libro aperto: testatina in alto, nastro segnalibro con il numero dei libri, una frase
    in prosa, linguette laterali al posto della barra in basso (Libri · Desideri · Per te · Amici · Tu), «+ Aggiungi»
-   che galleggia, il Menu diventa l'«Indice» a capitoli. Le funzioni restano quelle di sempre: questo modulo aggiunge solo i pezzi nuovi
-   e li collega ai tasti che esistono già (che restano nella pagina, nascosti dallo stile). Le regole d'aspetto stanno in stile-g.css. */
+   che galleggia, il Menu diventa l'«Indice» a capitoli. Testatina, titolo, nastro e frase stanno in index.html; qui si disegnano le
+   linguette e «+ Aggiungi» e si collega tutto alle funzioni dell'app (NL, NLLayout). Le regole d'aspetto stanno in stile-g.css.
+   20/11/2026: tolti i tasti delle vecchie disposizioni, che questo modulo «premeva» di nascosto. */
 (function () {
 'use strict';
 var NL = window.NL;
@@ -20,15 +21,14 @@ var IC = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   indice: '<path d="M4 7h16M4 12h16M4 17h10"/>'
 };
-function act(l) {
-  var b = document.querySelector('#layNav [data-l="' + l + '"]'); if (b) { b.click(); return; }
-  if ((l === 'lib' || l === 'wish') && NL.setTab) { if (NL.guest && NL.guest() && NL.guestExit) NL.guestExit(); NL.setTab(l); window.scrollTo(0, 0); }   // senza la barra in basso (disposizione classica)
-  else if (l === 'prof' && window.NLProfilo) window.NLProfilo.open();
-}
+function act(l) { if (window.NLLayout) window.NLLayout.act(l); }
 function vis(sel) { var e = $(sel); return !!(e && !e.hidden); }
+/* hidden cambiato solo se serve: ogni scrittura sveglia gli osservatori (questo modulo e il ritorno all'Indice di app-filtri.js);
+   prima si ridipingeva di continuo, ogni 40 ms, e «Chiudi» delle finestre dell'Indice non tornava all'Indice (20/11/2026) */
+function setHidden(e, v) { if (e && e.hidden !== !!v) e.hidden = !!v; }
 
 /* ---------- linguette laterali ---------- */
-var TABS = [['lib', 'Libri', 'libri'], ['wish', 'Desideri', 'desideri'], ['you', 'Per te', 'perte'], ['fri', 'Amici', 'amici'], ['chat', 'Chat', 'chat'], ['prof', 'Tu', 'tu']]; /* Chat aggiunta da Piero il 20/11/2026 */
+var TABS = [['idx', 'Indice', 'indice'], ['lib', 'Libri', 'libri'], ['wish', 'Desideri', 'desideri'], ['you', 'Per te', 'perte'], ['fri', 'Amici', 'amici'], ['chat', 'Chat', 'chat'], ['prof', 'Tu', 'tu']]; /* Chat aggiunta da Piero il 20/11/2026; Indice in cima al posto del tasto ≡ della testatina (Piero, 20/11/2026) */
 function tabs() {
   if ($('#gTabs')) return;
   var n = document.createElement('nav'); n.id = 'gTabs'; n.className = 'g-tabs'; n.setAttribute('aria-label', 'Sezioni');
@@ -38,9 +38,10 @@ function tabs() {
   document.body.appendChild(n);
   n.addEventListener('click', function (e) {
     var b = e.target.closest('[data-g]'); if (!b) return;
-    var g = b.dataset.g;
+    var g = b.dataset.g, wasIdx = current() === 'idx';
     closeAll();
-    if (g === 'fri') { if (window.NLAmici && window.NLAmici.open) window.NLAmici.open(); }
+    if (g === 'idx') { if (!wasIdx) NL.openMenu(true); }   // un altro tocco sul segnalibro Indice lo richiude
+    else if (g === 'fri') { if (window.NLAmici && window.NLAmici.open) window.NLAmici.open(); }
     else if (g === 'chat') { if (window.NLChat && window.NLChat.open) window.NLChat.open(); }
     else act(g);
     setTimeout(paintTabs, 60);
@@ -64,7 +65,7 @@ function current() {
   if (vis('#chSheet')) return 'chat';
   if (vis('#friSheet')) return 'fri';
   if (vis('#profSheet')) return (window.NLProfilo && window.NLProfilo.state && window.NLProfilo.state().cur) ? 'fri' : 'prof';
-  if (document.documentElement.classList.contains('drawer-open') || vis('#drawer')) return 'prof';
+  if (document.documentElement.classList.contains('drawer-open') || document.body.classList.contains('drawer-open') || vis('#drawer')) return 'idx';
   if (vis('#layYou') || vis('#wrap')) return 'you';
   if (NL.guest && NL.guest()) return 'fri';
   return NL.tab && NL.tab() === 'wish' ? 'wish' : 'lib';
@@ -79,28 +80,16 @@ function paintTabs() {
   /* numero dei messaggi non letti sul segnalibro Chat (la chat in alto non c'è più) */
   var nb = $('#btnChatN'), tb = document.querySelector('#gTabs [data-g="chat"]');
   if (tb) { var tn = tb.querySelector('.g-tn'); if (!tn) { tn = document.createElement('b'); tn.className = 'g-tn'; tb.appendChild(tn); }
-    var tx = nb && !nb.hidden ? (nb.textContent || '').trim() : ''; tn.textContent = tx; tn.hidden = !tx; tb.setAttribute('aria-label', 'Chat' + (tx ? ', ' + tx + ' da leggere' : '')); }
+    var tx = nb && !nb.hidden ? (nb.textContent || '').trim() : ''; if (tn.textContent !== tx) tn.textContent = tx; setHidden(tn, !tx); tb.setAttribute('aria-label', 'Chat' + (tx ? ', ' + tx + ' da leggere' : '')); }
   document.documentElement.classList.toggle('g-conv', vis('#chSheet') && ($('#chSheet').dataset.v === 'conv'));
-  document.documentElement.classList.toggle('g-page', c === 'you' || c === 'prof' || c === 'chat' || (c === 'fri' && !(NL.guest && NL.guest())));
+  document.documentElement.classList.toggle('g-page', c === 'you' || c === 'prof' || c === 'idx' || c === 'chat' || (c === 'fri' && !(NL.guest && NL.guest())));
 }
 
 /* ---------- testatina, nastro, frase in prosa, «+ Aggiungi» ---------- */
 function head() {
-  var top = $('header.top'); if (!top || $('#gHead')) return;
-  var h = document.createElement('section'); h.id = 'gHead'; h.className = 'g-head';
-  h.innerHTML = '<button type="button" class="g-back" id="gBack" aria-label="Torna alla tua libreria" hidden>' + SV('<path d="M15 6l-6 6 6 6"/>', 20) + '</button><span class="g-run" id="gRun">Next Libris</span><span class="g-ics" id="gIcs"></span>';
-  top.insertBefore(h, top.firstChild);
-  ['#btnChat', '#btnBell'].forEach(function (s) { var b = $(s); if (b) $('#gIcs').appendChild(b); });
-  var v = $('#btnView'), sb = $('#sortBar'); if (v && sb) sb.appendChild(v);
-  var m = document.createElement('button'); m.type = 'button'; m.id = 'gMenu'; m.className = 'ico g-menu'; m.setAttribute('aria-label', 'Indice'); m.title = 'Indice'; m.innerHTML = SV(IC.indice, 22);
-  m.addEventListener('click', function () { var o = $('#btnOpts'); if (o) o.click(); });
-  $('#gIcs').appendChild(m);   // l'Indice (il Menu) si apre dalla testatina   // copertine/elenco nella riga dell'ordine
+  if (head.done || !$('#gHead')) return; head.done = true;
   $('#gBack').addEventListener('click', function () { act('lib'); });
-  var r = document.createElement('div'); r.id = 'gRib'; r.className = 'g-rib'; r.setAttribute('aria-hidden', 'true');
-  top.appendChild(r);
-  var p = document.createElement('p'); p.id = 'gProse'; p.className = 'g-prose';
-  top.parentNode.insertBefore(p, top.nextSibling);
-  p.addEventListener('click', function (e) { if (e.target.closest('[data-gl="loan"]')) { var f = $('#fltLoan'); if (f) f.click(); } });
+  $('#gProse').addEventListener('click', function (e) { if (e.target.closest('[data-gl="loan"]')) NL.loanFilter(); });
   var a = document.createElement('button'); a.type = 'button'; a.id = 'gAdd'; a.className = 'g-add'; a.innerHTML = SV(IC.plus, 20) + '<span>Aggiungi</span>';
   a.addEventListener('click', function () { act('add'); });
   document.body.appendChild(a);
@@ -115,12 +104,11 @@ function paintHead() {
   var who = guest ? String(NL.guest() || '') : '';
   rib.innerHTML = '<b>' + n + '</b>' + (wish ? SV(IC.desideri, 13) : '<small>libri</small>');
   run.textContent = guest ? (who || 'Libreria di un amico') : 'Next Libris';
-  bk.hidden = !guest;
+  setHidden(bk, !guest);
   document.documentElement.classList.toggle('g-guest', !!guest);
-  var h1 = $('header.top h1');
-  if (h1 && !h1.querySelector('.g-t')) { var t = document.createElement('span'); t.className = 'g-t'; h1.insertBefore(t, h1.firstChild); }
-  if (h1) h1.querySelector('.g-t').textContent = guest ? (who ? 'Libreria di ' + who.split(' ')[0] : 'Libreria') : (wish ? 'Desideri' : 'Libreria');
-  if (guest) { pr.hidden = true; return; }
+  var gt = $('header.top h1 .g-t'), tt = guest ? (who ? 'Libreria di ' + who.split(' ')[0] : 'Libreria') : (wish ? 'Desideri' : 'Libreria');
+  if (gt && gt.textContent !== tt) gt.textContent = tt;
+  if (guest) { setHidden(pr, true); return; }
   var s = '';
   if (wish) {
     s = ws.length ? 'Hai <b>' + ws.length + ' ' + plural(ws.length, 'libro', 'libri') + '</b> nei Desideri.' : 'Nei Desideri metti i libri che vorresti: tocca <b>Aggiungi</b>.';
@@ -128,16 +116,16 @@ function paintHead() {
     s = 'La tua libreria è vuota: tocca <b>Aggiungi</b> e inquadra il codice a barre di un libro.';
   } else {
     var rd = lib.filter(function (b) { return b.rs === 'in'; });
-    var lo = 0; try { lo = +(($('#cntLoan') || {}).textContent || 0) || 0; } catch (e) { lo = 0; }
+    var lo = NL.loans ? NL.loans() : 0;   // prestati e ricevuti, come il filtro
     s = rd.length === 1 ? 'Stai leggendo <b>' + esc(rd[0].t || 'un libro') + '</b>' : rd.length ? 'Stai leggendo <b>' + rd.length + ' libri</b>' : 'Hai <b>' + lib.length + ' ' + plural(lib.length, 'libro', 'libri') + '</b>';
     s += lo ? '; <button type="button" class="g-lk" data-gl="loan">' + lo + ' ' + plural(lo, 'è in prestito', 'sono in prestito') + '</button>.' : '.';
   }
-  pr.innerHTML = s; /* niente capolettera (Piero, 20/11/2026) */ pr.hidden = false;
+  if (pr.innerHTML !== s) pr.innerHTML = s; /* niente capolettera (Piero, 20/11/2026) */ setHidden(pr, false);
 }
 
 /* ---------- Indice al posto del Menu ---------- */
 function indice() {
-  var h = $('#drawerH'); if (h && h.textContent !== 'Indice') h.textContent = 'Indice';
+  var h = $('#drawerH'); if (h && h.textContent === 'Menu') h.textContent = 'Indice';   // solo il titolo del Menu: la pagina Filtri resta «Filtri» (20/11/2026)
 }
 
 /* ---------- ordine e gruppi: testi brevi («Autore» invece di «Raggruppa: Autore») ---------- */
@@ -163,19 +151,26 @@ function side() {
   if (x) x.checked = !!st.gLeft;
 }
 
+/* barra di stato del telefono del colore della pagina (carta Avorio in chiaro, --surface in scuro), non più quello delle
+   vecchie disposizioni; durante l'apertura (data-splash) resta verde come prima (20/11/2026) */
+function barColor() {
+  var root = document.documentElement, m = document.querySelector('meta[name="theme-color"]');
+  if (!m || root.hasAttribute('data-splash')) return;
+  var c = (getComputedStyle(root).getPropertyValue('--surface') || '').trim();
+  if (c && m.getAttribute('content') !== c) m.setAttribute('content', c);
+}
+
 /* ---------- avvio e aggiornamenti ---------- */
 var pend = 0;
-function soon() { if (pend) return; pend = setTimeout(function () { pend = 0; try { paintHead(); paintTabs(); shortGrp(); indice(); } catch (e) { if (window.nlErr) nlErr(e); } }, 40); }
+function soon() { if (pend) return; pend = setTimeout(function () { pend = 0; try { paintHead(); paintTabs(); shortGrp(); indice(); barColor(); } catch (e) { if (window.nlErr) nlErr(e); } }, 40); }
 function start() {
-  if (window.NL_NO_G) return;   // solo nelle prove di prima (prove/_harness.js)
-  document.documentElement.classList.add('g-look');
   tabs(); head(); side(); soon();
   var mo = new MutationObserver(soon);
-  ['#list', '#summary', '#cntLoan', '#grpPick'].forEach(function (s) { var e = $(s); if (e) mo.observe(e, { childList: true, characterData: true, subtree: true }); });
+  ['#list', '#grpPick'].forEach(function (s) { var e = $(s); if (e) mo.observe(e, { childList: true, characterData: true, subtree: true }); });
   var mo2 = new MutationObserver(soon);
   mo2.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['hidden', 'data-v'] });
-  new MutationObserver(soon).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  if (NL.on) { NL.on('guest', soon); }
+  new MutationObserver(soon).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'data-pal', 'data-splash'] });
+  if (NL.on) { NL.on('guest', soon); NL.on('list', soon); }
   window.addEventListener('popstate', function () { setTimeout(soon, 80); });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

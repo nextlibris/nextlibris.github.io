@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="g-look" data-layout="a">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
@@ -40,7 +40,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 </style>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="wrap.css"><!-- modulo: riepilogo di ogni stagione -->
-<link rel="stylesheet" href="layout.css"><!-- modulo: disposizione dello schermo -->
+<link rel="stylesheet" href="layout.css"><!-- modulo: finestra del +, Per te, avvisi in cima -->
 <link rel="stylesheet" href="schede.css"><!-- modulo: aspetto della scheda aperta -->
 <link rel="stylesheet" href="social.css"><!-- modulo: account e sincronizzazione -->
 <link rel="stylesheet" href="profilo.css"><!-- modulo: profilo -->
@@ -56,15 +56,12 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/next-libris-192.png" alt="" width="168" height="168"><b>Next Libris</b><span id="splashWho"></span></div>
 <main>
-  <header class="top">
-    <div>
-      <h1>Next Libris</h1>
-      <p class="top-meta"><span class="owner" id="owner"></span><span class="summary" id="summary" aria-live="polite"></span></p>
-    </div>
-    <div class="sync" id="sync" role="status"><span class="dot"></span><span id="syncTxt">Salvato su questo telefono</span></div>
-    <button class="ico beer-top beer-pill" id="btnBeer" type="button" aria-label="Sostieni Next Libris: offrimi una birra" title="Offrimi una birra"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path d="M15 11h2a2.5 2.5 0 0 1 0 5h-2"/><path d="M5 8a2.5 2.5 0 0 1 2.5-3 3 3 0 0 1 5 0A2.5 2.5 0 0 1 15 8"/><path d="M8.5 12v5.5M11.5 12v5.5"/></svg><span class="beer-t">Sostieni</span></button>
-    <button class="ico gear" id="btnOpts" aria-label="Opzioni" title="Opzioni"></button>
+  <header class="top">   <!-- stile G: testatina (campanella a destra; l'Indice è il primo segnalibro a lato), titolo, nastro con il numero dei libri -->
+    <section class="g-head" id="gHead"><button type="button" class="g-back" id="gBack" aria-label="Torna alla tua libreria" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="g-run" id="gRun">Next Libris</span><span class="g-ics" id="gIcs"></span></section>
+    <div><h1><span class="g-t">Libreria</span></h1></div>
+    <div class="g-rib" id="gRib" aria-hidden="true"></div>
   </header>
+  <p class="g-prose" id="gProse" hidden></p>
 
   <div class="notice" id="notice" hidden><span id="noticeTxt"></span><button id="noticeBtn" hidden></button><button class="x" id="noticeX" aria-label="Chiudi l'avviso">×</button></div>
 
@@ -82,25 +79,11 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 
   <div class="stick-sentinel" id="stickSentinel" aria-hidden="true"></div>
   <div class="stick" id="stick">
-  <div class="tabbar">
-    <nav class="tabs" role="tablist" aria-label="Elenchi">
-      <button role="tab" id="tabLib" aria-selected="true">Libreria <span class="cnt" id="cntLib"></span></button>
-      <button role="tab" id="tabWish" aria-selected="false">Desideri <span class="cnt" id="cntWish"></span></button>
-    </nav>
-    <button class="quick loan" id="fltLoan" aria-pressed="false" title="Mostra solo i libri in prestito"><span id="icoLoan" aria-hidden="true"></span>Prestati <span class="cnt" id="cntLoan">0</span></button>
-  </div>
-
   <section class="tools" aria-label="Strumenti">
-    <button class="btn filt" id="btnFilters" aria-expanded="false" aria-controls="drawer"><span id="icoFilt" aria-hidden="true"></span>Filtri<span class="badge" id="fltBadge" hidden></span></button>
     <span class="qwrap"><input id="q" type="search" placeholder="Cerca nell'elenco" aria-label="Cerca nell'elenco" autocomplete="off"><button type="button" class="qx" id="qX" aria-label="Cancella la ricerca" title="Cancella la ricerca" hidden>×</button></span>   <!-- X: cancella solo il testo, non i filtri (giro 5) -->
-    <div class="acts">
-      <button class="btn sm" id="btnView"></button>
-      <button class="btn sm" id="btnCheck"></button>
-      <button class="btn sm" id="btnStats"></button>
-      <button class="btn sm" id="btnExport"></button>
-    </div>
   </section>
   <div class="sortbar" id="sortBar">   <!-- «Ordina» e «Raggruppa» sempre in vista, fuori dalla barra dei filtri (Piero, 17/11/2026 notte) -->
+    <button class="btn filt" id="btnFilters" aria-expanded="false" aria-controls="drawer"><span id="icoFilt" aria-hidden="true"></span>Filtri<span class="badge" id="fltBadge" hidden></span></button>
     <span class="sr" id="hSort">Ordina per</span>
     <select id="sort" class="dsel sb-sel" aria-labelledby="hSort">
       <option value="recent">Più recenti</option>
@@ -122,6 +105,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <option value="pae" data-s="Paese">Paese dell'autore</option>
       <option value="read">Lettura</option>
     </select>
+    <button class="btn sm" id="btnView"></button>
   </div>
   <div class="chips">
     <button class="chip todo" id="btnTodo" hidden>Completa con l'ISBN</button>
@@ -153,14 +137,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   <div id="list"></div>
 </main>
 
-<div class="dock">
-  <div class="dock-in">
-    <button class="btn primary" id="btnScan"></button>
-    <button class="btn" id="btnPhoto"></button>
-    <button class="btn" id="btnType"></button>
-  </div>
-  <p class="tip" id="tipTxt">Scansiona il codice a barre: è il modo più preciso. Dopo ogni libro puoi scrivere il prezzo (facoltativo). Digita per scrivere il titolo o l'ISBN.</p>
-</div>
 
 <div class="scan" id="scan" hidden>
   <video id="scanVideo" playsinline muted></video>
@@ -617,13 +593,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         <p class="hint" id="optColsTxt"></p>
         <p class="hint">Anche con due dita sulle copertine: allarga per ingrandirle, stringi per rimpicciolirle. L'app ricorda l'ultima vista che hai usato: copertine o elenco, ordine, raggruppamento e dimensione.</p>
       </fieldset>
-      <fieldset class="choice sum-opts">
-        <legend>Riepilogo in alto</legend>
-        <p class="hint">Sotto il nome compare sempre il numero dei libri. Puoi aggiungere:</p>
-        <label class="check"><input type="checkbox" id="optSumLoan"><span>Libri in prestito<small>«4 in prestito»: toccandolo vedi solo quelli.</small></span></label>
-        <label class="check"><input type="checkbox" id="optSumGone"><span>Libri non più in libreria<small>Venduti, regalati o smarriti.</small></span></label>
-        <label class="check"><input type="checkbox" id="optShowSync"><span>Conferma del salvataggio<small>Mostra «Salvato su questo telefono» sotto il riepilogo: vuol dire che ogni modifica è già salvata. Se il salvataggio non riesce o sei senza rete, l'avviso compare comunque.</small></span></label>
-      </fieldset>
     </section>
     <section class="opt-sec" data-sec="search" data-title="Ricerca dei libri">
       <p class="hint">L’API Google Libri è facoltativa: serve a trovare più libri e ad avere dati più precisi.</p>
@@ -788,7 +757,6 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   </div>
 </div>
 
-<button class="edge-tab" id="edgeTab" aria-label="Apri i filtri" aria-controls="drawer"></button>
 <div class="drawer-scrim" id="drawerScrim" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerH" hidden inert>
   <div class="drawer-head">
@@ -1019,7 +987,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <script src="app-wiki.js" defer></script>
 <script src="app-avvio.js" defer></script>
 <script src="wrap.js" defer></script><!-- modulo: riepilogo di ogni stagione -->
-<script src="layout.js" defer></script><!-- modulo: disposizione dello schermo -->
+<script src="layout.js" defer></script><!-- modulo: finestra del +, Per te, avvisi in cima -->
 <script src="schede.js" defer></script><!-- modulo: aspetto della scheda aperta -->
 <script src="social.js" defer></script><!-- modulo: account e sincronizzazione -->
 <script src="profilo.js" defer></script><!-- modulo: profilo -->

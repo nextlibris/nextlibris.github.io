@@ -49,7 +49,8 @@ var PROVA = COPIA === 'prova';
 function lsKey(k) { return COPIA ? COPIA + ':' + k : k; }
 var ls = {
   get: function (k) { try { return localStorage.getItem(lsKey(k)); } catch (e) { return null; } },
-  set: function (k, v) { try { localStorage.setItem(lsKey(k), v); return true; } catch (e) { return false; } }
+  set: function (k, v) { try { localStorage.setItem(lsKey(k), v); return true; } catch (e) { return false; } },
+  del: function (k) { try { localStorage.removeItem(lsKey(k)); } catch (e) { /* niente da togliere */ } }
 };
 var ICON = {
   apikey: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',   // la chiave vera (API Google), non la tastiera di «Digita»
@@ -93,20 +94,11 @@ var ICON_NEW = {
   bag: '<path d="M5 8h14l-1.2 11.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>'
 };
 function icon(n) { var p = (document.documentElement.getAttribute('data-look') === 'nuovo' && ICON_NEW[n]) || ICON[n]; return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
-$('#btnScan').innerHTML = icon('scan') + 'Scansiona';
 $('#icoFilt').innerHTML = icon('filt');
-$('#edgeTab').innerHTML = icon('right');
-$('#btnOpts').innerHTML = icon('gear');
 $('#optBack').innerHTML = icon('left');
 $('#photoCam').innerHTML = icon('cam') + 'Scatta una foto';
 $('#photoGal').innerHTML = icon('img') + 'Scegli dalla galleria';
 $('#scanPriceIco').innerHTML = icon('key');
-$('#btnPhoto').innerHTML = icon('cam') + 'Foto';
-$('#btnType').innerHTML = icon('key') + 'Digita';
-$('#btnCheck').innerHTML = icon('check') + 'Ce l\'ho già?';
-$('#icoLoan').innerHTML = icon('loan');
-$('#btnStats').innerHTML = icon('chart') + 'Statistiche';
-$('#btnExport').innerHTML = icon('down') + 'Esporta';
 
 function pool(n) {
   var active = 0, q = [];
@@ -126,7 +118,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 112, date: '2026-11-20', note: 'Catalogo delle biblioteche (SBN) incluso per tutti; si presta solo l\'API' };
+var APP_VERSION = { v: 113, date: '2026-11-20', note: 'Più pulita: resta solo il nuovo aspetto; segnalibro Indice in cima; avvisi del libro nella sua pagina e avviso se il salvataggio non riesce; correzioni' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -143,7 +135,7 @@ function renderVersion() {
   } else if (latestVer) { st.textContent = '✓ È l\'ultima versione.'; st.className = 'ver-state ok'; up.hidden = true; }
   else if (navigator.onLine === false) { st.textContent = 'Senza rete: non posso controllare se ce n\'è una più nuova.'; st.className = 'ver-state'; up.hidden = true; }
   else { st.textContent = 'Controllo se ce n\'è una più nuova…'; st.className = 'ver-state'; up.hidden = true; }
-  $('#verApp').textContent = 'Versione ' + APP_VERSION.v + ' del ' + itLongDate(APP_VERSION.date) + (latestVer && latestVer.v > APP_VERSION.v ? ' (c\'è la ' + latestVer.v + ': aggiorna dal menu)' : '') + '.';
+  $('#verApp').textContent = 'Versione ' + APP_VERSION.v + ' del ' + itLongDate(APP_VERSION.date) + (latestVer && latestVer.v > APP_VERSION.v ? ' (c\'è la ' + latestVer.v + ': aggiorna dall\'Indice)' : '') + '.';
 }
 var state = { books: [], updated: 0 };
 var hooks = {};                              // moduli aggiuntivi (vedi window.NL in fondo): si agganciano dopo l'avvio
@@ -438,10 +430,10 @@ function storable() {
 }
 function persist() {
   var ok = ls.set(LS_KEY, JSON.stringify({ books: storable(), updated: guest ? guest.upd : state.updated }));
-  var el = $('#sync');
-  $('#syncTxt').textContent = ok ? (navigator.onLine === false ? 'Offline · salvato su questo telefono' : 'Salvato su questo telefono') : 'Impossibile salvare: scarica un backup';
-  el.classList.toggle('off', !ok || navigator.onLine === false);
-  el.classList.toggle('quiet-ok', ok && navigator.onLine !== false && settings.showSync === false);
+  /* salvataggio non riuscito: avviso in cima alla libreria, solo quando serve (Piero, 20/11/2026; prima c'era la riga «Salvato su questo
+     telefono» della vecchia testata, che nello stile G non si vedeva più, e con lei spariva anche l'errore) */
+  if (!ok) notice('Non riesco a salvare le ultime modifiche: lo spazio dell\'app su questo telefono è pieno. Fai subito il backup per non perderle.', 'Fai il backup', function () { backupTap(); }, null, 'save');
+  else if (noticeKind === 'save') { $('#notice').hidden = true; noticeKind = ''; }
   checkBackupNag();
   if (ok) emit('saved');                                // i moduli (es. la sincronizzazione dell'account) sanno che i libri sono cambiati
 }
@@ -566,11 +558,6 @@ function loadAll() {
     settings.iosWeb = s.iosWeb === true;                                           // iPhone: ha scelto «Continua nel browser» (giro 11F)
     settings.goal = Math.max(0, Math.min(999, parseInt(s.goal, 10) || 0));          // obiettivo di lettura
     settings.newsAuto = s.newsAuto !== false;                                       // novita' degli autori: controllo automatico
-    settings.sumEur = s.sumEur === true;                                            // riepilogo in alto: valore in euro (spento di predefinito)
-    settings.sumLoan = s.sumLoan !== false;                                         // riepilogo: «N in prestito» (si tocca per vederli)
-    settings.sumGone = s.sumGone === true;                                          // riepilogo: «N non più in libreria» (spento di predefinito)
-    settings.showSync = s.syncOff ? s.showSync === true : false;                     // «Salvato su questo telefono»: spento di predefinito (16/11/2026); gli errori si vedono sempre
-    settings.syncOff = 1;
     settings.seenV = Number(s.seenV) || 0;                                         // ultima versione di cui si sono viste le novita'
     settings.wn2 = s.wn2 ? 1 : 0;
     settings.shelfShut = s.shelfShut && typeof s.shelfShut === 'object' ? { now: s.shelfShut.now ? 1 : 0, all: s.shelfShut.all ? 1 : 0 } : {};   // sezioni dell'elenco chiuse
@@ -628,6 +615,7 @@ function notice(msg, label, fn, onClose, kind) {
   b.onclick = function () { $('#notice').hidden = true; noticeKind = ''; if (fn) fn(); };
   $('#noticeX').onclick = function () { $('#notice').hidden = true; noticeKind = ''; if (onClose) onClose(); updateSummary(); };
   noticeKind = kind || '';
+  $('#notice').classList.toggle('nt-save', kind === 'save');   // l'errore di salvataggio si legge tutto (gli altri avvisi stanno su due righe)
   $('#notice').hidden = false;
 }
 function beep(ok) {
