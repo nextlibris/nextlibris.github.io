@@ -191,7 +191,7 @@ function close(fromPop) {
   if (W.pushed) { W.pushed = false; if (!fromPop) { try { history.back(); } catch (e) { if (window.nlErr) nlErr(e); } } }
   try { if (W.back) W.back.focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); }
 }
-window.addEventListener('popstate', function () { if (W.el && !W.el.hidden) { W.pushed = false; close(true); } });
+window.addEventListener('popstate', function () { if (PV) return; if (W.el && !W.el.hidden) { W.pushed = false; close(true); } });
 window.addEventListener('keydown', function (e) {
   if (!W.el || W.el.hidden) return;
   if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); close(); }
@@ -411,22 +411,73 @@ async function card(c, fmt) {
   g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '500 ' + (sq ? 26 : 32) + 'px ' + FB; g.textAlign = 'right'; g.fillText('nextlibris.github.io', W - M, H - foot + (sq ? 20 : 40)); g.textAlign = 'left';
   return cv;
 }
-function shareCard(c, fmt) {
+function cardName(c, fmt) { return 'Next Libris - ' + c.title.replace(/[^\wÀ-ÿ ]+/g, '').trim() + (fmt === 'square' ? ' (quadrata)' : '') + '.png'; }
+function saveBlob(blob, name) {
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  NL.toast('Immagine salvata nei Download.');
+}
+function sendBlob(c, fmt, blob) {
   var link = invite(), text = c.title + ' su Next Libris 📚 ' + (/amico=/.test(link) ? 'Aggiungimi tra gli amici: ' : 'È gratis: ') + link;
-  var name = 'Next Libris - ' + c.title.replace(/[^\wÀ-ÿ ]+/g, '').trim() + (fmt === 'square' ? ' (quadrata)' : '') + '.png';
-  NL.toast('Preparo l\'immagine…');
-  return card(c, fmt).then(function (cv) {
-    return new Promise(function (res) { try { cv.toBlob(res, 'image/png'); } catch (e) { if (window.nlErr) nlErr(e); res(null); } });
-  }).then(function (blob) {
-    if (!blob) { NL.toast('Non riesco a preparare l\'immagine.'); return; }
-    var f = null; try { f = new File([blob], name, { type: 'image/png' }); } catch (e) { if (window.nlErr) nlErr(e); }
-    if (f && navigator.canShare && navigator.canShare({ files: [f] })) {
-      return navigator.share({ files: [f], title: c.title, text: text }).catch(function () {});
-    }
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-    NL.toast('Immagine salvata nei Download.');
+  var name = cardName(c, fmt), f = null;
+  try { f = new File([blob], name, { type: 'image/png' }); } catch (e) { if (window.nlErr) nlErr(e); }
+  if (f && navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: c.title, text: text }).catch(function () {});
+  saveBlob(blob, name);
+  return Promise.resolve();
+}
+function makeBlob(c, fmt) {
+  return card(c, fmt).then(function (cv) { return new Promise(function (res) { try { cv.toBlob(res, 'image/png'); } catch (e) { if (window.nlErr) nlErr(e); res(null); } }); });
+}
+/* anteprima prima di condividere (Piero, 19/11/2026): finestra con l'immagine, Storia/Quadrata in alto, Condividi e Salva sotto */
+var PV = null;
+function pvClose(fromPop) {
+  if (!PV) return;
+  var el = PV.el; if (PV.url) URL.revokeObjectURL(PV.url);
+  var pushed = PV.pushed; PV = null; el.remove();
+  document.removeEventListener('keydown', pvKey, true);
+  if (pushed && !fromPop) { try { history.back(); } catch (e) {} }
+}
+function pvKey(e) { if (e.key === 'Escape' && PV) { e.stopPropagation(); e.preventDefault(); pvClose(); } }
+function pvPop() { if (PV) pvClose(true); }
+window.addEventListener('popstate', pvPop);
+function pvShow(fmt) {
+  if (!PV) return;
+  PV.fmt = fmt; PV.blob = null;
+  var el = PV.el, box = el.querySelector('.wp-img');
+  el.querySelectorAll('[data-pv="fmt"]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.f === fmt ? 'true' : 'false'); });
+  el.querySelectorAll('[data-pv="send"],[data-pv="save"]').forEach(function (b) { b.disabled = true; });
+  box.className = 'wp-img ' + fmt; box.innerHTML = '<span class="wp-wait">Preparo l\'immagine…</span>';
+  var my = PV;
+  makeBlob(PV.c, fmt).then(function (blob) {
+    if (PV !== my || PV.fmt !== fmt) return;
+    if (!blob) { box.innerHTML = '<span class="wp-wait">Non riesco a preparare l\'immagine.</span>'; return; }
+    if (PV.url) URL.revokeObjectURL(PV.url);
+    PV.blob = blob; PV.url = URL.createObjectURL(blob);
+    box.innerHTML = '<img src="' + PV.url + '" alt="Anteprima dell\'immagine da condividere">';
+    el.querySelectorAll('[data-pv="send"],[data-pv="save"]').forEach(function (b) { b.disabled = false; });
   });
+}
+function shareCard(c, fmt) {
+  if (PV) pvClose();
+  var el = document.createElement('div'); el.className = 'wp-ov'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Anteprima: ' + c.title);
+  el.innerHTML = '<div class="wp-top"><button type="button" class="wp-x" data-pv="close" aria-label="Indietro">‹</button><b>' + NL.esc(c.title) + '</b><button type="button" class="wp-x" data-pv="close" aria-label="Chiudi">×</button></div>' +
+    '<div class="wp-fmt"><button type="button" class="btn sm" data-pv="fmt" data-f="story">Storia</button><button type="button" class="btn sm" data-pv="fmt" data-f="square">Quadrata</button></div>' +
+    '<div class="wp-img"></div>' +
+    '<div class="wp-acts"><button type="button" class="btn primary" data-pv="send">Condividi</button><button type="button" class="btn" data-pv="save">Salva</button></div>';
+  document.body.appendChild(el);
+  PV = { el: el, c: c, fmt: fmt, pushed: false };
+  try { history.pushState({ opt: 'wp' }, ''); PV.pushed = true; } catch (e) {}
+  document.addEventListener('keydown', pvKey, true);
+  el.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-pv]'); if (!b || !PV) return;
+    var a = b.dataset.pv;
+    if (a === 'close') pvClose();
+    else if (a === 'fmt' && b.dataset.f !== PV.fmt) pvShow(b.dataset.f);
+    else if (a === 'send' && PV.blob) sendBlob(PV.c, PV.fmt, PV.blob);
+    else if (a === 'save' && PV.blob) saveBlob(PV.blob, cardName(PV.c, PV.fmt));
+  });
+  pvShow(fmt);
+  var f0 = el.querySelector('[data-pv="close"]'); if (f0) f0.focus({ preventScroll: true });
 }
 function share(fmt) { return shareCard(cardFromWrap(W.data), fmt); }
 
@@ -493,5 +544,5 @@ NL.on('closed', function (list) {            // invito chiuso con la × ma ancor
 NL.on('menu', paintMenu);
 NL.on('options', paintOption);
 paintAsk();
-window.NLWrap = { open: open, close: close, quarters: quarters, wrapData: wrapData, quarter: quarter, cfg: function () { return cfg; }, slides: slides, palette: palette, card: card, shareCard: shareCard, loved: loved, cardFromWrap: cardFromWrap };
+window.NLWrap = { open: open, close: close, quarters: quarters, wrapData: wrapData, quarter: quarter, cfg: function () { return cfg; }, slides: slides, palette: palette, card: card, shareCard: shareCard, closePreview: function () { pvClose(); }, loved: loved, cardFromWrap: cardFromWrap };
 })();

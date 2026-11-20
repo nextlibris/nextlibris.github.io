@@ -1,9 +1,9 @@
 /* Next Libris · modulo «Ricerche condivise» (16/11/2026, nella copia di prova). Scelte di Piero del 16/11/2026.
-   1) Contatore condiviso: chi usa la stessa chiave Google (o lo stesso worker SBN) ha un solo conto del giorno, su Supabase
-      (conta_ricerche, per sha256 della chiave: la chiave non esce dal telefono). Le soglie dell'app valgono sul totale:
+   1) Contatore condiviso: chi usa la stessa API Google (o lo stesso worker SBN) ha un solo conto del giorno, su Supabase
+      (conta_ricerche, per sha256 dell’API: l’API non esce dal telefono). Le soglie dell'app valgono sul totale:
       700 niente copertine grandi, suggerimenti e novità; 950 i dati arrivano solo da Open Library e SBN. Worker: 95.000.
    2) A 950 il database manda a chi la sta usando una notifica «limite» (campanella); aprendola si vede la guida
-      «Crea la tua chiave Google Libri: è gratis», con i passaggi e i link.
+      «Crea la tua API Google Libri: è gratis», con i passaggi e i link.
    3) Archivio comune per ISBN: prima di Google si guarda se qualcuno ha già cercato quel libro (da_archivio);
       dopo una ricerca riuscita i dati pubblici (titolo, autore, editore, anno, pagine, copertina, descrizione) vanno nell'archivio.
    Serve l'account: senza, l'app fa come prima (contatore solo sul telefono, niente archivio).
@@ -30,7 +30,7 @@ function lender(key) { try { var b = JSON.parse(NL.ls.get(K_LENT) || 'null'); re
 NL.on('apiCall', function (k) {
   if (!uid() || (k !== 'g' && k !== 's')) return;
   var sv = NL.svc(); if (!(k === 'g' ? sv.gbKey : sv.sbnUrl)) return;
-  if (k === 'g' && /^prestata:/.test(sv.gbKey)) return;            // chiave prestata: conta il server (funzione «libri», giro 8)
+  if (k === 'g' && /^prestata:/.test(sv.gbKey)) return;            // API prestata: conta il server (funzione «libri», giro 8)
   pend[k]++;
   schedule(pend.g + pend.s >= 10 ? 0 : 3000);                       // a gruppi: una richiesta a Supabase ogni ~10 ricerche o 3 secondi
 });
@@ -68,8 +68,9 @@ NL.archive = {
     if (!uid() || !/^97[89]\d{10}$/.test(isbn || '') || navigator.onLine === false) return null;
     var d = null;
     try { d = await within(rpc('da_archivio', { isbn: isbn }), 2500); } catch (e) { return null; }
-    if (!d || typeof d !== 'object' || !d.t || !d.a || !(d.e || d.y)) return null;   // incompleto: si cerca come sempre (e si completa l'archivio)
+    if (!d || typeof d !== 'object' || !d.t) return null;
     var r = { i: isbn, src: 'Archivio comune' };
+    if (!d.a || !(d.e || d.y)) r.part = 1;      // incompleto: si cerca come sempre (e si completa l'archivio); se non lo trova nessuno vale questo (029)
     KEEP.forEach(function (k) { if (d[k]) r[k] = String(d[k]); });
     if (r.imgL && NL.L.badBigCover && NL.L.badBigCover(r.imgL)) delete r.imgL;   // zoom=0 di Google: non e' la copertina (17/11/2026)
     return r;
@@ -81,24 +82,31 @@ NL.archive = {
     rpc('archivia', { isbn: isbn, dati: o }).catch(function () {});
   }
 };
+/* 029 (Piero, 19/11/2026): un libro che nessuna banca dati conosce, completato a mano, si propone all'archivio comune;
+   entra solo dopo il controllo dell'amministratore (Amministrazione › Archivio › Da controllare) */
+NL.archive.propose = async function (isbn, r) {
+  if (!uid() || !r || !r.t || !r.a || !/^97[89]\d{10}$/.test(isbn || '') || navigator.onLine === false) return '';
+  var o = {}; ['t', 'a', 'e', 'y', 'pg', 'gen', 'se', 'sn', 'img'].forEach(function (k) { if (r[k] != null && r[k] !== '') o[k] = String(r[k]); });
+  try { return String(await rpc('proponi_archivio', { isbn: isbn, dati: o }) || ''); } catch (e) { return ''; }
+};
 NL.on('bigCover', function (x) { if (x && x.t && x.imgL) NL.archive.put(x.i, { t: x.t, imgL: x.imgL }); });   // la copertina grande trovata dopo
 
-/* ---------- guida: crea la tua chiave Google Libri (dalla notifica «limite») ---------- */
+/* ---------- guida: crea la tua API Google Libri (dalla notifica «limite») ---------- */
 function sheet() {
   var el = document.getElementById('kgSheet'); if (el) return el;
   el = document.createElement('div'); el.className = 'sheet kg'; el.id = 'kgSheet'; el.hidden = true;
-  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="kgH"><h2 id="kgH">Crea la tua chiave Google Libri</h2>' +
+  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="kgH"><h2 id="kgH">Crea la tua API Google Libri</h2>' +
     '<p class="msg" id="kgWhy"></p>' +
     '<div class="kg-free"><b>È gratis</b><span>Non si paga niente. Google ti dà <b>1.000 ricerche al giorno, solo per te</b>. Ci vogliono circa 5 minuti, una volta sola.</span></div>' +
-    '<p class="msg kg-pc">Più comodo dal computer: apri Google Cloud lì, crea la chiave, poi mandatela (per esempio per email) e incollala qui dal telefono.</p>' +
+    '<p class="msg kg-pc">Più comodo dal computer: apri Google Cloud lì, crea l’API, poi mandatela (per esempio per email) e incollala qui dal telefono.</p>' +
     '<ol class="kg-steps">' +
       '<li>Apri <a href="' + LINKS.project + '" target="_blank" rel="noopener">Google Cloud</a> ed entra con il tuo account Google. Crea un progetto con il nome che vuoi (per esempio «Libri»).</li>' +
       '<li>Apri <a href="' + LINKS.api + '" target="_blank" rel="noopener">Books API</a> e tocca «Abilita».</li>' +
       '<li>Vai in <a href="' + LINKS.cred + '" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>' +
-      '<li>Limita la chiave: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>' +
-      '<li>Copia la chiave (comincia con <b>AIza</b>) e incollala qui sotto.</li>' +
+      '<li>Limita l’API: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>' +
+      '<li>Copia l’API (comincia con <b>AIza</b>) e incollala qui sotto.</li>' +
     '</ol>' +
-    '<div class="kg-paste"><label class="sr" for="kgKey">La tua chiave Google Libri</label><input type="text" id="kgKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui la chiave"><button class="btn primary" type="button" id="kgSave">Salva</button></div>' +
+    '<div class="kg-paste"><label class="sr" for="kgKey">La tua API Google Libri</label><input type="text" id="kgKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui l’API"><button class="btn primary" type="button" id="kgSave">Salva</button></div>' +
     '<p class="fr-small kg-err" id="kgErr" hidden></p>' +
     '<div class="row-btns"><button class="btn" type="button" id="kgClose">Più tardi</button><a class="btn primary" id="kgGo" href="' + LINKS.project + '" target="_blank" rel="noopener">Apri Google Cloud</a></div>' +
     '</div>';
@@ -106,12 +114,12 @@ function sheet() {
   var shut = function () { el.hidden = true; };
   el.addEventListener('click', function (e) { if (e.target === el) shut(); });
   el.querySelector('#kgClose').addEventListener('click', shut);
-  // campo della chiave direttamente qui (Piero, 18/11/2026)
+  // campo dell’API direttamente qui (Piero, 18/11/2026)
   el.querySelector('#kgSave').addEventListener('click', function () {
     var v = el.querySelector('#kgKey').value.replace(/\s+/g, ''), er = el.querySelector('#kgErr');
-    if (!/^AIza[\w-]{30,}$/.test(v)) { er.hidden = false; er.textContent = v ? 'Non sembra una chiave Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima la chiave.'; return; }
+    if (!/^AIza[\w-]{30,}$/.test(v)) { er.hidden = false; er.textContent = v ? 'Non sembra un’API Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima l’API.'; return; }
     er.hidden = true; NL.setKey(v); el.querySelector('#kgKey').value = ''; shut();
-    NL.toast('Chiave salvata: ora la ricerca usa la tua chiave Google Libri.');
+    NL.toast('API salvata: ora la ricerca usa la tua API Google Libri.');
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) shut(); });
   return el;
@@ -119,22 +127,22 @@ function sheet() {
 function guide() {   // il motivo (chiave finita, chiave dell'amico…) non cambia piu' il testo (18/11/2026)
   var el = sheet();
   // testo unico (Piero, 18/11/2026)
-  document.getElementById('kgWhy').innerHTML = 'Con una chiave tua l\'app trova molti più libri, con copertine e descrizioni.';
+  document.getElementById('kgWhy').innerHTML = 'Con un’API tua l\'app trova molti più libri, con copertine e descrizioni.';
   var er = document.getElementById('kgErr'); if (er) er.hidden = true;
   el.hidden = false;
 }
-/* ---------- «La mia chiave è finita in giro» (giro 8, R4): tranquillizza e guida a rigenerarla ---------- */
+/* ---------- «La mia API è finita in giro» (giro 8, R4): tranquillizza e guida a rigenerarla ---------- */
 function leakSheet() {
   var el = document.getElementById('klSheet'); if (el) return el;
   el = document.createElement('div'); el.className = 'sheet kg'; el.id = 'klSheet'; el.hidden = true;
-  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="klH"><h2 id="klH">La mia chiave è finita in giro</h2>' +
-    '<p class="msg">Niente paura. Una chiave Google Libri fa solo ricerche di libri e non costa niente: al massimo qualcuno consuma le tue ricerche del giorno. Per chiuderla fuori:</p>' +
+  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="klH"><h2 id="klH">La mia API è finita in giro</h2>' +
+    '<p class="msg">Niente paura. Un’API Google Libri fa solo ricerche di libri e non costa niente: al massimo qualcuno consuma le tue ricerche del giorno. Per chiuderla fuori:</p>' +
     '<ol class="kg-steps">' +
       '<li>Apri <a href="' + LINKS.cred + '" target="_blank" rel="noopener">Google Cloud › Credenziali</a>.</li>' +
       '<li>Tocca la tua chiave › «Rigenera chiave».</li>' +
-      '<li>Incolla qui la chiave nuova.</li>' +
+      '<li>Incolla qui l’API nuova.</li>' +
     '</ol>' +
-    '<div class="kg-paste"><label class="sr" for="klKey">La chiave nuova</label><input type="text" id="klKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui la chiave nuova"><button class="btn primary" type="button" id="klSave">Salva</button></div>' +
+    '<div class="kg-paste"><label class="sr" for="klKey">L’API nuova</label><input type="text" id="klKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla qui l’API nuova"><button class="btn primary" type="button" id="klSave">Salva</button></div>' +
     '<p class="fr-small kg-err" id="klErr" hidden></p>' +
     '<p class="fr-small" id="klFri">Gli amici a cui la presti continuano a cercare senza fare niente.</p>' +
     '<div class="row-btns"><button class="btn" type="button" id="klClose">Chiudi</button><a class="btn primary" href="' + LINKS.cred + '" target="_blank" rel="noopener">Apri Google Cloud</a></div>' +
@@ -145,11 +153,11 @@ function leakSheet() {
   el.querySelector('#klClose').addEventListener('click', shut);
   el.querySelector('#klSave').addEventListener('click', function () {
     var v = el.querySelector('#klKey').value.replace(/\s+/g, ''), er = el.querySelector('#klErr'), old = NL.ownKey ? NL.ownKey() : '';
-    var bad = !/^AIza[\w-]{30,}$/.test(v) ? (v ? 'Non sembra una chiave Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima la chiave nuova.')
+    var bad = !/^AIza[\w-]{30,}$/.test(v) ? (v ? 'Non sembra un’API Google: di solito comincia con AIza e ha 39 caratteri.' : 'Incolla prima l’API nuova.')
       : v === old ? 'Questa è la chiave di prima: su Google Cloud tocca «Rigenera chiave» e incolla quella nuova.' : '';
     if (bad) { er.hidden = false; er.textContent = bad; return; }
     er.hidden = true; NL.setKey(v); el.querySelector('#klKey').value = ''; shut();
-    NL.toast('Chiave nuova salvata: quella vecchia non funziona più.');
+    NL.toast('API nuova salvata: quella vecchia non funziona più.');
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) shut(); });
   return el;

@@ -223,8 +223,8 @@ async function makeNonce() {
   var d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
   return { raw: raw, hashed: Array.from(new Uint8Array(d)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('') };
 }
-async function gisButton() {
-  var slot = document.getElementById('accG'); if (!slot) return;
+async function gisButton(slot) {
+  slot = slot || document.getElementById('accG'); if (!slot) return;
   try {
     var id = await gisLoad(), n = await makeNonce();
     if (!document.body.contains(slot)) return;
@@ -367,7 +367,15 @@ function paintSheet() {
   var errs = body.querySelectorAll('#accErr'); for (var i = 1; i < errs.length; i++) errs[i].remove();   // un solo riquadro d'errore
   if (document.getElementById('accG')) gisButton();
 }
-function err(m) { var e = document.getElementById('accErr'); if (e) { e.textContent = m; e.hidden = !m; } }
+function err(m) { ['accErr', 'wcErr'].forEach(function (id) { var e = document.getElementById(id); if (e) { e.textContent = m; e.hidden = !m; } }); }   // wcErr: scheda «Entra con Google» (guida.js)
+/* tasto ufficiale di Google in un altro posto (scheda «Entra con Google» delle schede di benvenuto, 19/11/2026) */
+async function gButton(slot) {
+  if (!slot) return;
+  slot.innerHTML = '';
+  try { if (!prov) await providers(); } catch (e) { if (window.nlErr) nlErr(e); }
+  if (!(prov && prov.google && CFG.gClient)) { slot.innerHTML = '<button class="wc-btn" type="button" data-gd="acc">Accedi con Google</button>'; return; }
+  gisButton(slot);
+}
 function niceAuthErr(e) {
   if (e.code === 'net') return e.message;
   if (/not authorized|not_authorized/i.test(e.message)) return 'Per ora i codici arrivano solo agli indirizzi autorizzati nel progetto (in prova). Usa l\'email del tuo account Supabase.';
@@ -450,5 +458,6 @@ document.addEventListener('visibilitychange', function () { if (document.visibil
 if (/(access_token|error_code)=/.test(location.hash)) fromLink(); else if (auth) schedule(1500);
 window.addEventListener('hashchange', function () { if (/(access_token|error_code)=/.test(location.hash)) fromLink(); });   // link aperto nella stessa scheda dell'app
 window.NLSocial = { run: run, open: open, state: function () { return { auth: auth, sync: sync, busy: !!busy, err: lastErr }; }, hash: hash,   // per le prove
-  call: call, raw: raw, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home };   // per gli altri moduli (amici.js)
+  call: call, raw: raw, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home,
+  gButton: gButton, google: google };   // per le schede di benvenuto (guida.js)   // per gli altri moduli (amici.js)
 })();

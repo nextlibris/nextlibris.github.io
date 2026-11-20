@@ -360,7 +360,7 @@ document.addEventListener('change', function (e) {
 });
 $('#lookReset').addEventListener('click', function () {
   var before = { theme: settings.theme, pal: settings.pal, ft: settings.ft, fb: settings.fb };
-  settings.theme = 'light'; settings.pal = 'bosco'; settings.ft = 'literata'; settings.fb = 'plex'; saveSettings(); applyLook(true);
+  settings.theme = 'light'; settings.pal = 'bosco'; settings.ft = 'bricolage'; settings.fb = 'plex'; saveSettings(); applyLook(true);
   toast('Aspetto predefinito: tema chiaro, verde, Literata.', { label: 'Annulla', fn: function () { Object.assign(settings, before); saveSettings(); applyLook(true); } });
 });
 
@@ -435,7 +435,7 @@ async function loadPrivacy() {
 }
 function closeOptions(fromPop) {
   if (!optOpen) return;
-  $('#optSheet').hidden = true; optOpen = false; emit('optclose');   // i moduli si aggiornano (icona della chiave, giro 1)
+  $('#optSheet').hidden = true; optOpen = false; emit('optclose');   // i moduli si aggiornano (icona dell’API, giro 1)
   if (optPushed && !fromPop) { optPushed = false; try { history.back(); } catch (e) { nlErr(e); } }
   else optPushed = false;
 }

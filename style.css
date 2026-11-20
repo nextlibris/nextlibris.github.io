@@ -1855,7 +1855,8 @@ img.flag{display:inline-block;width:1.34em;height:1em;object-fit:cover;border-ra
 .filmbox .fl-m b{font-weight:600}
 .filmbox .fl-go{flex:none;font-size:22px;line-height:1;color:var(--muted)}
 .filmbox a.fl-row:hover b,.filmbox a.fl-row:focus-visible b{color:var(--accent)}
-.filmbox .fl-more{margin:2px 0 4px;font-size:13px}
+.filmbox .fl-more{display:block;margin:4px 0;padding:8px 0;min-height:40px;background:none;border:0;font:600 14px var(--font-body,inherit);color:var(--accent,#24527D);cursor:pointer}
+.res-h.ed{color:#9A5A00}
 .fm-films a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
 .fm-x{color:var(--muted)}
 @media (min-width:880px){ .filmbox{grid-column:1 / -1} }

@@ -48,18 +48,51 @@ function build() {
   document.body.appendChild(el('<div class="sheet" id="layAdd" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layAddH">' +
     '<h2 id="layAddH">Aggiungi un libro</h2>' +
     '<div class="tabs lay-dest" role="tablist" aria-label="Dove aggiungerlo"><button type="button" role="tab" data-dest="lib">In Libreria</button><button type="button" role="tab" data-dest="wish">Nei Desideri</button></div>' +
-    '<div class="lay-grid">' +
-    '<button type="button" class="lay-big pri" data-l="scan">' + NL.icon('scan') + '<b>Scansiona</b><small>il codice a barre: il modo più preciso</small></button>' +
-    '<button type="button" class="lay-big" data-l="photo">' + NL.icon('cam') + '<b>Foto</b><small>della copertina</small></button>' +
-    '<button type="button" class="lay-big" data-l="type">' + NL.icon('key') + '<b>Digita</b><small>titolo o ISBN</small></button>' +
-    '<button type="button" class="lay-big" data-l="check">' + NL.icon('check') + '<b>Ce l\'ho già?</b><small>controlla in libreria</small></button>' +
-    '<button type="button" class="lay-big lay-wide" data-l="author">' + svg(I.pen, 26) + '<span><b>Per autore</b><small>le sue opere, da Wikipedia</small></span></button></div>' +
+    /* restyle pezzo 3 (Piero, 19/11/2026): tre tasti tondi in fila, poi un riquadro con Per autore e Ce l'ho già? */
+    '<div class="lay-big3">' +
+    '<button type="button" class="pri" data-l="scan"><span class="c">' + NL.icon('scan') + '</span>Scansiona</button>' +
+    '<button type="button" data-l="photo"><span class="c">' + NL.icon('cam') + '</span>Fotografa</button>' +
+    '<button type="button" data-l="type"><span class="c">' + NL.icon('key') + '</span>Digita</button></div>' +
+    '<div class="dlist dmenu lay-rows">' +
+    '<button type="button" class="dopt" data-l="author"><span class="dico">' + svg(I.pen, 20) + '</span><span><b>Per autore</b><small>Tutte le opere di uno scrittore</small></span><span class="n" aria-hidden="true">›</span></button>' +
+    '<button type="button" class="dopt" data-l="check"><span class="dico">' + NL.icon('check') + '</span><span><b>Ce l\'ho già?</b><small>Controlla in negozio</small></span><span class="n" aria-hidden="true">›</span></button></div>' +
     '<div class="row-btns"><button type="button" class="btn" data-l="close">Chiudi</button></div></div></div>'));
   document.body.appendChild(el('<div class="sheet" id="layYou" hidden><div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="layYouH">' +
-    '<h2 id="layYouH">Per te</h2><div class="dlist dmenu" id="layYouList"></div>' +
+    '<h2 id="layYouH">Per te</h2><div class="dlist dmenu" id="layYouList"></div>' +   /* la scheda della stagione si mette sopra l'elenco (paintYou) */
     '<div class="row-btns"><button type="button" class="btn" data-l="close">Chiudi</button></div></div></div>'));
   document.addEventListener('click', onClick);
 }
+/* restyle pezzo 3: nel Menu ogni riga ha la sua icona in un quadratino (anche quelle aggiunte dai moduli) */
+var MI = {
+  filt: '<path d="M4 6h16M7 12h10M10 18h4"/>', spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+  quote: '<path d="M7 7h4v4c0 3-1.5 5-4 6M14 7h4v4c0 3-1.5 5-4 6"/>', chart: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  tools: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>', down: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2s-.8-1.6-.8-2.6 .8-1.9 2-1.9H18a3 3 0 0 0 3-3C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', shield: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.2-5.5 6.5-5.5s5.9 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .8 3.2 2.6 3.5 5.2"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>', user: '<circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5c.7-4 3.6-6.2 7.5-6.2s6.8 2.2 7.5 6.2"/>',
+  eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>', books: '<path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 2.5 15.5-3.5 1z"/>',
+  dot: '<circle cx="12" cy="12" r="3"/>'
+};
+function menuIco(b) {
+  var id = b.id || '', sec = b.getAttribute('data-sec') || '', t = (b.querySelector('b') || b).textContent.toLowerCase();
+  var k = { goFilters: 'filt', goSugg: 'spark', goQuotes: 'quote', goStats: 'chart' }[id] || { fix: 'tools', export: 'down', search: 'search', cards: 'plus', look: 'palette', share: 'share', app: 'phone', privacy: 'shield', contact: 'mail' }[sec];
+  if (!k) k = /amici e privacy/.test(t) ? 'eye' : /amic/.test(t) ? 'users' : /chiave|api google/.test(t) ? 'key' : /account/.test(t) ? 'user' : /notific/.test(t) ? 'bell' : /come si usa|guida/.test(t) ? 'info' : /esempio/.test(t) ? 'books' : /amministra/.test(t) ? 'shield' : /citazion/.test(t) ? 'quote' : /statist/.test(t) ? 'chart' : /backup/.test(t) ? 'down' : 'dot';
+  return '<span class="dico" aria-hidden="true">' + svg(MI[k], 20) + '</span>';
+}
+function menuIcons() {
+  Array.prototype.forEach.call(document.querySelectorAll('#drawerOpts .dmenu .dopt'), function (b) {
+    if (b.querySelector('.dico, .don-cup, .pf-av, img, .dset-i') || b.classList.contains('dset-t')) return;
+    b.insertAdjacentHTML('afterbegin', menuIco(b));
+  });
+}
+(function () {
+  var dr = document.getElementById('drawer'); if (!dr || !window.MutationObserver) return;
+  var t = 0; new MutationObserver(function () { if (t) return; t = setTimeout(function () { t = 0; if (dr.classList.contains('open') || !dr.hidden) menuIcons(); }, 30); }).observe(dr, { attributes: true, attributeFilter: ['class', 'hidden'], childList: true, subtree: true });
+})();
 function youItems() {
   var out = [{ l: 'sugg', i: I.next, t: 'Suggerimenti', s: 'Cosa leggere dopo e libri da scoprire' }];
   var W = window.NLWrap; if (W && W.cfg().on && W.quarters().length) out.push({ l: 'wrap', i: I.cal, t: 'La tua stagione in libri', s: 'Il riepilogo di ogni stagione' });
@@ -72,7 +105,17 @@ function youItems() {
   return out;
 }
 function paintYou() {
-  $('#layYouList').innerHTML = youItems().map(function (x) {
+  /* restyle pezzo 4 (Piero, 19/11/2026): «Per te» e' una pagina; in cima la scheda della stagione in libri, nei suoi colori */
+  var W = window.NLWrap, card = $('#layYouSeason');
+  if (!card) { card = document.createElement('button'); card.type = 'button'; card.id = 'layYouSeason'; card.className = 'lay-season'; card.dataset.l = 'wrap'; $('#layYouList').parentNode.insertBefore(card, $('#layYouList')); }
+  var qs = []; try { qs = W && W.cfg().on ? W.quarters() : []; } catch (e) { if (window.nlErr) nlErr(e); }
+  card.hidden = !qs.length;
+  if (qs.length) {
+    var d = qs[0], pal = W.palette(d.Q.q), n = d.n, pg = d.pages || 0;
+    card.style.setProperty('--sz-bg', pal.t[0]); card.style.setProperty('--sz-ink', pal.ink[0]); card.style.setProperty('--sz-2', pal.t[1]); card.style.setProperty('--sz-3', pal.t[2]);
+    card.innerHTML = '<span class="sz-t"><b>' + esc(d.Q.title) + '</b><small>' + esc(n === 1 ? '1 libro letto' : n + ' libri letti') + (pg ? ' · ' + esc(pg.toLocaleString('it-IT')) + ' pagine' : '') + '</small></span><span class="sz-go" aria-hidden="true">›</span>';
+  }
+  $('#layYouList').innerHTML = youItems().filter(function (x) { return x.l !== 'wrap' || !qs.length; }).map(function (x) {
     return '<button type="button" class="dopt dgo lay-you" data-l="' + x.l + '"><span class="lay-yi">' + svg(x.i) + '</span><span><b>' + esc(x.t) + '</b><small>' + esc(x.s) + '</small></span><span class="n" aria-hidden="true">›</span></button>';
   }).join('');
 }
@@ -83,10 +126,11 @@ document.addEventListener('click', function (e) {
   if (NL.tab && NL.tab() !== b.dataset.dest) { NL.setTab(b.dataset.dest); window.scrollTo({ top: 0 }); paintNav(); }
   paintDest();
 });
-function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') paintYou(); if (id === '#layAdd') paintDest(); setTimeout(function () { try { (s.querySelector('.lay-big') || s.querySelector('button')).focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); } }, 30); }
+function sheetOpen(id) { var s = $(id); s.hidden = false; if (id === '#layYou') paintYou(); if (id === '#layAdd') paintDest(); setTimeout(function () { try { (s.querySelector('.lay-big3 .pri') || s.querySelector('button')).focus({ preventScroll: true }); } catch (e) { if (window.nlErr) nlErr(e); } }, 30); }
 function sheetsClose() { ['#layAdd', '#layYou'].forEach(function (k) { var s = $(k); if (s) s.hidden = true; }); }
 function act(l) {
   sheetsClose();
+  if (l !== 'prof' && window.NLProfilo && window.NLProfilo.close) { var ps = document.getElementById('profSheet'); if (ps && !ps.hidden && ['lib', 'wish', 'add', 'you'].indexOf(l) >= 0) window.NLProfilo.close(); }   // il profilo è una pagina: gli altri tasti della barra lo chiudono (stile C, 19/11/2026)
   // libreria di esempio (guida): la barra resta dentro l'esempio (Piero, 18/11/2026)
   if (NL.esempio && NL.esempio()) {
     if (l === 'lib' || l === 'wish') { NL.setTab(l); window.scrollTo({ top: 0 }); paintNav(); NL.emit('guest'); return; }
@@ -228,3 +272,6 @@ NL.on('reopen', function () { noteIdx = 0; notes(); });   // avvisi riaperti dal
 apply();
 window.NLLayout = { get: function () { return cur; }, set: function (v) { cur = v; save(); apply(); }, list: LAYOUTS };
 })();
+
+/* stile «C · Schede» (19/11/2026): «Filtri» sta nella riga di «Ordina · Raggruppa», come pillola; la ricerca ha la riga tutta per sé */
+(function () { var sb = document.getElementById('sortBar'), f = document.getElementById('btnFilters'); if (sb && f && f.parentNode !== sb) sb.insertBefore(f, sb.firstChild); })();

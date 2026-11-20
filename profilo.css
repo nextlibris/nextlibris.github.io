@@ -87,9 +87,9 @@ html.guest .tag.loan.recv{pointer-events:none}
 .prof .pf-q .pf-qph{font:500 14px/1.4 var(--font-body);color:var(--muted)}
 
 /* numeri del profilo (giro 11C, 19/11/2026): stile «Tessere», fondo scuro e colori della stagione (variabili messe da profilo.js) */
-.prof .pf-board{--pf-n:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;background:var(--pf-bg,#2A1A12);border-radius:22px;padding:12px;display:grid;gap:10px}
-.prof .pf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.prof .pf-sep{margin:4px 4px -2px;font:600 13px/1.2 var(--font-body);color:#ffffffb0;letter-spacing:.02em}
+.prof .pf-board{--pf-n:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;display:grid;gap:10px}
+.prof .pf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.prof .pf-sep{margin:8px 0 0;padding-bottom:8px;border-bottom:1px solid var(--line);font:500 14px/1.2 var(--font-body);color:var(--muted);letter-spacing:.02em}
 .prof .pf-t{display:grid;align-content:start;gap:2px;border-radius:16px;padding:12px 14px;min-width:0;background:var(--pf-c0);color:var(--pf-i0)}
 .prof .pf-t.c1{background:var(--pf-c1);color:var(--pf-i1)}
 .prof .pf-t.c2{background:var(--pf-c2);color:var(--pf-i2)}
@@ -117,3 +117,13 @@ html.guest .tag.loan.recv{pointer-events:none}
 .prof .pf-share{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 .prof .pf-share > span{flex:1 1 100%;font-size:14px;color:var(--muted)}
 .prof .pf-share .btn{min-height:44px}
+/* layout del 19/11/2026: paesi con il solo bordo, «Da sempre» in elenco */
+.prof .pf-t.pf-out{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.prof .pf-big.pf-mid{font-size:40px;margin:0}
+.prof .pf-big.pf-mid small{font:500 17px/1.2 var(--font-body)}
+.prof .pf-list{margin:-10px 0 0;display:grid}
+.prof .pf-r{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.prof .pf-r:last-child{border-bottom:0}
+.prof .pf-r dt{flex:none;max-width:48%;font-size:15px;color:var(--muted)}
+.prof .pf-r dd{margin:0;min-width:0;text-align:right;font:600 18px/1.25 var(--font-display);color:var(--accent);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.prof .pf-r dd small{font:400 13px/1.3 var(--font-body);color:var(--muted);white-space:nowrap}

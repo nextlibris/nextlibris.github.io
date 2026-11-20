@@ -92,6 +92,10 @@ function saveName(v) {
 /* in testata, sotto «Next Libris»: «Libreria di Piero»; senza nome, l'invito a scriverlo */
 function renderOwner() {
   var el = $('#owner');
+  /* testata sobria (Piero, 19/11/2026): il titolo grande dice dove sei; i numeri stanno sotto; nome e foto nel Profilo */
+  var h1 = document.querySelector('header.top h1'), ht = esempio() ? (tab === 'wish' ? 'Desideri' : 'Libreria') + ' di esempio' : guest ? guest.name : tab === 'wish' ? 'Desideri' : 'Libreria';
+  if (h1) { var tn = h1.firstChild; if (tn && tn.nodeType === 3) tn.nodeValue = ht + ' '; else h1.insertBefore(document.createTextNode(ht + ' '), h1.firstChild); h1.classList.toggle('h1-long', ht.length > 12); }
+  var qi = $('#q'); if (qi) { var ph = guest || esempio() ? 'Cerca nell\'elenco' : tab === 'wish' ? 'Cerca nei Desideri' : 'Cerca nei tuoi libri'; qi.placeholder = ph; qi.setAttribute('aria-label', ph); }
   var pf = window.NLProfilo ? ['<button type="button" class="owner-n" id="ownerProf" title="Apri il profilo">', '</button>'] : ['', ''];   // il nome apre la pagina del profilo (giro 3)
   if (esempio()) { el.innerHTML = (tab === 'wish' ? 'Desideri' : 'Libreria') + ' di <b>esempio</b>'; return; }   // guida di primo avvio (giro 4)
   var av = window.NLProfilo ? '<button type="button" class="owner-av" id="ownerAv" aria-label="Apri il profilo">' + window.NLProfilo.avatar(guest && window.NLAmici ? window.NLAmici.guestId() : null, guest ? guest.name : settings.name).replace(/>[^<>]*<\/span>$/, '></span>') + '</button>' : '';   // giro 7: foto tonda in testata
@@ -99,6 +103,7 @@ function renderOwner() {
   el.innerHTML = settings.name ? av + (tab === 'wish' ? 'Desideri di ' : 'Libreria di ') + pf[0] + '<b>' + esc(settings.name) + '</b>' + pf[1]   // «Libreria di Piero R. · 120 libri», nei Desideri «Desideri di Piero R.» (Piero, 17/11/2026)
     : '<button type="button" class="link" id="ownerSet">Scrivi il tuo nome</button>';
 }
+(function () { var h = document.querySelector('header.top h1'); if (h) h.addEventListener('click', function () { if (guest && window.NLProfilo && window.NLAmici && window.NLAmici.guestId) window.NLProfilo.open(window.NLAmici.guestId()); }); })();   // nella libreria di un amico il suo nome apre il suo profilo
 $('#owner').addEventListener('click', function (e) { if (e.target.closest('#ownerProf, #ownerAv') && window.NLProfilo) { window.NLProfilo.open(guest && window.NLAmici ? window.NLAmici.guestId() : null); return; } if (e.target.closest('#ownerSet')) { openOptions('share'); setTimeout(function () { try { $('#optName').focus(); } catch (x) {} }, 80); } });
 async function sendShare(copyOnly) {
   if (!shareCtx) return;
@@ -215,32 +220,32 @@ async function checkIncoming() {
   hashBusy = true;
   try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) { nlErr(e); }
   try {
-    if (m[1] === 'k') { toast('I link con chiave e worker non si usano più: chiedi all\'amico di prestarteli da Next Libris (Menu › Chiave Google e worker).'); hashBusy = false; return; }   // giro 8: si presta solo dentro l'app
+    if (m[1] === 'k') { toast('I link con API e worker non si usano più: chiedi all\'amico di prestarteli da Next Libris (Menu › API Google e worker).'); hashBusy = false; return; }   // giro 8: si presta solo dentro l'app
     else openImport(await decodeShare(m[2]));
   }
-  catch (e) { toast(e && e.message === 'vecchio' ? 'Questo browser è troppo vecchio per aprire il link: aggiorna Chrome e riprova.' : (m[1] === 'k' ? 'Il link non contiene una chiave o un worker validi' : 'Il link non contiene una lista valida') + ': forse è stato tagliato. Fattelo rimandare.'); }
+  catch (e) { toast(e && e.message === 'vecchio' ? 'Questo browser è troppo vecchio per aprire il link: aggiorna Chrome e riprova.' : (m[1] === 'k' ? 'Il link non contiene un’API o un worker validi' : 'Il link non contiene una lista valida') + ': forse è stato tagliato. Fattelo rimandare.'); }
   hashBusy = false;
 }
 window.addEventListener('hashchange', checkIncoming);
 async function shareWish() { shareList(); }
-/* ---------- chiave Google e worker SBN: si prestano solo dentro l'app (amici.js); il link «#k=...» è stato tolto (giro 8, Piero 18/11/2026) ---------- */
+/* ---------- API Google e worker SBN: si prestano solo dentro l'app (amici.js); il link «#k=...» è stato tolto (giro 8, Piero 18/11/2026) ---------- */
 function cleanKey(v) { v = String(v || '').replace(/\s+/g, ''); return /^[A-Za-z0-9_-]{20,80}$/.test(v) ? v : ''; }
 function okWorker(v) { v = cleanWorker(v); return /^https:\/\/[^\s/]+\.[^\s]+$/.test(v) && v.length <= 200 ? v : ''; }
-/* Condivisione › «Chiave Google e worker», su misura (Piero, 16/11/2026): chi ha i suoi li presta; chi usa quelli di un amico
-   lo vede scritto e può smettere; chi non ha la sua trova la guida per crearla (è gratis). Il resto sta nella finestra della chiave (amici.js). */
+/* Condivisione › «API Google e worker», su misura (Piero, 16/11/2026): chi ha i suoi li presta; chi usa quelli di un amico
+   lo vede scritto e può smettere; chi non ha la sua trova la guida per crearla (è gratis). Il resto sta nella finestra dell’API (amici.js). */
 function svcRow(k, t, sub) { return '<button type="button" class="dopt dgo svc-go" data-svc="' + k + '"><span><b>' + esc(t) + '</b><small>' + esc(sub) + '</small></span><span class="n" aria-hidden="true">›</span></button>'; }
 function renderSvcShare() {
   var nm = ($('#optName').value || settings.name || 'Piero').trim();
   $('#optNameHint').textContent = 'Compare quando condividi un libro o una lista: «I consigli di ' + nm + '», «' + nm + ' ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l\'elenco, oppure Esporta.';
   var msb = mine('sbn'), mgk = mine('key'), b = lent(), bg = !!(b.gb && b.gb === settings.gbKey), bs = !!(b.sbn && b.sbn === settings.sbnUrl), h = '';
   var A = window.NLAmici, nUse = A && A.lentCount ? A.lentCount() : -1;   // contatore: solo gli amici (giro 5)
-  if (msb || mgk) h += svcRow('lend', 'Presta a un amico', (mgk && msb ? 'La tua chiave Google e il tuo worker SBN' : mgk ? 'La tua chiave Google' : 'Il tuo worker SBN') + ': li usate tutti e due e smetti quando vuoi.' + (nUse >= 0 ? ' ' + A.lentText(nUse) + '.' : ''));
+  if (msb || mgk) h += svcRow('lend', 'Presta a un amico', (mgk && msb ? 'La tua API Google e il tuo worker SBN' : mgk ? 'La tua API Google' : 'Il tuo worker SBN') + ': li usate tutti e due e smetti quando vuoi.' + (nUse >= 0 ? ' ' + A.lentText(nUse) + '.' : ''));
   var off = !bg && !bs && A && A.offers ? A.offers() : [];
-  if (off.length) h += svcRow('offer', off[0].nome + (off.length > 1 ? ' e altri ' + (off.length - 1) : '') + ' ti ' + (off.length > 1 ? 'prestano' : 'presta') + ' ' + (off[0].gb && off[0].sbn ? 'chiave Google e worker' : off[0].gb ? 'la chiave Google' : 'il worker SBN'), 'Tocca per usarli: la ricerca trova più libri.');
-  if (bg || bs) h += svcRow('used', 'Usi ' + (bg && bs ? 'la chiave Google e il worker SBN' : bg ? 'la chiave Google' : 'il worker SBN') + ' di ' + (b.nome || 'un amico'), 'Prestati da un amico: tocca per vedere o per smettere di usarli.');
+  if (off.length) h += svcRow('offer', off[0].nome + (off.length > 1 ? ' e altri ' + (off.length - 1) : '') + ' ti ' + (off.length > 1 ? 'prestano' : 'presta') + ' ' + (off[0].gb && off[0].sbn ? 'API Google e worker' : off[0].gb ? 'l’API Google' : 'il worker SBN'), 'Tocca per usarli: la ricerca trova più libri.');
+  if (bg || bs) h += svcRow('used', 'Usi ' + (bg && bs ? 'l’API Google e il worker SBN' : bg ? 'l’API Google' : 'il worker SBN') + ' di ' + (b.nome || 'un amico'), 'Prestati da un amico: tocca per vedere o per smettere di usarli.');
   if (!mgk) {
-    if (!bg && !bs && !msb && !off.length) h += '<p class="hint">Con una chiave Google tua la ricerca trova più libri, con copertina e descrizione. Se un amico ti presta la sua, la vedi qui.</p>';
-    h += svcRow('guide', 'Crea la tua chiave Google', 'È gratis: 1.000 ricerche al giorno solo per te, in circa 5 minuti.');
+    if (!bg && !bs && !msb && !off.length) h += '<p class="hint">Con un’API Google tua la ricerca trova più libri, con copertina e descrizione. Se un amico ti presta la sua, la vedi qui.</p>';
+    h += svcRow('guide', 'Crea la tua API Google', 'È gratis: 1.000 ricerche al giorno solo per te, in circa 5 minuti.');
   }
   $('#svcBox').innerHTML = h;
 }

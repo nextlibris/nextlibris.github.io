@@ -9,12 +9,14 @@
    - Avviso: titolo (80) e testo (300), anteprima come nella campanella, «Manda a N persone» con conferma.
    - Numeri: utenti, libri, spazio sui 500 MB, ricerche Google di oggi, chat, segnalazioni (una sola chiamata, admin_numeri).
    - Archivio comune: cerca per titolo, autore o ISBN; correggi titolo, autore, editore, anno, copertina, descrizione; «Togli».
+     In cima «Da controllare» (029): i libri scritti a mano proposti dagli utenti, con «Approva» (dopo le correzioni) o «Scarta».
    Usa window.NL, window.NLSocial (social.js) e window.NLChat (per il menu delle conferme). */
 (function () {
 'use strict';
 var NL = window.NL, S = window.NLSocial; if (!NL || !S || !S.call || window.NLAdmin) return;
 var esc = NL.esc;
 var tab = 'seg', closed = false, segs = null, segErr = '', det = null, sosp = null, nums = null, arQ = '', arRes = null, arEd = null, busy = false, depth = 0;
+var props = null, propTot = 0;   // 029: libri scritti a mano da controllare
 var av = { t: '', x: '', mode: 'tutti', sel: [], q: '', res: [] };   // giro 10: a tutti o a persone scelte (al massimo 50)
 var avTimer = 0, avSeq = 0;
 
@@ -101,6 +103,7 @@ function load() {
   if (tab === 'seg') return loadSegs();
   if (tab === 'sosp') return loadSosp();
   if (tab === 'num' || tab === 'av') return loadNums();
+  if (tab === 'ar') return loadProps();
 }
 
 /* ---------- dati ---------- */
@@ -119,6 +122,12 @@ async function loadNums() {
   try { var r = await rpc('admin_numeri'); if (r && typeof r === 'object') nums = r; } catch (e) { if (denied(e)) return; if (tab === 'num') NL.toast(nice(e)); }
   badge(); paint();
 }
+async function loadProps() {
+  try { var r = await rpc('admin_proposte'); props = r && Array.isArray(r.elenco) ? r.elenco : []; propTot = Number(r && r.tot) || props.length; }
+  catch (e) { if (denied(e)) return; props = props || []; }
+  if (nums) nums.proposte = propTot;
+  paint();
+}
 async function search() {
   var q = ($('adArQ') || {}).value || arQ; arQ = q.trim();
   if (arQ.length < 3) { NL.toast('Scrivi almeno 3 lettere o l\'ISBN.'); return; }
@@ -133,17 +142,19 @@ function paint() {
   var el = $('adSheet'); if (!el || el.hidden) return;
   var sub = det || arEd;
   $('adHead').innerHTML = (sub ? '<button type="button" class="ico ch-back" data-a="back" aria-label="Indietro">‹</button>' : '') +
-    '<h2 id="adH">' + (det ? 'Segnalazione' : arEd ? 'Libro dell\'archivio' : 'Amministrazione') + '</h2>' +
+    '<h2 id="adH">' + (det ? 'Segnalazione' : arEd ? (arEd.prop ? 'Libro da controllare' : 'Libro dell\'archivio') : 'Amministrazione') + '</h2>' +
     '<button type="button" class="ico ch-x" data-a="close" aria-label="Chiudi">×</button>';
   var tb = $('adTabs'); tb.hidden = !!sub;
   var open = nums ? nums.segnalazioni : (segs && !closed ? segs.length : 0);
   tb.innerHTML = TABS.map(function (t) {
-    var k = t[0] === 'seg' && open ? ' <span class="fr-n">' + n(open) + '</span>' : '';
+    var pr = nums ? Number(nums.proposte) || 0 : propTot;
+    var k = t[0] === 'seg' && open ? ' <span class="fr-n">' + n(open) + '</span>' : t[0] === 'ar' && pr ? ' <span class="fr-n">' + n(pr) + '</span>' : '';
     return '<button type="button" role="tab" class="ad-tab' + (tab === t[0] ? ' on' : '') + '" aria-selected="' + (tab === t[0]) + '" data-t="' + t[0] + '">' + t[1] + k + '</button>';
   }).join('');
   var body = $('adBody'), foot = $('adFoot'); foot.innerHTML = '';
   if (det) { body.innerHTML = detHTML(); foot.innerHTML = detFoot(); return; }
-  if (arEd) { body.innerHTML = edHTML(); foot.innerHTML = '<div class="ad-btns"><button type="button" class="btn bad-t" data-a="artogli">Togli</button><button type="button" class="btn primary" data-a="arsalva">Salva</button></div>'; return; }
+  if (arEd) { body.innerHTML = edHTML(); foot.innerHTML = arEd.prop ? '<div class="ad-btns"><button type="button" class="btn bad-t" data-a="prscarta">Scarta</button><button type="button" class="btn primary" data-a="prok">Approva</button></div>'
+    : '<div class="ad-btns"><button type="button" class="btn bad-t" data-a="artogli">Togli</button><button type="button" class="btn primary" data-a="arsalva">Salva</button></div>'; return; }
   body.innerHTML = tab === 'seg' ? segHTML() : tab === 'sosp' ? sospHTML() : tab === 'av' ? avHTML() : tab === 'num' ? numHTML() : arHTML();
   if (tab === 'av') foot.innerHTML = '<button type="button" class="btn primary ad-wide" data-a="avmanda" id="adAvGo"' + (avOk() ? '' : ' disabled') + '>' + avBtn() + '</button>';
   var tabBtn = tb.querySelector('.on'); if (tabBtn && tabBtn.scrollIntoView) try { tabBtn.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
@@ -273,10 +284,10 @@ function numHTML() {
   function t(ico, v, l, s) { return '<div class="ad-tile"><span class="ad-ico" aria-hidden="true">' + ico + '</span><b>' + v + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>'; }
   return '<div class="ad-grid">' +
     t('👥', n(nums.utenti), 'utenti', n(nums.attivi_mese) + ' attivi nel mese') +
-    t('📚', n(nums.libri), 'libri online', n(nums.archivio) + ' nell\'archivio comune') +
+    t('📚', n(nums.libri), 'libri online', n(nums.archivio) + ' nell\'archivio comune' + (Number(nums.proposte) ? ' · ' + n(nums.proposte) + ' da controllare' : '')) +
     '<div class="ad-tile ad-full"><span class="ad-ico" aria-hidden="true">💾</span><b>' + mb(sp) + ' su ' + mb(max) + '</b><span>spazio del database</span>' +
       '<span class="ad-bar' + (pc >= 80 ? ' bad' : '') + '"><i style="width:' + Math.max(1, pc) + '%"></i></span><small>' + pc + '% usato · messaggi della chat ' + mb(nums.messaggi_spazio) + '</small></div>' +
-    t('🔎', n(rq), 'ricerche Google oggi', rmax ? 'la chiave più usata: ' + n(rmax) + ' su 1.000' : '') +
+    t('🔎', n(rq), 'ricerche Google oggi', rmax ? 'l’API più usata: ' + n(rmax) + ' su 1.000' : '') +
     t('💬', n(nums.chat), 'chat', n(nums.messaggi) + ' messaggi') +
     t('🚩', n(nums.segnalazioni), 'segnalazioni aperte', '') +
     t('⛔', n(nums.sospesi), 'fermi o sospesi', '') +
@@ -284,9 +295,18 @@ function numHTML() {
 }
 
 /* Archivio comune */
+function propHTML() {
+  if (!props || !props.length) return '';
+  return '<h3 class="ad-h3">Da controllare (' + n(propTot) + ')</h3><p class="ad-sub">Libri che nessuna banca dati conosce, scritti a mano da chi li ha. Approvali (anche dopo averli corretti) e chi li cerca dopo li trova già pronti.</p>' +
+    '<ul class="ch-list">' + props.map(function (r, i) {
+      var d = r.dati || {}, img = d.img;
+      return '<li><button type="button" class="ch-row ad-row" data-a="pred" data-i="' + i + '">' + (img ? '<img class="ad-cov" src="' + esc(img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="ad-cov" aria-hidden="true">📚</span>') +
+        '<span class="ch-t"><span class="ch-l1"><b>' + esc(d.t || '(senza titolo)') + '</b></span><span class="ch-l2"><span class="ch-last">' + esc([d.a, 'da ' + (r.nome || 'qualcuno') + (r.simili > 1 ? ' e altri ' + (r.simili - 1) : ''), r.isbn].filter(Boolean).join(' · ')) + '</span></span></span><span class="n" aria-hidden="true">›</span></button></li>';
+    }).join('') + '</ul>' + (propTot > props.length ? '<p class="ad-sub">Ne mostro ' + props.length + ': gli altri dopo.</p>' : '');
+}
 function arHTML() {
-  var h = '<p class="ad-sub">I libri salvati per ISBN da chi li ha cercati per primo. Correggi quelli sbagliati o toglili: chi li cerca dopo li ritrova giusti.</p>' +
-    '<form class="ad-arf" id="adArF"><input id="adArQ" type="search" enterkeyhint="search" value="' + esc(arQ) + '" placeholder="Titolo, autore o ISBN" aria-label="Cerca nell\'archivio" autocomplete="off"><button class="btn primary" type="submit">Cerca</button></form>';
+  var h = propHTML() + '<h3 class="ad-h3">Archivio comune</h3><p class="ad-sub">I libri salvati per ISBN da chi li ha cercati per primo. Correggi quelli sbagliati o toglili: chi li cerca dopo li ritrova giusti.</p>' +
+    '<form class="ad-arf" id="adArF"><input id="adArQ" type="search" enterkeyhint="search" value="' + esc(arQ) + '" placeholder="Titolo, autore o ISBN" aria-label="Cerca nell\'archivio" autocomplete="off"><button class="btn primary ad-arb" type="submit" aria-label="Cerca">' + NL.icon('search') + '</button></form>';
   if (arRes === 'load') return h + '<p class="ch-empty">Un momento…</p>';
   if (!arRes) return h;
   if (!arRes.length) return h + '<p class="ch-empty">Nessun libro trovato.</p>';
@@ -299,7 +319,8 @@ function arHTML() {
 var FIELDS = [['t', 'Titolo', 'text'], ['a', 'Autore', 'text'], ['e', 'Editore', 'text'], ['y', 'Anno', 'text'], ['img', 'Copertina (indirizzo)', 'url'], ['ds', 'Descrizione', 'area']];
 function edHTML() {
   var d = arEd.dati, img = d.img || d.imgL;
-  return '<p class="ad-meta">ISBN <b>' + esc(arEd.isbn) + '</b> · aggiornato ' + esc(ago(arEd.aggiornato)) + '</p>' +
+  return '<p class="ad-meta">ISBN <b>' + esc(arEd.isbn) + '</b> · ' + (arEd.prop ? 'proposto da ' + esc(arEd.nome || 'qualcuno') + ', ' + esc(ago(arEd.aggiornato)) : 'aggiornato ' + esc(ago(arEd.aggiornato))) + '</p>' +
+    (arEd.prop ? '<p class="ad-sub"><a href="https://www.google.com/search?q=' + encodeURIComponent(arEd.isbn) + '" target="_blank" rel="noopener">Cerca l\'ISBN sul web</a> per controllare titolo e autore.</p>' : '') +
     (img ? '<img class="ad-big" id="adArImg" src="' + esc(img) + '" alt="Copertina" referrerpolicy="no-referrer">' : '') +
     FIELDS.map(function (f) {
       var v = esc(d[f[0]] || ''), id = 'adAr_' + f[0];
@@ -322,6 +343,26 @@ async function arSave() {
     if (Array.isArray(arRes)) arRes.forEach(function (r) { if (r.isbn === arEd.isbn) { r.dati = d; r.aggiornato = arEd.aggiornato; } });
     back();
   } catch (e) { if (!denied(e)) NL.toast(nice(e)); }
+}
+async function prOk() {
+  var d = edGet(); if (!d.t) { NL.toast('Serve almeno il titolo.'); return; }
+  if (d.y && !/^\d{3,4}$/.test(d.y)) { NL.toast('L\'anno va scritto in cifre, per esempio 1963.'); return; }
+  try {
+    var isbn = arEd.isbn; await rpc('admin_proposta_approva', { isbn: isbn, dati: d });
+    NL.toast('Approvato: ora è nell\'archivio comune.');
+    var gone = (props || []).filter(function (r) { return r.isbn === isbn; }).length;
+    props = (props || []).filter(function (r) { return r.isbn !== isbn; }); propTot = Math.max(0, propTot - gone); if (nums) { nums.proposte = propTot; nums.archivio = Number(nums.archivio || 0) + 1; }
+    back();
+  } catch (e) { if (!denied(e)) NL.toast(nice(e)); }
+}
+function prNo() {
+  confirm('Scartare «' + esc(arEd.dati.t || arEd.isbn) + '»?', 'Non entra nell\'archivio comune. Nella libreria di chi l\'ha scritto non cambia niente.', 'Scarta', async function () {
+    try {
+      var isbn = arEd.isbn, u = arEd.utente; await rpc('admin_proposta_scarta', { isbn: isbn, utente: u });
+      NL.toast('Scartato.'); props = (props || []).filter(function (r) { return !(r.isbn === isbn && r.utente === u); }); propTot = Math.max(0, propTot - 1); if (nums) nums.proposte = propTot;
+      back();
+    } catch (e) { if (!denied(e)) NL.toast(nice(e)); }
+  });
 }
 function arDel() {
   confirm('Togliere «' + esc(arEd.dati.t || arEd.isbn) + '» dall\'archivio?', 'Chi lo cerca dopo lo ritrova con la ricerca solita (e l\'archivio si riempie di nuovo). Le librerie di chi ce l\'ha non cambiano.', 'Togli', async function () {
@@ -363,6 +404,9 @@ function onClick(e) {
   if (a === 'numagg') { nums = null; paint(); loadNums(); return; }
   if (a === 'ared') { var r = Array.isArray(arRes) && arRes[+b.dataset.i]; if (r) { arEd = { isbn: r.isbn, dati: Object.assign({}, r.dati || {}), aggiornato: r.aggiornato }; pushBack('det'); paint(); } return; }
   if (a === 'arsalva') { arSave(); return; }
+  if (a === 'pred') { var p = Array.isArray(props) && props[+b.dataset.i]; if (p) { arEd = { prop: true, isbn: p.isbn, utente: p.utente, nome: p.nome, dati: Object.assign({}, p.dati || {}), aggiornato: p.creato }; pushBack('det'); paint(); } return; }
+  if (a === 'prok') { prOk(); return; }
+  if (a === 'prscarta') { prNo(); return; }
   if (a === 'artogli') { arDel(); return; }
 }
 

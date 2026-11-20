@@ -196,7 +196,7 @@ function numsLine(st) {
   var np = (st.pa || []).length; if (np) p.push('<b>' + np + '</b> ' + (np === 1 ? 'paese' : 'paesi'));
   return '<p class="pf-nums">' + p.join(' · ') + '</p>';
 }
-/* ---------- i numeri (giro 11C, 19/11/2026, scelte di Piero): stile «Tessere», schede colorate di misure diverse su fondo scuro,
+/* ---------- i numeri (giro 11C, 19/11/2026, scelte di Piero; layout rifatto il 19/11: tessere direttamente sulla pagina, paesi con il solo bordo, «Da sempre» in elenco),
    numero grande in Bricolage Grotesque, colori della stagione di oggi (gli stessi dell'immagine da condividere, da wrap.js).
    In cima la tessera grande dell'anno (con l'obiettivo, facoltativo); poi pagine, autore e paesi dell'anno; poi «Da sempre».
    Aprendo il profilo i numeri salgono e la barra dell'obiettivo si riempie. Nel tuo profilo «Condividi i tuoi numeri»
@@ -240,46 +240,44 @@ function yearTiles(st, own, name) {
   if (pgy) h += tess(1, two ? '' : 'wide', 'Pagine dell\'anno', num(pgy), pileTxt(pgy, ly));
   if (st.auy && st.y === y) h += tess(2, two ? '' : 'wide', own ? 'Il tuo autore dell\'anno' : 'Il suo autore dell\'anno', esc(st.auy), plur(st.auyn, 'libro', 'libri'), true);
   var py = (st.pay || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); });
-  if (py.length) h += tess(pgy && st.auy ? 1 : 2, 'wide', (own ? 'Quest\'anno hai viaggiato in' : 'Quest\'anno ha viaggiato in'), plur(py.length, 'paese', 'paesi'), flags(py, 24));
+  if (py.length) h += '<div class="pf-t pf-out wide"><span class="pf-big pf-mid">' + num(py.length) + ' <small>' + (py.length === 1 ? 'paese visitato' : 'paesi visitati') + ' leggendo</small></span><span class="pf-ts">' + flags(py, 24) + '</span></div>';   // riquadro con il solo bordo (19/11/2026)
   return h;
 }
+/* «Da sempre» in elenco (19/11/2026, scelta di Piero): nome a sinistra, valore a destra, linea sottile tra le righe */
+function row(k, v) { return '<div class="pf-r"><dt>' + k + '</dt><dd>' + v + '</dd></div>'; }
 function statsHTML(st, own, rel) {
   var t = [], P = pal(), year = '';
-  function add(size, kick, big, sub, isVal) { t.push({ size: size, kick: kick, big: big, sub: sub, val: isVal }); }
+  function add(k, v) { t.push(row(k, v)); }
+  function sm(x) { return ' <small>' + x + '</small>'; }
   if (st) {
     year = yearTiles(st, own, own ? '' : (cur && A() && A().friendName ? A().friendName(cur) : ''));
-    add('', '', num(st.n), st.n === 1 ? 'libro in libreria' : 'libri in libreria');
-    add('', '', num(st.pg), 'pagine lette' + (st.l ? ' · ' + plur(st.l, 'libro', 'libri') : ''));
-    if (st.au) add(st.au.length > 18 ? 'wide' : '', 'Autore più letto', esc(st.au), plur(st.aun, 'libro', 'libri'), true);
-    if (st.ge) add(st.ge.length > 18 ? 'wide' : '', 'Genere più letto', esc(st.ge), plur(st.gen, 'libro', 'libri'), true);
-    if (st.ul && st.ul.t) add('wide', 'Ultimo libro letto', '«' + esc(st.ul.t) + '»', st.ul.a ? esc(st.ul.a) : '', true);
-    if (st.lu && st.lu.t) add('wide', 'Il più lungo', '«' + esc(st.lu.t) + '»', st.lu.pg ? nf(st.lu.pg) + ' pagine' : '', true);
+    add('Libri in libreria', num(st.n));
+    add('Pagine lette', num(st.pg));
+    if (st.au) add('Autore più letto', esc(st.au) + sm('· ' + nf(st.aun)));
+    if (st.ge) add('Genere più letto', esc(st.ge) + sm('· ' + nf(st.gen)));
+    if (st.ul && st.ul.t) add('Ultimo letto', '«' + esc(st.ul.t) + '»');
+    if (st.lu && st.lu.t) add('Il più lungo', '«' + esc(st.lu.t) + '»' + (st.lu.pg ? sm('· ' + nf(st.lu.pg) + ' pag.') : ''));
     var pa = (st.pa || []).filter(function (c) { return /^[A-Z]{2}$/.test(c); });
-    if (pa.length) add('wide', 'Paesi degli autori letti', plur(pa.length, 'paese', 'paesi'), flags(pa, 60));
-    add('', '', num(st.pr), st.pr === 1 ? 'libro prestato adesso' : 'libri prestati adesso');
+    if (pa.length) add('Paesi degli autori', num(pa.length));
+    add('Prestati adesso', num(st.pr));
   }
   if (rel) {
     if (rel.comuni != null) {
       var pc = st && st.n ? Math.min(100, Math.round(rel.comuni / st.n * 100)) : 0;
-      add('', 'In comune con te', num(rel.comuni), (rel.comuni === 1 ? 'libro' : 'libri') + (rel.comuni && pc ? ' · il ' + pc + '% dei suoi' : ''));
+      add('In comune con te', num(rel.comuni) + (rel.comuni && pc ? sm('· il ' + pc + '% dei suoi') : ''));
     }
     var d = Number(rel.tra && rel.tra.dati) || 0, v = Number(rel.tra && rel.tra.avuti) || 0;
-    if (d + v) add('', 'Prestiti tra voi', num(d + v), nf(d) + ' da te, ' + nf(v) + ' a te');
+    if (d + v) add('Prestiti tra voi', num(d + v) + sm(nf(d) + ' da te, ' + nf(v) + ' a te'));
   }
   if (!t.length && !year) return '';
-  var half = 0; t.forEach(function (x, i) {                  // niente buco: una mezza rimasta sola diventa larga
-    if (x.size) { if (half % 2) t[i - 1].size = 'wide'; half = 0; } else half++;
-  });
-  if (half % 2) t[t.length - 1].size = 'wide';
-  var tiles = t.map(function (x, i) { return tess(i % 3, x.size, x.kick, x.big, x.sub, x.val); }).join('');
-  var vars = '--pf-bg:' + P.bg + ';' + P.t.map(function (c, i) { return '--pf-c' + i + ':' + c + ';--pf-i' + i + ':' + P.ink[i]; }).join(';');
+  var vars = P.t.map(function (c, i) { return '--pf-c' + i + ':' + c + ';--pf-i' + i + ':' + P.ink[i]; }).join(';');
   var sh = '';
   if (own && cur !== 'esempio' && st && window.NLWrap && window.NLWrap.shareCard) {
     sh = shareOpen ? '<div class="pf-share"><span>Condividi i tuoi numeri:</span><button class="btn" type="button" data-p="shs">Storia</button><button class="btn" type="button" data-p="shq">Quadrata</button></div>'
       : '<div class="pf-share"><button class="btn" type="button" data-p="share">Condividi i tuoi numeri</button></div>';
   }
   return '<section class="fr-sec pf-num"><h3 class="fr-h">' + (own ? 'I tuoi numeri' : 'I suoi numeri') + '</h3><div class="pf-board" style="' + vars + '">' +
-    (year ? '<div class="pf-grid">' + year + '</div>' : '') + (tiles ? '<p class="pf-sep">Da sempre</p><div class="pf-grid">' + tiles + '</div>' : '') + '</div>' + sh + '</section>';
+    (year ? '<div class="pf-grid">' + year + '</div>' : '') + (t.length ? '<p class="pf-sep">Da sempre</p><dl class="pf-list">' + t.join('') + '</dl>' : '') + '</div>' + sh + '</section>';
 }
 /* i numeri salgono e la barra si riempie, una volta per apertura del profilo (non a ogni aggiornamento) */
 function animate(body) {
@@ -345,8 +343,8 @@ function paint() {
   if (cur === 'esempio') {                             /* ----- profilo della libreria di esempio: solo da guardare ----- */
     document.getElementById('profH').textContent = 'Profilo di esempio';
     var est = stats(), els = lists(), eq = myPins();
-    h = head('esempio', EX_NAME, 'novembre 2026') + numsLine(est) +
-      '<div class="pf-go"><button class="btn" type="button" data-p="lib">Libreria</button><button class="btn" type="button" data-p="wish">Desideri</button></div>' +
+    h = '<section class="pf-card">' + head('esempio', EX_NAME, 'novembre 2026') + numsLine(est) +
+      '<div class="pf-go"><button class="btn" type="button" data-p="lib">Libreria</button><button class="btn" type="button" data-p="wish">Desideri</button></div></section>' +
       strip('In lettura', els.let) + strip('Consigliati', els.cons);   // via i Preferiti (Piero, 18/11/2026)
     if (eq.length) h += '<section class="fr-sec"><h3 class="fr-h">Citazioni in evidenza</h3><div class="pf-qlist">' + eq.map(quoteHTML).join('') + '</div></section>';
     h += statsHTML(est, true) + '<p class="fr-small">È un profilo inventato: il tuo lo trovi nel Menu, con la tua foto e i tuoi numeri.</p>';
@@ -357,18 +355,22 @@ function paint() {
     var go = '<div class="pf-go"><button class="btn" type="button" data-p="lib">Libreria</button><button class="btn" type="button" data-p="wish">Desideri</button>' +
       (window.NLChat ? '<button class="btn pf-chat" type="button" data-p="chat">Scrivi</button>' : '') + '<span class="pf-icos">' +   // chat (giro 9b)
       (acts.swap ? icoBtn('swap', ' gb-swap', 'Prestiti e regali tra te e ' + name, I_SWAP) : '') +
-      (acts.key ? icoBtn('key', acts.lent ? ' on' : '', acts.lent ? acts.lent + ' ' + aNome(name) : 'Presta la tua chiave Google o il worker ' + aNome(name), I_KEY + (acts.lent ? '<span class="gk-ok" aria-hidden="true">✓</span>' : '')) : '') +
+      (acts.key ? icoBtn('key', acts.lent ? ' on' : '', acts.lent ? acts.lent + ' ' + aNome(name) : 'Presta la tua API Google o il worker ' + aNome(name), I_KEY + (acts.lent ? '<span class="gk-ok" aria-hidden="true">✓</span>' : '')) : '') +
       icoBtn('drop', ' gb-drop', 'Togli ' + name + ' dagli amici', I_DROP) + '</span></div>';                       // Libreria e Desideri ci sono sempre, anche se il profilo non si carica
-    if (!data) h = head(cur, name, '') + go + '<p class="msg">Un momento…</p>';
-    else if (data.err) h = head(cur, name, '') + go + '<p class="msg">' + esc(data.err) + '</p>';
+    var ks = A().askState && A().askState(cur), ask = !ks ? '' :          // «Chiedimela» (Piero, 19/11/2026): solo se tu non hai un’API e l'amico ne ha una sua
+      '<section class="fr-sec pf-ask"><p><span aria-hidden="true">🔑 </span><b>' + esc(name) + '</b> ha un’API Google Libri sua. Se te la presta, la tua ricerca trova molti più libri, con copertine e descrizioni.</p>' +
+      (ks.asked ? '<span class="pf-asked">Richiesta mandata</span>' : '<button class="btn primary" type="button" data-p="ask">Chiedimela</button>') + '</section>';
+    if (!data) h = '<section class="pf-card">' + head(cur, name, '') + go + '</section>' + ask + '<p class="msg">Un momento…</p>';
+    else if (data.err) h = '<section class="pf-card">' + head(cur, name, '') + go + '</section>' + ask + '<p class="msg">' + esc(data.err) + '</p>';
     else if (mode === 'cits') {
       h = '<button class="link fr-back" type="button" data-p="back">‹ Profilo</button><div class="pf-qlist">' + (data.cits || []).map(quoteHTML).join('') + '</div>';
     } else {
       var nn = (A().nums && A().nums(cur)) || {};
       var ev = data.evid || (data.cit && data.cit.x ? [data.cit] : []);          // database senza la 019: la vecchia preferita
-      h = head(cur, data.utente || name, since(data.creato));
+      h = '<section class="pf-card">' + head(cur, data.utente || name, since(data.creato));   // riquadro in cima (stile C, 19/11/2026)
       if (data.stat) h += numsLine(data.stat);
-      h += go;
+      h += go + '</section>';
+      h += ask;
       if (data.desideri) h += '<section class="fr-sec pf-fol"><button class="btn' + (data.segue ? '' : ' primary') + '" type="button" data-p="segui" aria-pressed="' + !!data.segue + '">' + (data.segue ? 'Stai seguendo i suoi Desideri ✓' : 'Segui i suoi Desideri') + '</button>' +
         '<p class="fr-small">' + (data.segue ? 'Ti scriviamo al massimo una volta al giorno, solo quando c\'è qualcosa di nuovo. ' + esc(name) + ' non lo sa. Tocca per smettere.'
           : esc(name) + ' ti mostra già i suoi Desideri: seguili e scopri cosa sogna di leggere. Magari ci trovi il regalo giusto, o il tuo prossimo libro. Ti scriviamo al massimo una volta al giorno, solo quando c\'è qualcosa di nuovo, e ' + esc(name) + ' non lo saprà.') + '</p></section>';
@@ -386,25 +388,32 @@ function paint() {
       h = '<button class="link fr-back" type="button" data-p="back">‹ Profilo</button><p class="fr-small">Tocca una citazione per metterla in evidenza o toglierla: al massimo ' + PINS + '. In evidenza: <b>' + pins.length + ' di ' + PINS + '</b>.</p><div class="pf-qlist">' +
         qs.slice(0, 300).map(function (q) { return '<button type="button" class="pf-qpick" data-p="pin" data-b="' + esc(q.b) + '" data-i="' + q.i + '" aria-pressed="' + q.pin + '">' + quoteHTML(q) + '</button>'; }).join('') + '</div>';
     } else {
-      h = head(null, nm, since((me && me.creato) || firstTs()));
+      h = '<section class="pf-card">' + head(null, nm, since((me && me.creato) || firstTs()));   // riquadro in cima (stile C, 19/11/2026)
       if (photoOpen) h += '<div class="pf-photo"><button class="btn" type="button" data-p="file">Dalla galleria</button><button class="btn" type="button" data-p="cam">Fotocamera</button>' + (uid() ? '<button class="btn" type="button" data-p="google">Usa quella di Google</button>' : '') +
         (my.foto ? '<button class="link" type="button" data-p="nofoto">Togli la foto</button>' : '') + '<p class="fr-small">' + (uid() ? 'La vedono solo i tuoi amici.' : 'Resta su questo telefono: con l\'account la vedono i tuoi amici.') + '</p></div>';
-      h += numsLine(st);
+      h += numsLine(st) + '</section>';
       h += strip('In lettura', ls.let) + strip('Consigliati', ls.cons, 'Nella pagina di un libro tocca la stella: «Lo consiglio».');
       h += '<section class="fr-sec"><h3 class="fr-h">Citazioni in evidenza' + (pins.length ? ' <span class="fr-n">' + pins.length + '</span>' : '') + '</h3>' +
         (pins.length ? '<div class="pf-qlist">' + pins.map(quoteHTML).join('') + '</div>' : '<p class="fr-small">' + (qs.length ? 'Scegli fino a ' + PINS + ' citazioni da mettere in evidenza con la puntina.' : 'Quando salvi una citazione da un libro, con la puntina puoi metterla in evidenza qui (fino a ' + PINS + ').') + '</p>') +
         (qs.length ? '<p class="pf-acts"><button class="link" type="button" data-p="pick">' + (pins.length ? 'Cambia' : 'Scegli le citazioni') + '</button></p>' : '') + '</section>';
       if (qs.length) h += '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-p="allq">Tutte le citazioni<small>' + qs.length + (qs.length === 1 ? ' citazione' : ' citazioni') + '</small></button><span class="n" aria-hidden="true">›</span></li></ul>';
       h += statsHTML(st, true);
+      h += friRow();      // «I tuoi amici» anche dal profilo (Piero, 19/11/2026: Amici non era più raggiungibile dalla Libreria)
       h += setRows(me);   // scorciatoie alle impostazioni personali (Piero, 18/11/2026)
     }
   }
   body.innerHTML = h;
   animate(body); fitCovers(body);
 }
-/* ---------- scorciatoie alle impostazioni personali (Piero, 18/11/2026): Account, Amici e privacy, Notifiche, Chiave Google e worker.
+/* ---------- scorciatoie alle impostazioni personali (Piero, 18/11/2026): Account, Amici e privacy, Notifiche, API Google e worker.
    La finestra si apre sopra e, quando si chiude, torna il profilo. ---------- */
 function setRow(k, t, sub) { return '<li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-p="' + k + '">' + t + '<small>' + esc(sub) + '</small></button><span class="n" aria-hidden="true">›</span></li>'; }
+function friRow() {
+  if (!A() || !A().open) return '';
+  var st = A().state ? A().state() : null, n = ((st && st.list) || []).filter(function (x) { return x.stato === 'amici'; }).length;
+  var sub = !uid() ? 'Entra con l\'account per aggiungere amici' : n ? (n === 1 ? '1 amico' : n + ' amici') + ' · cerca, invita, scrivi' : 'Cerca e invita i tuoi amici';
+  return '<section class="fr-sec pf-fri"><h3 class="fr-h">Amici</h3><ul class="fr-list fr-box">' + setRow('fri', 'I tuoi amici', sub) + '</ul></section>';
+}
 function setRows(me) {
   var r = '', S = window.NLSocial, au = S && S.auth && S.auth();
   if (S && S.open) r += setRow('acc', 'Account e sincronizzazione', au ? (au.email || 'Entrato con Google') : 'Entra per salvare i libri online');
@@ -418,11 +427,11 @@ function setRows(me) {
     r += setRow('privacy', 'Amici e privacy', uid() ? 'Gli amici vedono la foto' + (vis.length ? ', ' + vis.join(', ') : ' e nient\'altro') : 'Con l\'account scegli cosa vedono gli amici');
   }
   if (window.NLPush && document.getElementById('goPush')) r += setRow('push', 'Notifiche', (document.getElementById('goPushTxt') || {}).textContent || 'Avvisi anche ad app chiusa');
-  if (A() && A().keys) r += setRow('keys', 'Chiave Google e worker', 'Per trovare più libri, anche agli amici');
+  if (A() && A().keys) r += setRow('keys', 'API Google e worker', 'Per trovare più libri, anche agli amici');
   r += setRow('menu', 'Menu', 'Le altre impostazioni e le info');
   return '<section class="fr-sec pf-set"><h3 class="fr-h">Impostazioni</h3><ul class="fr-list fr-box">' + r + '</ul></section>';
 }
-var RET_WIN = { acc: '#accSheet', privacy: '#friSheet', push: '#optSheet', keys: '#kwSheet' };
+var RET_WIN = { fri: '#friSheet', acc: '#accSheet', privacy: '#friSheet', push: '#optSheet', keys: '#kwSheet' };
 function via(k, fn) {          // chiude il profilo, apre la finestra e, quando quella si chiude, riapre il profilo
   close(); fn();
   setTimeout(function () {
@@ -463,6 +472,7 @@ async function onClick(e) {
   else if (a === 'pick' || a === 'cits') { mode = a; paint(); var si = document.querySelector('#profSheet .sheet-in'); if (si) si.scrollTop = 0; }
   else if (a === 'pin') { if (NL.togglePin) NL.togglePin(b.dataset.b, Number(b.dataset.i)); paint(); }
   else if (a === 'allq') { close(); NL.openQuotes(); }
+  else if (a === 'fri') via('fri', function () { A().open(); });
   else if (a === 'privacy') via('privacy', function () { A().open(true); });
   else if (a === 'keys') via('keys', function () { A().keys(); });
   else if (a === 'acc') via('acc', function () { window.NLSocial.open(); });
@@ -474,6 +484,7 @@ async function onClick(e) {
   else if ((a === 'lib' || a === 'wish') && id) { close(); goGuest(id, a); }
   else if (a === 'book') { var bid = b.dataset.id; close(); if (id) goGuest(id, 'lib', bid); else if (NL.showBook) NL.showBook(bid); }
   else if (a === 'chat' && id && window.NLChat) { var cn = (data && data.utente) || A().friendName(id); close(); setTimeout(function () { window.NLChat.to(id, cn); }, 60); }   // Scrivi (giro 9b)
+  else if (a === 'ask' && id && A().ask) { await A().ask(id, b); paint(); }   // «Chiedimela»
   else if (a === 'swap' && id && A().swapSheet) A().swapSheet(id);
   else if (a === 'key' && id && A().keySheet) A().keySheet(id);
   else if (a === 'drop' && id && A().dropSheet) A().dropSheet(id);
@@ -492,7 +503,7 @@ NL.on('privacy', function () { if (!cur) paint(); });
 NL.on('pins', function () { if (my.cit) { my.cit = null; my.t = Date.now(); save(); push(); } if (!cur) paint(); });   // scelte le puntine, la vecchia preferita non serve più
 NL.on('lc', function () { if (!cur) paint(); });
 NL.on('keys', function () { if (cur && data && !data.err && !mode) paint(); });
-window.NLProfilo = { open: open, avatar: avatar, stats: stats, lists: lists, pins: myPins, state: function () { return { my: my, pics: pics, cur: cur, data: data, mode: mode }; }, push: push };   // per amici.js e le prove
+window.NLProfilo = { open: open, close: close, avatar: avatar, stats: stats, lists: lists, pins: myPins, state: function () { return { my: my, pics: pics, cur: cur, data: data, mode: mode }; }, push: push };   // per amici.js e le prove
 if (NL.renderOwner) NL.renderOwner();      // il nome in testata diventa il tasto del profilo
 /* giro 7 (in prova): «Il mio profilo» in cima al Menu, con la tua foto */
 (function menu() {

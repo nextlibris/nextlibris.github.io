@@ -52,6 +52,7 @@ var ls = {
   set: function (k, v) { try { localStorage.setItem(lsKey(k), v); return true; } catch (e) { return false; } }
 };
 var ICON = {
+  apikey: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/>',   // la chiave vera (API Google), non la tastiera di «Digita»
   pen: '<path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20z"/><path d="M13.5 7.5l3 3"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>',
   scan: '<path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 8v8M11 8v8M14 8v8M17 8v8"/>',
@@ -125,7 +126,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 110, date: '2026-11-19', note: 'Scheda del libro uguale per tutti; scritta sotto le copertine sempre' };
+var APP_VERSION = { v: 111, date: '2026-11-20', note: 'Un aspetto nuovo: pagine color carta, segnalibri sul lato e l’Indice' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -151,7 +152,7 @@ var S = {};                                  // stato di sessione per riga: st, 
 var settings = { gbKey: '', price: true, extra: true, lastBackup: 0, snooze: 0, view: 'grid', viewDef: 'grid', openAll: false, sbnUrl: '', loanSnooze: 0, look: 'nuovo', theme: 'light', pal: 'bosco', ft: 'literata', fb: 'plex' };
 var GRP_TXT = { aut: 'per autore', gen: 'per genere', genaut: 'per genere e autore', read: 'per lettura', pae: 'per paese' };   // «Raggruppa per» (17/11/2026)
 var PALS = { inchiostro: ['#EDF0F5', '#10141D'], bordeaux: ['#F2EFEE', '#161112'], bosco: ['#EEF1EE', '#0F1513'] };
-var FONTS_T = ['literata', 'garamond', 'playfair', 'lora', 'merriweather', 'montserrat', 'roboto'], FONTS_B = ['plex', 'roboto', 'lato', 'atkinson', 'lora'];
+var FONTS_T = ['bricolage', 'literata', 'lora', 'roboto'], FONTS_B = ['plex', 'atkinson', 'roboto'];   // restyle «C · Schede» (19/11/2026): Bricolage + Plex di partenza, poche alternative
 var openState = {}, autoOpened = {};
 function collapseCards() { if (!settings.openAll) openState = {}; if (cardPushed) { cardPushed = null; try { history.back(); } catch (e) { nlErr(e); } } }   // quando si filtra l'elenco torna compatto   // schede aperte/chiuse in questa sessione (true/false); se manca vale la regola di isOpen
 var SORTS = ['recent', 'titolo', 'autore', 'editore', 'anno', 'scaffale', 'voto', 'letti'];
@@ -164,7 +165,7 @@ function smallImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.img || 
 function bigImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.imgL || b.img || s.big || s.thumb || ''; }
 /* Richieste di oggi a Google Libri e al worker SBN. Il giorno di Google finisce a mezzanotte ora del Pacifico (le 9 da noi),
    quello di Cloudflare a mezzanotte UTC (l'1 o le 2 di notte da noi). */
-var G_LIMIT = 1000, G_STOP = 950, G_EXTRA = 700, S_STOP = 95000;          // con la chiave: 1.000 al giorno; le copertine grandi si fermano prima
+var G_LIMIT = 1000, G_STOP = 950, G_EXTRA = 700, S_STOP = 95000;          // con l’API: 1.000 al giorno; le copertine grandi si fermano prima
 var quota = { d: '', g: 0, ds: '', s: 0 };
 var shared = { g: 0, d: '', s: 0, ds: '' };   // totale di oggi di chi usa la stessa chiave o lo stesso worker (modulo ricerche.js, Supabase)
 function pacificDay() { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
@@ -178,12 +179,12 @@ function rollQuota() {
 function countCall(k) { rollQuota(); quota[k]++; ls.set('catalogo-libri-quota', JSON.stringify(quota)); emit('apiCall', k); if ($('#optSheet').hidden) return; updateQuotaInfo(); }
 function gUsed() { rollQuota(); return Math.max(quota.g, shared.d === quota.d ? shared.g : 0); }
 function sUsed() { rollQuota(); return Math.max(quota.s, shared.ds === quota.ds ? shared.s : 0); }
-/* Chiave Google prestata da un amico (giro 8, Piero 18/11/2026): sul telefono c'è solo il segno «prestata:<id di chi presta>»,
-   la chiave vera resta sul server. Le ricerche passano dalla funzione «libri» di Supabase, che conta: 300 al giorno per amico
-   (x-nl-stop: mio), 950 in tutto per la chiave (pieno), prestito tolto (no). */
+/* API Google prestata da un amico (giro 8, Piero 18/11/2026): sul telefono c'è solo il segno «prestata:<id di chi presta>»,
+   l’API vera resta sul server. Le ricerche passano dalla funzione «libri» di Supabase, che conta: 300 al giorno per amico
+   (x-nl-stop: mio), 950 in tutto per l’API (pieno), prestito tolto (no). */
 var LENT_STOP = 'catalogo-libri-prestata-stop', lentStopD = '';
 try { lentStopD = ls.get(LENT_STOP) || ''; } catch (e) { nlErr(e); }
-function lentOut() { rollQuota(); return !!lentStopD && lentStopD === quota.d && /^prestata:/.test(settings.gbKey || ''); }   // finite le tue ricerche di oggi con la chiave dell'amico
+function lentOut() { rollQuota(); return !!lentStopD && lentStopD === quota.d && /^prestata:/.test(settings.gbKey || ''); }   // finite le tue ricerche di oggi con l’API dell'amico
 function googleLeft(extra) { return !settings.gbKey || (!lentOut() && gUsed() < (extra ? G_EXTRA : G_STOP)); }
 function lentFetch(u, da) {
   var S = window.NLSocial, no = { ok: false, status: 429, local: true, json: function () { return Promise.resolve({}); } };
@@ -195,7 +196,7 @@ function lentFetch(u, da) {
     if (tot > 0) { shared.g = tot; shared.d = quota.d; }
     if (stop === 'mio' && lentStopD !== quota.d) {
       lentStopD = quota.d; ls.set(LENT_STOP, lentStopD);
-      toast('Per oggi hai finito le ricerche con la chiave di ' + (lent().nome || 'un amico') + ': fino a domattina cerco in Open Library e nelle biblioteche.');
+      toast('Per oggi hai finito le ricerche con l’API di ' + (lent().nome || 'un amico') + ': fino a domattina cerco in Open Library e nelle biblioteche.');
     } else if (stop === 'no') emit('lentGone');          // prestito tolto: amici.js rilegge e torna alle tue impostazioni
     if (!$('#optSheet').hidden) updateQuotaInfo();
     return r;
@@ -203,13 +204,13 @@ function lentFetch(u, da) {
 }
 function updateQuotaInfo() {
   var nf = new Intl.NumberFormat('it-IT'), g = gUsed(), sb = sUsed();
-  var withG = g > quota.g ? ' (con chi usa la stessa chiave)' : '', withS = sb > quota.s ? ' (con chi usa lo stesso worker)' : '';
+  var withG = g > quota.g ? ' (con chi usa la stessa API)' : '', withS = sb > quota.s ? ' (con chi usa lo stesso worker)' : '';
   $('#gbCount').innerHTML = 'Richieste oggi: <b>' + nf.format(g) + '</b>' + (settings.gbKey
     ? withG + ' su 1.000 · si azzera verso le 9' + (g >= G_STOP ? '. Limite quasi raggiunto: le ricerche riprendono domattina' : g >= G_EXTRA ? '. Le copertine grandi aspettano domani' : '')
-    : ' · senza chiave il limite lo decide Google');
+    : ' · senza API il limite lo decide Google');
   $('#sbnCount').innerHTML = 'Richieste oggi: <b>' + nf.format(sb) + '</b>' + (settings.sbnUrl ? withS + ' su 100.000 · si azzera nella notte' + (sb >= S_STOP ? '. Limite quasi raggiunto: il catalogo SBN riprende domani' : '') : '');
 }
-/* Worker SBN e chiave Google: quelli usati restano tra i «salvati» (anche dopo «Cancella») per rimetterli con un tocco */
+/* Worker SBN e API Google: quelli usati restano tra i «salvati» (anche dopo «Cancella») per rimetterli con un tocco */
 var LS_SAVED = 'catalogo-libri-saved', saved = { sbn: [], key: [] };
 function loadSaved() {
   try {
@@ -260,7 +261,7 @@ function svcFold(k, open) {
   var o = open == null ? !svcOpenK[k] : !!open; svcOpenK[k] = o;
   box.querySelector('.svc-tog').setAttribute('aria-expanded', o ? 'true' : 'false'); box.querySelector('.svc-b').hidden = !o; box.classList.toggle('open', o);
 }
-function gbMask(v) { return v.length > 10 ? v.slice(0, 4) + '…' + v.slice(-3) : '…'; }   // «AIza…7Gt»: la chiave non resta in vista (giro 5)
+function gbMask(v) { return v.length > 10 ? v.slice(0, 4) + '…' + v.slice(-3) : '…'; }   // «AIza…7Gt»: l’API non resta in vista (giro 5)
 $('#optSheet').addEventListener('click', function (e) {
   if (e.target.closest('#gbLeak')) { window.NLRicerche.leak(); return; }
   var t = e.target.closest('.svc-tog'); if (t) { svcFold(t.closest('.svc').id === 'svcSbn' ? 'sbn' : 'key'); return; }
@@ -277,17 +278,17 @@ function renderSvc() {
   if (document.activeElement !== gi) { gi.value = lk ? '' : masked ? gbMask(gk) : gk; gi.readOnly = masked; gi.dataset.mask = masked ? '1' : ''; }
   $('#gbShow').hidden = !gk || lk; $('#gbShow').textContent = gbShown ? 'Nascondi' : 'Mostra'; $('#gbShow').setAttribute('aria-pressed', gbShown ? 'true' : 'false');
   $('#sbnSt').textContent = ls_ ? 'Prestato da ' + who : sb ? 'In uso' : 'Non impostato'; $('#sbnSt').className = 'svc-st' + (sb ? ' on' : '');
-  $('#gbSt').textContent = lk ? 'Prestata da ' + who : gk ? 'In uso' : 'Nessuna chiave'; $('#gbSt').className = 'svc-st' + (gk ? ' on' : '');
+  $('#gbSt').textContent = lk ? 'Prestata da ' + who : gk ? 'In uso' : 'Nessuna API'; $('#gbSt').className = 'svc-st' + (gk ? ' on' : '');
   $('#gbGuide').hidden = !!mine('key'); $('#sbnGuide').hidden = !!mine('sbn');
   $('#sbnClear').hidden = !sb || ls_; $('#gbClear').hidden = !gk || lk;
   $('#gbLeak').hidden = !mine('key') || !(window.NLRicerche && window.NLRicerche.leak);
-  [['sbn', ls_, 'il worker SBN di '], ['key', lk, 'la chiave Google di ']].forEach(function (x) {
+  [['sbn', ls_, 'il worker SBN di '], ['key', lk, 'l’API Google di ']].forEach(function (x) {
     var box = $(x[0] === 'sbn' ? '#svcSbn' : '#svcKey'), row = box.querySelector('.svc-row'), note = box.querySelector('.svc-lent');
     row.hidden = x[1];
     if (x[1] && !note) { note = document.createElement('p'); note.className = 'hint svc-lent'; row.parentNode.insertBefore(note, row); }
     if (note) { note.hidden = !x[1]; if (x[1]) { var my = mine(x[0]);   // «Usa la tua»: ognuno deve poter usare i suoi (Piero, 17/11/2026)
       note.innerHTML = 'Usi ' + esc(x[2] + who) + ': non si vede e non si può prestare ad altri. <button type="button" class="link svc-own" data-own="' + (x[0] === 'sbn' ? 'sbn' : 'gb') + '">' +
-        (my ? (x[0] === 'sbn' ? 'Usa il tuo worker' : 'Usa la tua chiave') + ' (' + esc(svcShort(x[0], my)) + ')' : (x[0] === 'sbn' ? 'Inserisci il tuo worker' : 'Inserisci la tua chiave')) + '</button>'; } }
+        (my ? (x[0] === 'sbn' ? 'Usa il tuo worker' : 'Usa la tua API') + ' (' + esc(svcShort(x[0], my)) + ')' : (x[0] === 'sbn' ? 'Inserisci il tuo worker' : 'Inserisci la tua API')) + '</button>'; } }
   });
   ['sbn', 'key'].forEach(function (k) {
     var cur = svcVal(k), box = $(k === 'sbn' ? '#sbnSaved' : '#gbSaved'), html = '';
@@ -296,15 +297,15 @@ function renderSvc() {
       html += '<span class="schip"><button type="button" class="schip-use" data-k="' + k + '" data-i="' + i + '" title="Usa ' + esc(svcShort(k, x)) + '">' + esc(svcShort(k, x)) + '</button>' +
         '<button type="button" class="schip-x" data-k="' + k + '" data-forget="' + i + '" aria-label="Togli ' + esc(svcShort(k, x)) + ' dai salvati">×</button></span>';
     });
-    box.innerHTML = html ? '<span class="svc-saved-l">' + (k === 'sbn' ? 'Worker salvati:' : 'Chiavi salvate:') + '</span>' + html : '';
+    box.innerHTML = html ? '<span class="svc-saved-l">' + (k === 'sbn' ? 'Worker salvati:' : 'API salvate:') + '</span>' + html : '';
     box.hidden = !html;
   });
   var rs = !sb && saved.sbn.length, rk = !gk && saved.key.length;   // (con quelli di un amico in uso sb/gk ci sono: niente «Rimetti»)
   $('#svcRestore').hidden = !(rs || rk);
-  $('#svcRestore').textContent = rs && rk ? 'Rimetti chiave e worker salvati' : rs ? 'Rimetti il worker salvato' : 'Rimetti la chiave salvata';
+  $('#svcRestore').textContent = rs && rk ? 'Rimetti API e worker salvati' : rs ? 'Rimetti il worker salvato' : 'Rimetti l’API salvata';
   updateQuotaInfo();
 }
-/* fetch che conta le richieste e, con la chiave, non supera il limite giornaliero di Google (ne lascia un margine) */
+/* fetch che conta le richieste e, con l’API, non supera il limite giornaliero di Google (ne lascia un margine) */
 function apiFetch(url, init) {
   var u = String(url);
   if (/googleapis\.com\/books\//.test(u)) {
@@ -357,9 +358,11 @@ function lookupOpts() { return { gbKey: settings.gbKey, sbnUrl: settings.sbnUrl 
 /* ricerca per ISBN: prima l'archivio comune (modulo ricerche.js: libri gia' cercati da altri, senza Google), poi le banche dati; il risultato va nell'archivio */
 async function findIsbn(code) {
   var A = window.NL && window.NL.archive;
-  if (A && A.get) { try { var hit = await A.get(code); if (hit) return hit; } catch (e) { nlErr(e); } }
+  var hit = null;
+  if (A && A.get) { try { hit = await A.get(code); if (hit && !hit.part) return hit; } catch (e) { nlErr(e); } }
   var res = await L.lookupIsbn(code, lookupOpts());
   if (res && A && A.put) { try { A.put(code, res); } catch (e) { nlErr(e); } }
+  if (!res && hit) { delete hit.part; return hit; }   // solo l'archivio lo conosce (es. libro scritto a mano e approvato, 029)
   return res;
 }
 function hasData(b) { return !!(b.t || b.a || b.e || b.y || b.i || b.c != null || b.n); }
@@ -482,7 +485,9 @@ function showBook(id) {
   if (b.w !== (tab === 'wish')) setTab(b.w ? 'wish' : 'lib');
   if (!visible().some(function (x) { return x.id === id; })) clearFilters();
   if (settings.view === 'grid') { openFromGrid(id); return true; }
+  if (!settings.openAll) state.books.forEach(function (x) { if (x.id !== id) openState[x.id] = false; });   // una scheda alla volta: dal restyle e' una pagina intera (19/11/2026)
   openState[id] = true; renderList();
+  if (!settings.openAll) { try { if (cardPushed) history.replaceState({ card: id }, ''); else history.pushState({ card: id }, ''); cardPushed = id; } catch (e) { nlErr(e); } }   // Indietro la chiude
   var el = rowEl(id); if (el) el.scrollIntoView({ block: 'start' });
   return true;
 }
@@ -535,8 +540,10 @@ function loadAll() {
     settings.themeV2 = true;
     settings.pal = s.palV2 && PALS[s.pal] ? s.pal : 'bosco';   // da questa versione il verde (Bosco) e' la palette principale
     settings.palV2 = true;
-    settings.ft = FONTS_T.indexOf(s.ft) >= 0 ? s.ft : 'literata';
+    // restyle (19/11/2026, Piero): tutti a Bricolage + Plex, una volta sola; chi aveva scelto Lora o Roboto li tiene (Literata era la partenza di prima)
+    settings.ft = s.ftV3 ? (FONTS_T.indexOf(s.ft) >= 0 ? s.ft : 'bricolage') : (s.ft === 'lora' || s.ft === 'roboto' ? s.ft : 'bricolage');
     settings.fb = FONTS_B.indexOf(s.fb) >= 0 ? s.fb : 'plex';
+    settings.ftV3 = true;
     settings.installed = s.installed === true && s.instScope === location.pathname.replace(/[^/]*$/, '');   // installata a questo indirizzo (non a uno vecchio)
     settings.instScope = settings.installed ? s.instScope : '';
     settings.name = L.str(s.name).replace(/\s+/g, ' ').trim().slice(0, 30);

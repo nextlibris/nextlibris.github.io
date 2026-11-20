@@ -104,6 +104,20 @@ function applyResult(b, r, code) {
 var KDP_E = 'Amazon (pubblicazione in proprio)';
 function isKdp(b) { return /^9798/.test(L.toIsbn13(b && b.i) || ''); }
 function markKdp(b) { if (b && b.nf && !b.t && !b.e && isKdp(b)) { b.e = KDP_E; b.g = b.g.filter(function (k) { return k !== 'e'; }); return true; } return false; }
+/* 029 (Piero, 19/11/2026): libro che nessuna banca dati conosce, completato a mano (titolo e autore) o riconosciuto dalla foto:
+   si propone all'archivio comune dopo una pausa; entra solo quando l'amministratore lo approva */
+var propT = {}, proposed = {};
+function proposeLater(b) {
+  var code = L.toIsbn13(b && b.i);
+  if (guest || !code || !b.t || !b.a || !b.nf || !window.NL || !NL.archive || !NL.archive.propose) return;
+  clearTimeout(propT[b.id]);
+  propT[b.id] = setTimeout(async function () {
+    delete propT[b.id];
+    var x = get(b.id); if (!x || !x.t || !x.a || L.toIsbn13(x.i) !== code) return;
+    var r = await NL.archive.propose(code, x);
+    if (r === 'ok' && !proposed[code]) { proposed[code] = 1; toast('Grazie! Controlliamo i dati: poi chi cerca questo libro lo troverà già pronto.'); }
+  }, 4000);
+}
 function guessEditor(b) {
   if (b.e) return false;
   var g = L.guessPublisher(b.i, state.books);
@@ -175,11 +189,12 @@ async function doLookup(id) {
       s.retry = 'lookup';
       if (rate && s.tries > waits.length) {
         s.st = 'error'; heardFail(id);
-        s.err = settings.gbKey ? 'Google Libri ha raggiunto il limite di richieste della tua chiave. Riprova più tardi.'
-          : 'Google Libri rifiuta le richieste senza chiave (limite raggiunto). Soluzione stabile: inserisci la tua chiave gratuita in Menu › Impostazioni › Ricerca dei libri. Intanto puoi premere Riprova.';
+        s.err = e.nokey ? 'Open Library e le biblioteche non conoscono questo libro e l’API Google Libri che ti avevano prestato non c’è più. Con una tua API (è gratis) lo trovi: Indice › Ricerca dei libri. Intanto puoi premere Riprova o fotografare la copertina.'
+          : settings.gbKey ? 'Google Libri ha raggiunto il limite di richieste della tua API. Riprova più tardi.'
+          : 'Open Library e le biblioteche non conoscono questo libro e senza un’API Google Libri Google non risponde. Con la tua API (è gratis) lo trovi: Indice › Ricerca dei libri. Intanto puoi premere Riprova o fotografare la copertina.';
       } else {
         s.st = 'wait';
-        s.err = (rate ? (settings.gbKey && !googleLeft(false) ? 'Ricerche di oggi su Google quasi finite (' + quota.g + ' su 1.000): riprovo con le altre banche dati tra ' + when + ' (Google riparte verso le 9 del mattino)' : 'Google Libri è al limite di richieste' + (settings.gbKey ? '' : ' (senza chiave)')) : (navigator.onLine === false ? 'Senza connessione' : 'Connessione debole')) + (rate && settings.gbKey && !googleLeft(false) ? '.' : ': riprovo da solo tra ' + when + '.');
+        s.err = (rate ? (settings.gbKey && !googleLeft(false) ? 'Ricerche di oggi su Google quasi finite (' + quota.g + ' su 1.000): riprovo con le altre banche dati tra ' + when + ' (Google riparte verso le 9 del mattino)' : (e.nokey ? 'Non lo trovo nelle banche dati libere e l’API Google Libri che ti avevano prestato non c’è più' : settings.gbKey ? 'Google Libri è al limite di richieste' : 'Non lo trovo nelle banche dati libere e senza un’API Google Libri Google non risponde')) : (navigator.onLine === false ? 'Senza connessione' : 'Connessione debole')) + (rate && settings.gbKey && !googleLeft(false) ? '.' : ': riprovo da solo tra ' + when + '.');
         clearTimeout(s.timer);
         s.timer = setTimeout(function () { var x = S[id]; if (x && x.st === 'wait' && get(id)) { x.st = 'queued'; refreshRow(id); lookupPool(function () { return doLookup(id); }); } }, sec * 1000);
       }
@@ -285,6 +300,7 @@ function applyCandidate(id, c) {
   if (!b.img && s.big && !coverURL[id]) saveCoverData(id, s.big);
   b.g = (keep ? ['y'] : ['e', 'y', 'i']).filter(function (k) { return b[k] && !(k === 'e' && b.e === KDP_E); });
   if (s.price != null && b.c == null) b.c = s.price;
+  if (keep) proposeLater(b);                       // riconosciuto dalla foto ma il suo ISBN non lo conosce nessuno (029)
   b.nf = false;
   ['st', 'cands', 'lines', 'price', 'err', 'retry', 'keep'].forEach(function (k) { delete s[k]; });
   touch(); refreshRow(id); updateSummary();
@@ -815,7 +831,7 @@ function onScanned(code) {
   if (settings.price) { priceTarget = book.id; priceBar(PRICE_HINT); }
   res.done.then(function () {
     if (!scanning) return;
-    scanMsg(book.t ? '✓ ' + book.t : (book.nf ? 'Non trovato nelle banche dati: lo completi dopo.' : 'Titolo da completare più tardi.'));
+    scanMsg(book.t ? '✓ ' + book.t : (book.nf ? (isKdp(book) ? 'Pubblicato in proprio su Amazon: non è nelle banche dati. Aprilo e fotografa la copertina.' : 'Non trovato nelle banche dati: lo completi dopo.') : 'Titolo da completare più tardi.'));
   });
 }
 /* ---------- «Ce l'ho già?»: controlla senza aggiungere ---------- */
@@ -833,6 +849,19 @@ function ppInfo(b) {
 function shelfLine(b) {
   return [b.a, b.sh ? 'Scaffale: ' + b.sh : '', readLabel(b)].filter(Boolean).join(' · ');
 }
+/* stesso libro in un'altra edizione: stesso titolo (senza sottotitolo) e un cognome dell'autore in comune (Piero, 19/11/2026) */
+function edKey(t) { return L.norm(String(t || '').split(/\s[:\-–—]\s|[:.(]/)[0]).replace(/[^a-z0-9]+/g, ' ').trim(); }
+function edAut(a) { return L.norm(a).split(/[^a-z]+/).filter(function (w) { return w.length > 2; }); }
+function otherEdition(info, code) {
+  if (!info || !info.t) return null;
+  var k = edKey(info.t), au = edAut(info.a);
+  if (!k) return null;
+  return state.books.find(function (x) {
+    if (x.w || x.xs || L.toIsbn13(x.i) === code || edKey(x.t) !== k) return false;
+    if (!au.length) return true;
+    var xa = edAut(x.a); return !xa.length || au.some(function (w) { return xa.indexOf(w) >= 0; });
+  }) || null;
+}
 function showRes(code, kind, book, info) {
   resCode = code; resKind = kind;
   var o = '';
@@ -849,7 +878,9 @@ function showRes(code, kind, book, info) {
       '<div class="res-b"><button class="btn primary" data-act="bought">L\'ho comprato: spostalo in Libreria</button></div>';
   } else if (kind === 'no') {
     var t = info === undefined ? 'Cerco il titolo…' : info ? info.t : (info === null ? 'Titolo sconosciuto alle banche dati' : 'Titolo non disponibile (connessione)');
-    o = '<p class="res-h no">✗ Non ce l\'hai</p><p class="res-t">' + esc(t) + '</p>' +
+    var oe = otherEdition(info, code);
+    o = (oe ? '<p class="res-h ed">≈ Ce l\'hai in un\'altra edizione</p><p class="res-s">' + esc([oe.e, oe.y].filter(Boolean).join(', ') || ('ISBN ' + (oe.i || '—'))) + (shelfLine(oe) ? ' · ' + esc(shelfLine(oe)) : '') + '</p><p class="res-s">Questa edizione:</p>'
+      : '<p class="res-h no">✗ Non ce l\'hai</p>') + '<p class="res-t">' + esc(t) + '</p>' +
       (info && info.a ? '<p class="res-s">' + esc(info.a) + '</p>' : '') + '<p class="res-s">ISBN ' + esc(code) + '</p>' +
       '<div class="res-b"><button class="btn primary" data-act="addlib">Aggiungi alla Libreria</button><button class="btn" data-act="addwish">Aggiungi ai Desideri</button></div>';
   } else {

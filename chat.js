@@ -183,6 +183,8 @@ var curWasReq = false, longAt = 0;
 /* ---------- disegno ---------- */
 function paint() {
   var el = $('chSheet'); if (!el || el.hidden) return;
+  el.dataset.v = view;                            // restyle pezzo 4: nella chat aperta la barra in basso non copre il campo
+
   if (view === 'conv') return paintConv();
   if (view === 'grp' || view === 'gadd') return paintPick();
   if (view === 'ginfo') return paintInfo();
@@ -323,7 +325,7 @@ document.addEventListener('visibilitychange', function () { if (document.visibil
 function convName() { var c = curChat(); return c ? c.nome : draftTo ? draftTo.nome : ''; }
 function convOther() { var c = curChat(); return c ? c.altro : draftTo ? draftTo.id : null; }
 function paintConv(scroll) {
-  var el = $('chSheet'); if (!el || el.hidden || view !== 'conv') return;
+  var el = $('chSheet'); if (!el || el.hidden || view !== 'conv') return; el.dataset.v = 'conv';
   var head = $('chHead'), body = $('chBody'), foot = $('chFoot'), c = curChat(), name = convName(), other = convOther(), grp = c && c.tipo === 'gruppo';
   var sub = [grp && c.membri ? c.membri + ' persone' : '', c && c.silenziata ? 'Silenziata' : ''].filter(Boolean).join(' · ');
   head.innerHTML = '<button class="ico ch-back" type="button" data-c="back" aria-label="Indietro">‹</button>' +
@@ -770,7 +772,7 @@ function bookCard(id) {
   var el = document.createElement('div'); el.className = 'sheet ch-menu ch-bk'; el.id = 'chBk';
   el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-label="' + esc(L.t || 'Libro') + '"><div class="ch-bkc">' +
     (img ? '<img src="' + esc(img) + '" alt="" referrerpolicy="no-referrer">' : '<span class="ch-bimg" aria-hidden="true">📚</span>') +
-    '<div><b>' + esc(L.t || 'Un libro') + '</b>' + (L.a ? '<span>' + esc(L.a) + '</span>' : '') + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div></div>' +
+    '<div><b>' + esc(L.t || 'Un libro') + '</b>' + (L.a ? '<span>' + esc(L.a) + '</span>' : '') + (sub ? '<small>' + esc(sub) + '</small>' : '') + (L.i ? '<small>ISBN ' + esc(L.i) + '</small>' : '') + '</div></div>' +
     (have ? '<p class="ch-bks ok">✓ Ce l\'hai già nella Libreria</p>' : wish ? '<p class="ch-bks ok">★ È già nei tuoi Desideri</p>' : '') +
     '<div class="ch-bkb">' + (have || wish ? '' : '<button type="button" class="btn primary" data-i="wish">Aggiungi ai Desideri</button>') + '<button type="button" class="btn" data-i="x">Chiudi</button></div></div>';
   document.body.appendChild(el);

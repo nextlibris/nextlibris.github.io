@@ -38,6 +38,7 @@ list.addEventListener('change', function (e) {
   if (!b) return;
   if (el.dataset.k === 'se' || el.dataset.k === 'sn' || el.dataset.k === 'sq') seriesChanged(b, row, el.dataset.k);
   if (el.dataset.k === 'c') el.value = b.c == null ? '' : L.fmtNum(b.c);
+  if (['t', 'a', 'e', 'y', 'pg'].indexOf(el.dataset.k) >= 0) proposeLater(b);   // non trovato e completato a mano: all'archivio comune (029)
   if (el.dataset.k === 'i') {
     var code = L.toIsbn13(b.i);
     if (code) {
@@ -573,20 +574,20 @@ $('#sbnUrl').addEventListener('change', function (e) {
   else toast('Worker tolto: ora cerco senza il catalogo SBN.', { label: 'Annulla', fn: function () { setSvc('sbn', before); } });
 });
 $('#gbShow').addEventListener('click', function () { gbShown = !gbShown; renderSvc(); });
-$('#gbKey').addEventListener('click', function (e) { if (e.target.dataset.mask === '1') { gbShown = true; renderSvc(); e.target.focus(); } });   // tocco sulla chiave coperta: si scopre per cambiarla
+$('#gbKey').addEventListener('click', function (e) { if (e.target.dataset.mask === '1') { gbShown = true; renderSvc(); e.target.focus(); } });   // tocco sull’API coperta: si scopre per cambiarla
 $('#gbKey').addEventListener('change', function (e) {
   if (e.target.dataset.mask === '1') return;
   var v = e.target.value.replace(/\s+/g, ''), before = settings.gbKey;
   if (v === before) { e.target.value = v; return; }
   e.target.value = v; setSvc('key', v);
-  if (!v) toast('Chiave tolta: ora cerco su Google senza chiave.', { label: 'Annulla', fn: function () { setSvc('key', before); } });
-  else toast(/^AIza[\w-]{30,}$/.test(v) ? 'Chiave in uso. Premi «Prova la ricerca ISBN» per controllare.' : 'Chiave in uso, ma non sembra una chiave Google (di solito inizia con AIza e ha 39 caratteri): controlla.');
+  if (!v) toast('API tolta: ora cerco su Google senza API.', { label: 'Annulla', fn: function () { setSvc('key', before); } });
+  else toast(/^AIza[\w-]{30,}$/.test(v) ? 'API in uso. Premi «Prova la ricerca ISBN» per controllare.' : 'API in uso, ma non sembra un’API Google (di solito inizia con AIza e ha 39 caratteri): controlla.');
 });
 function clearSvc(k) {
   var before = svcVal(k);
   if (!before) return;
   setSvc(k, '');
-  toast(k === 'sbn' ? 'Worker tolto. Resta tra i salvati.' : 'Chiave tolta. Resta tra le salvate.',
+  toast(k === 'sbn' ? 'Worker tolto. Resta tra i salvati.' : 'API tolta. Resta tra le salvate.',
     { label: 'Annulla', fn: function () { setSvc(k, before); } });
 }
 $('#sbnClear').addEventListener('click', function () { clearSvc('sbn'); });
@@ -596,7 +597,7 @@ $('#svcRestore').addEventListener('click', function () {
   if (!settings.sbnUrl && saved.sbn[0]) { setSvc('sbn', saved.sbn[0]); did.push('sbn'); }
   if (!settings.gbKey && saved.key[0]) { setSvc('key', saved.key[0]); did.push('key'); }
   if (!did.length) return;
-  toast(did.length === 2 ? 'Chiave e worker rimessi.' : did[0] === 'sbn' ? 'Worker rimesso.' : 'Chiave rimessa.',
+  toast(did.length === 2 ? 'API e worker rimessi.' : did[0] === 'sbn' ? 'Worker rimesso.' : 'API rimessa.',
     { label: 'Annulla', fn: function () { did.forEach(function (k) { setSvc(k, ''); }); } });
 });
 $('#svcSbn').parentNode.addEventListener('click', function (e) {
@@ -605,12 +606,12 @@ $('#svcSbn').parentNode.addEventListener('click', function (e) {
     var k = u.dataset.k, v = saved[k][+u.dataset.i], before = svcVal(k);
     if (!v) return;
     setSvc(k, v);
-    toast(k === 'sbn' ? 'Worker rimesso: ' + svcShort(k, v) + '.' : 'Chiave rimessa: ' + svcShort(k, v) + '.', { label: 'Annulla', fn: function () { setSvc(k, before); } });
+    toast(k === 'sbn' ? 'Worker rimesso: ' + svcShort(k, v) + '.' : 'API rimessa: ' + svcShort(k, v) + '.', { label: 'Annulla', fn: function () { setSvc(k, before); } });
   } else if (x) {
     var k2 = x.dataset.k, i2 = +x.dataset.forget, v2 = saved[k2][i2];
     if (!v2) return;
     saved[k2].splice(i2, 1); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc();
-    toast((k2 === 'sbn' ? 'Worker tolto dai salvati.' : 'Chiave tolta dalle salvate.'), { label: 'Annulla', fn: function () { saved[k2].splice(i2, 0, v2); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc(); } });
+    toast((k2 === 'sbn' ? 'Worker tolto dai salvati.' : 'API tolta dalle salvate.'), { label: 'Annulla', fn: function () { saved[k2].splice(i2, 0, v2); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc(); } });
   }
 });
 $('#btnClearGuess').addEventListener('click', function () {
@@ -937,8 +938,8 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
    Un modulo si toglie cancellando i suoi file e le sue righe in index.html e sw.js (vedi togli_modulo.py nel ramo prove). ---- */
 window.NL = {
   openPh: function (src, cap) { openPh(src, cap); },   // foto dell'amico a tutto schermo (giro 10)
-  inst: { standalone: isStandalone, kind: browserKind, go: doInstall, ios: function () { return /^ios/.test(browserKind()); } },   // per la guida (giro 10)
-  setKey: function (v) { setSvc('key', v); }, svcAll: function () { return svcAll(); }, svcPurge: function (v) { svcPurge(v); }, openDon: function () { openDon(); },   // dalla guida della chiave (18/11/2026)
+  inst: { standalone: isStandalone, kind: browserKind, go: doInstall, ios: function () { return /^ios/.test(browserKind()); }, can: function () { return !!deferred; } },   // can: il browser offre «Installa» (schede di benvenuto)   // per la guida (giro 10)
+  setKey: function (v) { setSvc('key', v); }, svcAll: function () { return svcAll(); }, svcPurge: function (v) { svcPurge(v); }, openDon: function () { openDon(); },   // dalla guida dell’API (18/11/2026)
   ownKey: function () { return mine('key'); },
   qThumb: function (c) { return qThumb(c); },   // miniatura della foto di una citazione (profilo, 18/11/2026)   // la TUA chiave, anche mentre usi quella di un amico (giro 8)
   renderOwner: function () { renderOwner(); }, emit: function (n, a) { emit(n, a); },   // (nella 104.8 queste due erano finite dentro il commento: rimesse)
@@ -952,7 +953,7 @@ window.NL = {
   setFlt: function (v) { flt = v; collapseCards(); renderList(); updateSummary(); if (typeof updateActiveFilters === 'function') updateActiveFilters(); }, flt: function () { return flt; }, goal: function () { return settings.goal || 0; },
   closeDrawer: function () { closeDrawer(); }, fromMenu: fromMenu, refresh: function () { renderList(); updateSummary(); },
   icon: icon, setTab: function (t) { setTab(t); }, openMenu: function () { openDrawer('opt'); }, openSugg: function (t) { openSugg(t); },
-  wdBookCountry: wdBookCountry, wdFlag: wdFlag, wdFlagImg: wdFlagImg, wdCName: wdCName, films: function () { return filmsMine(); }, openFilms: function () { openFilms(); }, openWorks: function () { openWorks('', '', true); },   // Wikidata (giro 2)
+  wdBookCountry: wdBookCountry, wdCountry: wdCountry, wdFlag: wdFlag, wdFlagImg: wdFlagImg, wdCName: wdCName, films: function () { return filmsMine(); }, openFilms: function () { openFilms(); }, openWorks: function () { openWorks('', '', true); },   // Wikidata (giro 2)
   openQuotes: function () { openAllQuotes(); }, openStats: function () { openStats(); }, openExport: function () { openExport(); }, nQuotes: function () { return allQuotes().length; },
   updateStick: function () { updateStick(); }, summary: function () { updateSummary(); }, autosize: function (el) { autosizeAll(el); },
   rdLong: function (v) { return rdLong(v); }, get: function (id) { return get(id); }, itDate: function (d) { return L.itDate(d); }, refreshRow: function (id) { refreshRow(id); },

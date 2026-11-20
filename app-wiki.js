@@ -2,7 +2,7 @@
    Paese degli autori (statistiche, filtro, Raggruppa per, Stagione in libri), film e serie TV tratti dai libri
    (riga nella scheda, «Dai tuoi libri al cinema» in «Per te»), opere di un autore («Le sue opere» in Info Autore, «Per autore» nel +).
    Script classico come le altre parti: usa le loro funzioni globali e viene prima di app-avvio.js.
-   Tutto gratis e senza chiave: it.wikipedia.org (auLookup, per trovare la voce) e query.wikidata.org (una domanda per autore, salvata sul telefono). */
+   Tutto gratis e senza API: it.wikipedia.org (auLookup, per trovare la voce) e query.wikidata.org (una domanda per autore, salvata sul telefono). */
 'use strict';
 var WD_LS = 'catalogo-libri-auwd', WD_RETRY = 30 * 864e5, WD_V = 3, WD_API = 'https://query.wikidata.org/sparql?format=json&query=';
 var wdo = null, wdBusy = false, wdFails = 0, wdTimer = 0, wdPaintT = 0, wdNames = {}, wdCodes = {}, wdDN = null;
@@ -378,13 +378,23 @@ function filmLine(f) {                                    // «🎬 Il Gattopard
   return f.u ? '<a class="fl-row" href="' + esc(f.u) + '" target="_blank" rel="noopener" title="Apri su Wikipedia">' + inner + '<span class="fl-go" aria-hidden="true">›</span></a>'
     : '<div class="fl-row">' + inner + '</div>';
 }
-function filmInner(b) {                                   // sezione «Dal libro»: prima i film, poi le serie, in ordine di anno
+function filmInner(b) {                                   // sezione «Dal libro»: film e serie insieme, dal più recente (Piero, 19/11/2026)
   var fs = wdFilms(b);
   if (!fs.length) return '';
-  var by = function (x, y) { return (x.y || 9999) - (y.y || 9999); };
-  var all = fs.filter(function (f) { return !f.s; }).sort(by).concat(fs.filter(function (f) { return f.s; }).sort(by)), MAX = 6;
-  return '<p class="fl-h">Dal libro</p>' + all.slice(0, MAX).map(filmLine).join('') + (all.length > MAX ? '<p class="fl-more fm-x">e altri ' + (all.length - MAX) + '</p>' : '');
+  var all = fs.slice().sort(function (x, y) { return (y.y || 0) - (x.y || 0); }), MAX = 6;
+  if (all.length <= MAX) return '<p class="fl-h">Dal libro</p>' + all.map(filmLine).join('');
+  return '<p class="fl-h">Dal libro</p>' + all.slice(0, MAX).map(filmLine).join('') +
+    '<div class="fl-rest" hidden>' + all.slice(MAX).map(filmLine).join('') + '</div>' +
+    '<button type="button" class="fl-more" data-n="' + (all.length - MAX) + '" aria-expanded="false">Mostra altri ' + (all.length - MAX) + ' ⌄</button>';
 }
+document.addEventListener('click', function (e) {          // «Mostra altri N» / «Mostra meno»
+  var bt = e.target.closest && e.target.closest('.filmbox .fl-more');
+  if (!bt) return;
+  var rest = bt.previousElementSibling, open = rest.hidden;
+  rest.hidden = !open;
+  bt.setAttribute('aria-expanded', open ? 'true' : 'false');
+  bt.textContent = open ? 'Mostra meno ⌃' : 'Mostra altri ' + bt.dataset.n + ' ⌄';
+});
 function filmHTML(b, off) {                               // riga nella scheda del libro; vuota finche' non si trova un film
   if (off || !b.t) return '';
   var h = filmInner(b);

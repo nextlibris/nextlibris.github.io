@@ -30,6 +30,7 @@ html[data-card]:not([data-card="attuale"]) .row.open .facets .fchip{min-height:3
 .cv-ht h3.cv-not{color:var(--muted);font-style:italic}
 .cv-au{margin:0;font-size:16px;color:var(--ink)}
 .cv-meta{margin:6px 0 0;font-size:14px;line-height:1.4;color:var(--muted)}
+.cv-meta.cv-isbn{margin-top:2px;font-variant-numeric:tabular-nums}
 .cv-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0}
 .cv-au .au-name{padding:0;border:0;background:none;color:var(--ink);font:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;cursor:pointer}
 .cv-au .au-sep{color:var(--muted)}
@@ -45,7 +46,6 @@ html[data-card]:not([data-card="attuale"]) .row.open .facets .fchip{min-height:3
 .cv-acts2 .ico.act{min-height:40px}
 .cv-note{margin:0;padding:8px 12px;border-left:3px solid var(--line);font-size:14.5px;color:var(--ink)}
 .cv-editb{justify-self:start;gap:6px}
-.cv-done{display:block;margin:6px 0 10px auto}
 
 /* D: descrizione sobria sotto i dati; etichette-filtro in fondo */
 .cv-desc{border:0!important;background:none!important;padding:0!important;margin:0!important;box-shadow:none!important}
@@ -109,20 +109,42 @@ html[data-card]:not([data-card="attuale"]) .row.open .facets .fchip{min-height:3
   html[data-card="d"] .cv-view .cv-page:not(:has(>.cv-desc)){grid-template-columns:minmax(0,560px)}
   html[data-card="d"] .cv-view .cv-tags .cv-chips,html[data-card="d"] .cv-view .cv-tags{max-width:100%}
 }
-/* modifica (la matita) su schermo largo: gli stessi campi in colonna del telefono, in una colonna comoda, non la vecchia tabella */
-@media (min-width:880px){
-  html[data-card="d"] .row.open.cv-edit{grid-template-columns:minmax(0,1fr);column-gap:0;padding:14px 22px 18px}
-  html[data-card="d"] .row.open.cv-edit>*{grid-column:1 / -1;grid-row:auto;min-width:0;order:0;max-width:820px}
-  html[data-card="d"] body .row.open.cv-edit>.card-top{max-width:none;margin-right:0;padding-left:0!important;grid-row:auto!important}
-  html[data-card="d"] .row.open.cv-edit .head{display:grid;grid-template-columns:minmax(0,1fr)}
-  html[data-card="d"] .row.open.cv-edit.has-thumb .head{grid-template-columns:48px minmax(0,1fr)}
-  html[data-card="d"] body .row.open.cv-edit .head .thumb{display:block;grid-row:1 / span 2!important;grid-column:1!important;position:static}
-  html[data-card="d"] .row.open.cv-edit .meta{display:grid}
-  html[data-card="d"] .row.open.cv-edit .foot{display:flex}
-  html[data-card="d"] .row.open.cv-edit .tail{margin-left:auto}
-  html[data-card="d"] .row.open.cv-edit .foot .f-i{flex:1 1 150px}
-  html[data-card="d"] .row.open.cv-edit .more{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 72px}
-  html[data-card="d"] .row.open.cv-edit .more .f-n{grid-column:1 / -1}
-  html[data-card="d"] .row.open.cv-edit .ser{grid-template-columns:minmax(0,1fr) 64px 64px}
-  html[data-card="d"] .row.open.cv-edit .cv-done{margin:6px 0 10px 0;justify-self:start}
+/* «da verificare» accanto a un dato dedotto: piccolo, il tocco lo conferma (Piero, 19/11/2026) */
+.cv-guess{display:inline;margin:0 0 0 6px;padding:0 2px;border:0;background:none;font:400 12px/1.3 var(--font-body);color:var(--warn);text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer;white-space:nowrap;vertical-align:middle}
+.cv-guess::before{content:"· "}
+
+/* modifica (matita): la stessa pagina, i dati si scrivono nel loro posto (Piero, 19/11/2026: via la scheda a campi) */
+.cv-ed .cv-in{display:flex;align-items:baseline;gap:6px;min-width:0}
+.cv-ed .cv-in textarea,.cv-ed .cv-in input{display:block;flex:1 1 auto;width:100%;min-width:0;margin:0;padding:2px 2px;border:0;border-bottom:1px dashed var(--line);border-radius:4px 4px 0 0;background:transparent;color:var(--ink);font:inherit;resize:none;overflow:hidden}
+.cv-ed .cv-in textarea:focus,.cv-ed .cv-in input:focus{background:var(--surface2);border-bottom:1px solid var(--accent);outline:none}
+.cv-ed .cv-in ::placeholder{color:var(--muted);opacity:.75;font-style:italic}
+.cv-ht-ed{display:grid;gap:4px;min-width:0}
+.cv-in-t{font:700 22px/1.2 var(--font-display)}
+.cv-in-a{font-size:16px}
+.cv-in-e,.cv-in-line,.cv-in-i{font-size:14px;color:var(--muted)}
+.cv-in-line{display:flex;gap:14px;align-items:baseline}
+.cv-in-y{flex:0 0 auto}
+.cv-ed .cv-in-y input{width:5.5ch}
+.cv-ed .cv-in-pg input{width:6ch;flex:0 0 auto}
+.cv-in-i input{font-variant-numeric:tabular-nums}
+.cv-pre,.cv-suf{flex:none;font-size:14px;color:var(--muted)}
+.cv-ed .cv-in .cv-guess{flex:none}
+.cv-ex{display:grid;gap:6px}
+.cv-exr{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 14px;align-items:baseline;font-size:15px}
+.cv-exl{font-size:13px;color:var(--muted)}
+.cv-vol{grid-column:2;display:flex;gap:18px;font-size:14px}
+.cv-ed .cv-in-n{flex:none}
+.cv-ed .cv-in-n input{width:4ch;flex:none}
+.cv-exr-n{grid-template-columns:minmax(0,1fr)}
+.cv-exr-n .cv-exl{display:none}
+.cv-exr-n .cv-in{border-left:3px solid var(--line);padding-left:10px;font-size:14.5px}
+.cv-adds{display:flex;flex-wrap:wrap;gap:6px}
+.cv-add{min-height:34px;padding:3px 12px;border:1px dashed var(--line);border-radius:999px;background:none;color:var(--muted);font:500 13px var(--font-body);cursor:pointer}
+.cv-add:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:360px){.cv-exr{grid-template-columns:76px minmax(0,1fr)}}
+@media (min-width:760px){
+  html[data-card="d"] .cv-ed .cv-page>.cv-ex,html[data-card="d"] .cv-ed .cv-page>.cv-adds{grid-column:1}
+  html[data-card="d"] .cv-ed .cv-in-t{font-size:26px}
 }
+.cv-nat{display:inline-flex;align-items:center;gap:4px;margin-left:6px;font-size:13px;color:var(--muted);white-space:nowrap;vertical-align:1px}
+.cv-nat .cv-flag{width:18px;height:auto;border-radius:2px;box-shadow:0 0 0 1px #0001}

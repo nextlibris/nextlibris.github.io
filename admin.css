@@ -6,6 +6,8 @@
 .ad-tab{flex:none;display:flex;align-items:center;gap:4px;min-height:36px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink);font:600 14px/1.2 var(--font-body);cursor:pointer;white-space:nowrap}
 .ad-tab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#fff)}
 .ad-tab.on .fr-n{background:#fff;color:var(--accent)}
+.ad-h3{margin:14px 2px 2px;font-size:15px;font-weight:700}
+.ad-h3:first-child{margin-top:4px}
 .ad-sub{margin:8px 2px;font-size:13.5px;line-height:1.45;color:var(--muted)}
 .ad-more{margin:14px 0 6px;text-align:center}
 .ad-row .n{flex:none;color:var(--muted);font-size:20px}
@@ -55,7 +57,8 @@
 
 /* archivio */
 .ad-arf{display:flex;gap:8px;margin:6px 0 8px}
-.ad-arf input{flex:1;min-width:0}
+.ad .ad-arf input{flex:1 1 auto;width:auto;min-width:0}   /* il 100% generale spingeva fuori il tasto (Piero, 19/11/2026) */
+.ad-arb{flex:none;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;display:flex;align-items:center;justify-content:center}
 .ad-cov{flex:none;width:36px;height:52px;object-fit:cover;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px}
 .ad-big{display:block;max-width:120px;max-height:180px;margin:4px auto 6px;border-radius:6px}
 .ad-who{display:flex;gap:8px}

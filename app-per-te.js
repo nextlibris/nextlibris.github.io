@@ -66,7 +66,7 @@ async function runNews() {
   if (!googleLeft(true)) { renderNews('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
   $('#newsAgain').disabled = true; $('#newsMsg').textContent = 'Cerco le novità…';
   try { await findNews(); renderNews(); }
-  catch (e) { renderNews('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza chiave capita spesso') + '). Riprova più tardi.'); }
+  catch (e) { renderNews('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza API capita spesso') + '). Riprova più tardi.'); }
 }
 function openNews() {
   $('#newsAuto').checked = settings.newsAuto !== false;
@@ -220,7 +220,7 @@ async function runSugg() {
   if (!googleLeft(true)) { renderDisc('Le ricerche di Google per oggi le tengo per i libri nuovi: riprova domani.'); return; }
   $('#sgAgain').disabled = true; $('#sgDiscMsg').textContent = 'Cerco…';
   try { await findSugg(); renderDisc(); }
-  catch (e) { renderDisc('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza chiave capita spesso') + '). Riprova più tardi.'); }
+  catch (e) { renderDisc('Non sono riuscito a cercare (connessione o limite di Google' + (settings.gbKey ? '' : ': senza API capita spesso') + '). Riprova più tardi.'); }
 }
 function suggPick(k, wish) {
   var x = suggFresh().find(function (n) { return n.k === k; });

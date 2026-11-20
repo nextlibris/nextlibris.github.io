@@ -50,6 +50,8 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <link rel="stylesheet" href="ricerche.css"><!-- modulo: ricerche condivise e archivio comune -->
 <link rel="stylesheet" href="push.css"><!-- modulo: notifiche push -->
 <link rel="stylesheet" href="guida.css"><!-- modulo: guida di primo avvio e libreria di esempio -->
+<link rel="stylesheet" href="stile-c.css"><!-- stile «C · Schede» (restyle 19/11/2026) -->
+<link rel="stylesheet" href="stile-g.css"><!-- stile G «Pagina con l’Indice» (20/11/2026): ultimo, vale su tutto -->
 </head>
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/next-libris-192.png" alt="" width="168" height="168"><b>Next Libris</b><span id="splashWho"></span></div>
@@ -201,6 +203,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <div class="tres" id="isbnResBox" hidden>
       <p class="msg" id="isbnResMsg" aria-live="polite"></p>
       <ul class="cands" id="isbnRes"></ul>
+      <button class="btn" id="isbnKey" type="button" hidden>Come avere l’API, gratis ›</button>
       <button class="btn" id="isbnAsIs" type="button" hidden></button>
     </div>
     <div class="row-btns">
@@ -339,7 +342,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
     <h2 id="newsH">Novità dei tuoi autori</h2>
     <p class="msg" id="newsMsg" aria-live="polite"></p>
     <ul class="news" id="newsList"></ul>
-    <label class="check small"><input type="checkbox" id="newsAuto"><span>Controlla da solo ogni due settimane (serve la chiave Google)</span></label>
+    <label class="check small"><input type="checkbox" id="newsAuto"><span>Controlla da solo ogni due settimane (serve l’API Google)</span></label>
     <div class="row-btns">
       <button class="btn" type="button" id="newsAgain">Cerca di nuovo</button>
       <button class="btn" type="button" id="newsClose">Chiudi</button>
@@ -600,11 +603,11 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
         </fieldset>
         <fieldset class="choice">
           <legend>Carattere dei titoli</legend>
-          <div class="font-list"><label class="fopt"><input type="radio" name="ft" value="literata"><span class="fs ft-literata">Il nome della rosa</span><span class="fn"><b>Literata</b><small>Pensato per leggere libri (predefinito)</small></span></label><label class="fopt"><input type="radio" name="ft" value="garamond"><span class="fs ft-garamond">Il nome della rosa</span><span class="fn"><b>EB Garamond</b><small>Il classico dei libri stampati</small></span></label><label class="fopt"><input type="radio" name="ft" value="playfair"><span class="fs ft-playfair">Il nome della rosa</span><span class="fn"><b>Playfair Display</b><small>Elegante, da copertina</small></span></label><label class="fopt"><input type="radio" name="ft" value="lora"><span class="fs ft-lora">Il nome della rosa</span><span class="fn"><b>Lora</b><small>Morbido e caldo</small></span></label><label class="fopt"><input type="radio" name="ft" value="merriweather"><span class="fs ft-merriweather">Il nome della rosa</span><span class="fn"><b>Merriweather</b><small>Robusto, si legge bene in piccolo</small></span></label><label class="fopt"><input type="radio" name="ft" value="montserrat"><span class="fs ft-montserrat">Il nome della rosa</span><span class="fn"><b>Montserrat</b><small>Senza grazie, moderno</small></span></label><label class="fopt"><input type="radio" name="ft" value="roboto"><span class="fs ft-roboto">Il nome della rosa</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label></div>
+          <div class="font-list"><label class="fopt"><input type="radio" name="ft" value="bricolage"><span class="fs ft-bricolage">Il nome della rosa</span><span class="fn"><b>Bricolage Grotesque</b><small>Moderno e caldo (predefinito)</small></span></label><label class="fopt"><input type="radio" name="ft" value="literata"><span class="fs ft-literata">Il nome della rosa</span><span class="fn"><b>Literata</b><small>Pensato per leggere libri</small></span></label><label class="fopt"><input type="radio" name="ft" value="lora"><span class="fs ft-lora">Il nome della rosa</span><span class="fn"><b>Lora</b><small>Morbido, con le grazie</small></span></label><label class="fopt"><input type="radio" name="ft" value="roboto"><span class="fs ft-roboto">Il nome della rosa</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label></div>
         </fieldset>
         <fieldset class="choice">
           <legend>Carattere del testo</legend>
-          <div class="font-list"><label class="fopt"><input type="radio" name="fb" value="plex"><span class="fs fb-plex">Umberto Eco, Bompiani 1980</span><span class="fn"><b>IBM Plex Sans</b><small>Predefinito</small></span></label><label class="fopt"><input type="radio" name="fb" value="roboto"><span class="fs fb-roboto">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label><label class="fopt"><input type="radio" name="fb" value="lato"><span class="fs fb-lato">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Lato</b><small>Morbido e arioso</small></span></label><label class="fopt"><input type="radio" name="fb" value="atkinson"><span class="fs fb-atkinson">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Atkinson Hyperlegible</b><small>Disegnato per essere leggibilissimo</small></span></label><label class="fopt"><input type="radio" name="fb" value="lora"><span class="fs fb-lora">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Lora</b><small>Con le grazie, come un libro</small></span></label></div>
+          <div class="font-list"><label class="fopt"><input type="radio" name="fb" value="plex"><span class="fs fb-plex">Umberto Eco, Bompiani 1980</span><span class="fn"><b>IBM Plex Sans</b><small>Predefinito</small></span></label><label class="fopt"><input type="radio" name="fb" value="atkinson"><span class="fs fb-atkinson">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Atkinson Hyperlegible</b><small>Disegnato per essere leggibilissimo</small></span></label><label class="fopt"><input type="radio" name="fb" value="roboto"><span class="fs fb-roboto">Umberto Eco, Bompiani 1980</span><span class="fn"><b>Roboto</b><small>Quello di Android</small></span></label></div>
         </fieldset>
         <button class="btn" id="lookReset" type="button">Torna all'aspetto predefinito</button>
       </div>
@@ -623,8 +626,8 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       </fieldset>
     </section>
     <section class="opt-sec" data-sec="search" data-title="Ricerca dei libri">
-      <p class="hint">Chiave e worker sono facoltativi: servono a trovare più libri e ad avere dati più precisi.</p>
-      <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti chiave e worker salvati</button>
+      <p class="hint">API e worker sono facoltativi: servono a trovare più libri e ad avere dati più precisi.</p>
+      <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti API e worker salvati</button>
 
       <div class="svc svc-fold" id="svcKey">   <!-- sezioni richiudibili, Google sopra il worker (giro 5) -->
         <button type="button" class="svc-h svc-tog" aria-expanded="false" aria-controls="svcKeyB">
@@ -632,29 +635,29 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
           <span class="svc-st" id="gbSt"></span>
           <span class="svc-chev" aria-hidden="true"></span>
         </button>
-        <p class="hint svc-desc">Trova titoli, copertine e descrizioni nell'archivio di Google. Senza chiave l'app usa solo Open Library e trova meno libri.</p>
-        <button class="btn svc-guide" type="button" data-guide="key" id="gbGuide">Come si crea la chiave (gratis)</button>
+        <p class="hint svc-desc">Trova titoli, copertine e descrizioni nell'archivio di Google. Senza API l'app usa solo Open Library e trova meno libri.</p>
+        <button class="btn svc-guide" type="button" data-guide="key" id="gbGuide">Come si crea l’API (gratis)</button>
         <div class="svc-b" id="svcKeyB" hidden>
         <p class="svc-count" id="gbCount" aria-live="polite"></p>
         <div class="svc-row">
-          <label class="sr" for="gbKey">Chiave API di Google Libri</label>
-          <input type="text" id="gbKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla la chiave (inizia con AIza)">
+          <label class="sr" for="gbKey">API Google Libri (la chiave che inizia con AIza)</label>
+          <input type="text" id="gbKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla l’API (inizia con AIza)">
           <button class="btn svc-show" type="button" id="gbShow" aria-pressed="false" hidden>Mostra</button>
         </div>
-        <p class="hint svc-uff">Incolla la chiave solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>
+        <p class="hint svc-uff">Incolla l’API solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>
         <div class="svc-acts">
           <button class="btn svc-clear" id="gbClear" type="button" hidden>Cancella</button>
           <div class="svc-saved" id="gbSaved" hidden></div>
         </div>
-        <button class="link svc-leak" id="gbLeak" type="button" hidden>La mia chiave è finita in giro</button>
+        <button class="link svc-leak" id="gbLeak" type="button" hidden>La mia API è finita in giro</button>
         <details class="svc-how">
-          <summary>Come si crea la chiave (gratis, una volta sola)</summary>
+          <summary>Come si crea l’API (gratis, una volta sola)</summary>
           <ol class="hint keysteps">
           <li>Apri <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a> con il tuo account Google e crea un progetto.</li>
           <li>Apri <a href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">Books API</a> e premi «Abilita».</li>
           <li>Vai in <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credenziali</a> › «Crea credenziali» › «Chiave API».</li>
-          <li>Limita la chiave: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>
-          <li>Copia la chiave e incollala qui sopra.</li>
+          <li>Limita l’API: in «Restrizioni API» scegli solo <b>Books API</b>. La fatturazione non va attivata (di partenza è già spenta, non devi fare niente): così non si paga mai niente, qualunque cosa succeda.</li>
+          <li>Copia l’API e incollala qui sopra.</li>
         </ol>
         </details>
         </div>
@@ -837,7 +840,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <div class="dlist dmenu dset">
         <button type="button" class="dopt dset-t" id="goSettings" aria-expanded="false" aria-controls="setList"><span class="dset-i" aria-hidden="true"></span><span><b>Impostazioni</b><small>Account, amici, ricerca, aspetto</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
         <div class="dsub" id="setList" hidden>
-        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>Chiave Google, worker, SBN</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>API Google, worker, SBN</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt" data-sec="cards"><span><b>Aggiunta dei libri</b><small>Prezzo, suoni, fotocamera</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt" data-sec="look"><span><b>Aspetto</b><small>Tema, colori, caratteri</small></span><span class="n" aria-hidden="true">›</span></button>
         </div>
@@ -1050,7 +1053,8 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 <script src="chat.js" defer></script><!-- modulo: chat (giro 9b) -->
 <script src="ricerche.js" defer></script><!-- modulo: ricerche condivise e archivio comune -->
 <script src="push.js" defer></script><!-- modulo: notifiche push -->
-<script src="guida.js" defer></script><!-- modulo: guida di primo avvio e libreria di esempio -->
+<script src="guida.js" defer></script>
+<script src="stile-g.js" defer></script><!-- stile G: testatina, nastro, frase, linguette, Indice --><!-- modulo: guida di primo avvio e libreria di esempio -->
 <div id="printView" aria-hidden="true"></div>
 </body>
 </html>

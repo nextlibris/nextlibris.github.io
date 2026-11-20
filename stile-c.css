@@ -1,0 +1,673 @@
+/* Next Libris · stile «C · Schede» (restyle generale, Piero 19/11/2026). Regole in claude/stile-base.md del progetto.
+   Si carica per ultimo e vale per tutti: riquadri arrotondati su fondo colorato, barra in basso sospesa, tasti tondi in testata,
+   titoli in Bricolage Grotesque e testo in IBM Plex Sans. Solo le variabili dei colori, mai colori scritti a mano.
+   Pezzo 1: basi comuni, librerie (tua e dell'amico) e profili. Pezzi 2-4: scheda del libro, Menu e finestre, chat/amici/Per te/guida. */
+
+/* ---------- 1. caratteri ---------- */
+html[data-look="nuovo"]{--font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--ft-k:1;
+  --c-sh:0 1px 2px rgba(0,0,0,.06);--c-r:20px}
+html[data-look="nuovo"][data-ft="bricolage"]{--font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;--ft-k:1}
+.fs.ft-bricolage{font-family:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;font-weight:700;font-size:19px}
+html[data-look="nuovo"] body{font-size:15px}
+html[data-look="nuovo"] svg{stroke-width:1.8}
+
+/* ---------- 2. testata ---------- */
+/* una riga: nome dell'app e tasti tondi; sotto: foto, nome, numeri e la pillola «Sostieni» */
+html[data-look="nuovo"] body header.top{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0!important;margin:0 0 14px;--h1-fs:21px}
+html[data-look="nuovo"] body header.top>div:first-child{display:contents}
+html[data-look="nuovo"] body header.top h1{order:1;flex:1 1 auto;min-width:0;margin:0;font:700 21px/1.1 var(--font-display);letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
+html[data-look="nuovo"] body header.top h1 .prova-tag{margin:0;padding:3px 7px;font-size:10px;letter-spacing:.04em;border-radius:999px}
+html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){order:2;position:relative;top:auto;right:auto;left:auto;flex:none;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;
+  display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] body header.top>.ico:not(.beer-pill) svg{width:20px;height:20px}
+html[data-look="nuovo"] body header.top>.ico .nt-badge{top:-2px;right:-2px}
+html[data-look="nuovo"] body header.top .top-meta{order:3;flex:1 1 calc(100% - 140px);min-width:0;margin:6px 0 0!important;font-size:13.5px;color:var(--muted);position:relative}
+html[data-look="nuovo"]:not(.guest):not(.esempio) body header.top .top-meta{padding-right:0}
+html[data-look="nuovo"] body header.top .owner{font:600 15px/1.25 var(--font-body);color:var(--ink)}
+html[data-look="nuovo"] body header.top .owner .link{font-size:15px}
+html[data-look="nuovo"] body header.top .owner .owner-av .pf-av{width:40px;height:40px}
+html[data-look="nuovo"] body header.top .beer-top.beer-pill{order:4;position:static;align-self:center;margin:6px 0 0 auto;height:34px;padding:0 12px 0 9px;border:0;border-radius:999px;
+  background:var(--warn-bg);color:var(--warn);box-shadow:none}
+html[data-look="nuovo"] body header.top .sync{order:5;flex:1 1 100%}
+@media (max-width:380px){
+  html[data-look="nuovo"] body header.top{gap:4px}
+  html[data-look="nuovo"] body header.top h1{font-size:19px}
+  html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){width:36px;height:36px;min-width:36px;min-height:36px}
+}
+
+/* ---------- 3. ricerca, ordine, chip ---------- */
+html[data-look="nuovo"] .tools{gap:8px;flex-wrap:nowrap;align-items:center;margin:0 0 10px}
+html[data-look="nuovo"] .tools .qwrap{position:relative}
+html[data-look="nuovo"] .tools .qwrap::before{content:"";position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);pointer-events:none;background:var(--muted);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") center/contain no-repeat}
+html[data-look="nuovo"] .tools #q{height:44px;min-height:44px;padding-left:42px;border:0;border-radius:14px;background:var(--surface);box-shadow:var(--c-sh);font-size:15px}
+html[data-look="nuovo"] .tools #q:focus{outline:none;box-shadow:0 0 0 2px var(--accent)}
+html[data-look="nuovo"] .tools #btnView,html[data-look="nuovo"][data-layout="a"] .stick.stuck #btnView{width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:14px;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh)}
+/* «Filtri» passa nella riga di «Ordina · Raggruppa» (layout.js): tre pillole */
+html[data-look="nuovo"] .sortbar{gap:8px;margin:0 0 12px}
+html[data-look="nuovo"] .sortbar .sb-dot{display:none}
+html[data-look="nuovo"] .sortbar .dpick,html[data-look="nuovo"] .sortbar #btnFilters{min-height:34px;height:34px;padding:0 11px;gap:5px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);
+  box-shadow:var(--c-sh);font:500 13.5px var(--font-body)}
+html[data-look="nuovo"][data-layout="a"] .sortbar #btnFilters{font-size:13.5px;min-width:0;min-height:34px;padding:0 12px}
+html[data-look="nuovo"] .sortbar #btnFilters svg{width:17px;height:17px}
+html[data-look="nuovo"] .sortbar #btnFilters[aria-pressed="true"],html[data-look="nuovo"] .sortbar #btnFilters:has(.badge:not([hidden])){background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .sortbar #btnFilters .badge{position:static;margin:0;background:var(--accent-ink);color:var(--accent)}
+html[data-look="nuovo"] .sortbar .dpick.sb-on .sb-ic{stroke:var(--accent)}
+html[data-look="nuovo"] .stick.stuck .sortbar{margin:0 0 8px}
+html[data-look="nuovo"] .stick.stuck .sortbar .dpick,html[data-look="nuovo"] .stick.stuck .sortbar #btnFilters{min-height:32px;height:32px}
+html[data-look="nuovo"] .stick{background:var(--bg)}
+html[data-look="nuovo"] .stick.stuck{box-shadow:0 6px 14px -10px rgba(0,0,0,.3)}
+/* pillole (avvisi e scelte) */
+html[data-look="nuovo"] .chips .chip,html[data-look="nuovo"] .quick{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh);font:500 13.5px var(--font-body)}
+html[data-look="nuovo"] .chips .chip[aria-pressed="true"],html[data-look="nuovo"] .quick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .chips .chip.share,html[data-look="nuovo"] .chips #btnNews{background:var(--accent-soft);color:var(--accent);box-shadow:none;font-weight:600}
+
+/* ---------- 4. riquadri in pagina ---------- */
+html[data-look="nuovo"] #list>.shelf{margin:0 -4px 12px;padding:4px 12px 14px;border-radius:var(--c-r);background:var(--surface)}
+html[data-look="nuovo"] #list>.shelf>.shelf-h{min-height:46px;margin:0;padding:6px 2px;border-bottom:0;font:700 16px/1.2 var(--font-display);letter-spacing:-.005em}
+html[data-look="nuovo"] #list>.shelf>.shelf-h[aria-expanded="true"]{margin-bottom:6px}
+html[data-look="nuovo"] #list>.shelf>.shelf-h .sh-n{min-width:0;padding:0;background:none;color:var(--muted);font:500 13px var(--font-body)}
+html[data-look="nuovo"] #list>.shelf>.shelf-h svg.sh-ic{width:18px;height:18px}
+html[data-look="nuovo"] #list>.shelf .shelf.grp>.shelf-h{border-bottom-color:var(--line)}
+html[data-look="nuovo"] .grp-tools .gx{min-height:32px;padding:0 12px;border:0;border-radius:999px;background:var(--surface2);color:var(--ink);font:500 13px var(--font-body);box-shadow:none}
+/* avvisi in cima: stessi angoli dei riquadri */
+html[data-look="nuovo"] main>.notice,html[data-look="nuovo"] .inst-card,html[data-look="nuovo"] .nx-box,html[data-look="nuovo"] .wrap-ask,html[data-look="nuovo"] .don-ask,html[data-look="nuovo"] .pu-ask{border-radius:var(--c-r)}
+
+/* ---------- 5. copertine ---------- */
+html[data-look="nuovo"] #list .grid{gap:16px 12px}
+html[data-look="nuovo"] .cover .art{border:0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+html[data-look="nuovo"] .cover:hover .art,html[data-look="nuovo"] .cover:focus-visible .art{box-shadow:0 0 0 2px var(--accent)}
+html[data-look="nuovo"] .cover .cap{font:600 13px/1.25 var(--font-body);margin-top:4px}
+html[data-look="nuovo"] .cover .cap2{font-size:12px}
+html[data-look="nuovo"] .cover .badge{left:6px;bottom:6px;padding:4px 7px;border:0;border-radius:999px;background:var(--surface);color:var(--accent);font:700 10.5px/1 var(--font-body);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+html[data-look="nuovo"] .cover .badge.warn,html[data-look="nuovo"] .cover .badge.loan{background:var(--warn-bg);color:var(--warn)}
+html[data-look="nuovo"] .gcard .gc-n{background:var(--accent);color:var(--accent-ink);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+/* ---------- 6. elenco: righe dentro il riquadro, separate da una linea ---------- */
+html[data-look="nuovo"] #list>.shelf .row:not(.open){margin:0;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
+html[data-look="nuovo"] #list>.shelf .shelf-b>.row:first-child:not(.open),html[data-look="nuovo"] #list>.shelf .shelf-b>.list>.row:first-child:not(.open){border-top:0}
+html[data-look="nuovo"] #list>.shelf .row.open{margin:6px 0;border-radius:16px}
+html[data-look="nuovo"] .sum-t{font:600 15px/1.25 var(--font-body)}
+html[data-look="nuovo"] #list>.shelf .grow{border-radius:0}
+
+/* ---------- 7. barra in basso sospesa ---------- */
+html[data-look="nuovo"][data-layout="a"] .lay-nav{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));padding:6px 4px;border:0;border-radius:24px;background:var(--surface);
+  box-shadow:0 8px 24px rgba(0,0,0,.14);align-items:center}
+html[data-look="nuovo"] .lay-nav button{min-height:52px;font:500 11px var(--font-body);gap:3px}
+html[data-look="nuovo"] .lay-nav button.on{font-weight:700}
+html[data-look="nuovo"] .lay-nav .lay-plus{flex:0 0 46px;width:46px;height:46px;min-height:0;margin:0 6px;border-radius:16px;box-shadow:none}
+html[data-look="nuovo"][data-layout="a"] .toast{bottom:calc(96px + env(safe-area-inset-bottom))}
+@media (min-width:760px){ html[data-look="nuovo"][data-layout="a"] .lay-nav{left:max(12px,calc(50% - 280px));right:max(12px,calc(50% - 280px));padding-left:4px;padding-right:4px} }
+@media (max-height:480px){
+  html[data-look="nuovo"][data-layout="a"] .lay-nav{bottom:calc(6px + env(safe-area-inset-bottom));padding:2px 4px}
+  html[data-look="nuovo"] .lay-nav button{min-height:40px}
+  html[data-look="nuovo"] .lay-nav .lay-plus{flex:0 0 40px;width:40px;height:40px}
+}
+/* profilo aperto: la voce «Profilo» è quella accesa */
+html:has(#profSheet:not([hidden])) .lay-nav [data-l="lib"].on,html:has(#profSheet:not([hidden])) .lay-nav [data-l="wish"].on{color:var(--muted);font-weight:500}
+html:has(#profSheet:not([hidden])) .lay-nav [data-l="prof"]{color:var(--accent);font-weight:700}
+
+/* ---------- 8. libreria di un amico: stesso layout della tua ---------- */
+html[data-look="nuovo"] .guest-bar{gap:6px;margin:0 0 12px;padding:0;border-bottom:0}
+html[data-look="nuovo"] .guest-bar .gb-num,html[data-look="nuovo"] .guest-bar .gb-line{font-size:13.5px}
+html[data-look="nuovo"] .guest-bar .gb-tabs,html[data-look="nuovo"] .tabs{display:flex;width:auto;margin:6px 0 4px;padding:3px;gap:0;border:0;border-radius:14px;background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .guest-bar .gb-tabs button,html[data-look="nuovo"] .tabs button{flex:1 1 0;justify-content:center;min-height:38px;padding:0 10px;border:0;border-radius:11px;background:none;
+  color:var(--muted);font:600 14px var(--font-body)}
+html[data-look="nuovo"] .guest-bar .gb-tabs button[aria-selected="true"],html[data-look="nuovo"] .tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+html[data-look="nuovo"] .guest-bar .gb-tabs button[aria-selected="true"] .cnt,html[data-look="nuovo"] .tabs button[aria-selected="true"] .cnt{color:inherit;opacity:.85}
+html[data-look="nuovo"] .guest-bar .gb-chips .chip{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh);font:500 13.5px var(--font-body)}
+html[data-look="nuovo"] .guest-bar .gb-chips .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+/* ---------- 9. profilo: una pagina con riquadri (tuo, dell'amico e di esempio) ---------- */
+html[data-look="nuovo"] #profSheet{padding:0;background:var(--bg);align-items:stretch}
+html[data-look="nuovo"] #profSheet>.sheet-in{width:100%;max-width:none;max-height:none;height:100%;border-radius:0;background:var(--bg);padding:14px max(12px,calc(50% - 300px)) calc(110px + env(safe-area-inset-bottom));align-content:start}
+html[data-look="nuovo"] #profSheet>.sheet-in::before{display:none}
+html[data-look="nuovo"] #profSheet>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;margin:0 0 -38px;font-size:24px;box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #profSheet>.sheet-in>.row-btns{display:none}
+/* la barra in basso resta sopra il profilo (non sopra le altre finestre) */
+html[data-look="nuovo"]:has(#profSheet:not([hidden])):not(:has(.sheet:not([hidden]):not(#profSheet))) .lay-nav{z-index:31}
+html[data-look="nuovo"] .prof #profBody{gap:12px}
+html[data-look="nuovo"] .prof .pf-card{display:grid;justify-items:center;gap:10px;padding:20px 14px 16px;border-radius:24px;background:var(--surface);text-align:center}
+html[data-look="nuovo"] .prof .pf-card .pf-top{flex-direction:column;gap:10px}
+html[data-look="nuovo"] .prof .pf-card .pf-av.big{width:92px;height:92px;font:700 36px/1 var(--font-display)}
+html[data-look="nuovo"] .prof .pf-card .pf-id{justify-items:center}
+html[data-look="nuovo"] .prof .pf-card .pf-name{font:700 24px/1.15 var(--font-display);letter-spacing:-.01em}
+html[data-look="nuovo"] .prof .pf-card .pf-id small{font-size:13.5px}
+html[data-look="nuovo"] .prof .pf-cam{right:0;bottom:2px;width:30px;height:30px;background:var(--surface);color:var(--ink);border:0;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+html[data-look="nuovo"] .prof .pf-cam svg{width:16px;height:16px}
+html[data-look="nuovo"] .prof .pf-card .pf-nums{padding:0;border:0;font-size:14px;color:var(--muted)}
+html[data-look="nuovo"] .prof .pf-card .pf-nums b{color:var(--ink)}
+html[data-look="nuovo"] .prof .pf-card .pf-photo{width:100%;justify-content:center;border:0;background:var(--surface2)}
+html[data-look="nuovo"] .prof .pf-card .pf-go{justify-content:center;gap:8px;width:100%}
+html[data-look="nuovo"] .prof .pf-go .btn{min-height:40px;padding:0 16px;border:0;border-radius:14px;background:var(--surface2);color:var(--ink);font:600 14px var(--font-body)}
+html[data-look="nuovo"] .prof .pf-go .btn.pf-chat{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .prof .pf-card .pf-icos{margin:0;gap:8px}
+html[data-look="nuovo"] .prof .pf-icos .gb-key{width:40px;height:40px;min-width:40px;border:0;border-radius:14px;background:var(--surface2)}
+html[data-look="nuovo"] .prof .pf-icos .gb-drop{background:var(--bad-bg);color:var(--bad)}
+/* sezioni come riquadri bianchi */
+html[data-look="nuovo"] .prof #profBody>.fr-sec:not(.pf-num),html[data-look="nuovo"] .prof #profBody>.fr-list.fr-box{padding:14px;border:0;border-radius:var(--c-r);background:var(--surface)}
+html[data-look="nuovo"] .prof #profBody>.fr-list.fr-box{padding:0 0 0 0}
+html[data-look="nuovo"] .prof .fr-h{font:700 16px/1.2 var(--font-display);margin:0}
+html[data-look="nuovo"] .prof .fr-h .fr-n{background:none;color:var(--muted);font:500 13px var(--font-body);padding:0}
+html[data-look="nuovo"] .prof .pf-fol{background:var(--accent-soft)!important}
+html[data-look="nuovo"] .prof .pf-fol .btn{border:0;border-radius:14px}
+html[data-look="nuovo"] .prof .pf-fol .fr-small{color:var(--accent)}
+html[data-look="nuovo"] .prof .pf-strip{gap:12px}
+html[data-look="nuovo"] .prof .pf-bk,html[data-look="nuovo"] .prof .pf-cv{width:92px}
+html[data-look="nuovo"] .prof .pf-cv{border-radius:8px}
+html[data-look="nuovo"] .prof .pf-cap{font:600 12.5px/1.25 var(--font-body);color:var(--ink)}
+html[data-look="nuovo"] .prof :is(.pf-set,.pf-fri) .fr-box{border:0;background:none}
+html[data-look="nuovo"] .prof :is(.pf-set,.pf-fri) .fr-box .fr-go{padding:0 2px}
+/* numeri: le tessere stanno sulla pagina, «Da sempre» in un riquadro */
+html[data-look="nuovo"] .prof .pf-num>.fr-h{margin:6px 4px 0;font-size:17px}
+html[data-look="nuovo"] .prof .pf-t,html[data-look="nuovo"] .prof .pf-t.big{border-radius:var(--c-r)}
+html[data-look="nuovo"] .prof .pf-t.pf-out{background:var(--surface);border:0}
+html[data-look="nuovo"] .prof .pf-sep{margin:8px 4px 0;padding:0;border:0;font:700 13px/1 var(--font-body);color:var(--muted)}
+html[data-look="nuovo"] .prof .pf-list{margin:0;padding:2px 14px;border-radius:var(--c-r);background:var(--surface)}
+html[data-look="nuovo"] .prof .pf-r dd{font:600 15px/1.25 var(--font-body);color:var(--ink)}
+html[data-look="nuovo"] .prof .pf-r dt{font-size:14px}
+html[data-look="nuovo"] .prof .pf-share .btn{border:0;border-radius:14px;background:var(--surface)}
+
+/* ---------- 10. scheda del libro: pagina intera (pezzo 2, Piero 19/11/2026) ---------- */
+/* la scheda aperta esce dall'elenco e copre lo schermo, come il profilo; la barra in basso resta sopra; le finestre (z 30) sopra la pagina */
+html[data-look="nuovo"] .row.open.cv-full{position:fixed;inset:0;z-index:20;display:block;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0;
+  background:var(--bg)!important;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:calc(6px + env(safe-area-inset-top)) max(12px,calc(50% - 300px)) calc(110px + env(safe-area-inset-bottom))!important;animation:cvIn .18s ease-out}
+@keyframes cvIn{from{opacity:.4;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){html[data-look="nuovo"] .row.open.cv-full{animation:none}}
+html[data-look="nuovo"]:has(.row.open.cv-full){overflow:hidden}
+html[data-look="nuovo"]:has(.row.open.cv-full) .edge-tab{display:none}
+html[data-look="nuovo"]:has(.row.open.cv-full):not(:has(.sheet:not([hidden]))) .lay-nav{z-index:21}
+html[data-look="nuovo"] .row.open.cv-full>*{max-width:none}
+/* barra: ‹ a sinistra, ⋯ a destra */
+html[data-look="nuovo"] .cv-bar{position:sticky;top:calc(-6px - env(safe-area-inset-top));z-index:2;display:flex;align-items:center;gap:8px;margin:0 -4px;padding:6px 4px 8px;background:var(--bg)}
+html[data-look="nuovo"] .cv-bar .cv-bt{flex:1}
+html[data-look="nuovo"] .cv-rb{width:38px;height:38px;min-width:38px;min-height:38px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh);cursor:pointer}
+html[data-look="nuovo"] .cv-rb svg{width:20px;height:20px}
+html[data-look="nuovo"] .cv-rb:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+html[data-look="nuovo"] .cv-pop{position:absolute;right:4px;top:48px;z-index:3;min-width:200px;display:grid;padding:6px;border-radius:16px;background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+html[data-look="nuovo"] .cv-pop[hidden]{display:none}
+html[data-look="nuovo"] .cv-pop .cv-popi{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 10px;border:0;border-radius:12px;background:none;color:var(--ink);font:600 15px/1.2 var(--font-body);justify-content:flex-start}
+html[data-look="nuovo"] .cv-pop .cv-popi .al{display:inline!important}
+html[data-look="nuovo"] .cv-pop .cv-popi:active{background:var(--surface2)}
+/* la vecchia fila in alto: resta solo per le pillole di stato (Da verificare, ISBN non valido…) */
+html[data-look="nuovo"] .row.open.cv-full .card-top{display:flex;justify-content:center;margin:0 0 6px!important;padding:0!important;border:0}
+html[data-look="nuovo"] .row.open.cv-full .card-top.cv-empty,html[data-look="nuovo"] .row.open.cv-full .card-top .top-acts{display:none}
+html[data-look="nuovo"] .row.open.cv-full .card-top .flags{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+html[data-look="nuovo"] .row.open.cv-full .status{display:none}
+/* copertina al centro, titolo, autore con bandiera, pillole dei dati */
+html[data-look="nuovo"] .cv-full .cv-page{display:block;margin:0}
+html[data-look="nuovo"] .cv-full .cv-page>*+*{margin-top:12px}
+html[data-look="nuovo"] .cv-full .cv-hero{display:grid;grid-template-columns:1fr;justify-items:center;text-align:center;gap:16px;padding:4px 4px 0}
+html[data-look="nuovo"] .cv-full .cv-cov,html[data-look="nuovo"] .cv-full .cv-cov img,html[data-look="nuovo"] .cv-full .cv-ph{width:132px;height:196px;border-radius:8px}
+html[data-look="nuovo"] .cv-full .cv-cov img,html[data-look="nuovo"] .cv-full .cv-ph{box-shadow:0 6px 18px rgba(0,0,0,.18)}
+html[data-look="nuovo"] .cv-full .cv-ph{font-size:52px}
+html[data-look="nuovo"] .cv-full .cv-ht{display:grid;justify-items:center;min-width:0;width:100%}
+html[data-look="nuovo"] .cv-full .cv-ht h3{margin:0;font:800 24px/1.12 var(--font-display);letter-spacing:-.015em;text-wrap:balance}
+html[data-look="nuovo"] .cv-full .cv-au{margin:6px 0 0;font-size:15px;line-height:1.35}
+html[data-look="nuovo"] .cv-full .cv-au .au-name{color:var(--accent);font-weight:700;text-decoration:none}
+html[data-look="nuovo"] .cv-full .cv-nat{font-size:13px}
+html[data-look="nuovo"] .cv-full .cv-meta:not(.cv-isbn){display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px 0 0}
+html[data-look="nuovo"] .cv-full .cv-meta .cv-dot{display:none}
+html[data-look="nuovo"] .cv-full .cv-pill{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;background:var(--surface);color:var(--muted);font:500 12.5px/1 var(--font-body)}
+html[data-look="nuovo"] .cv-full .cv-pill .cv-guess{font-size:11.5px;margin-left:4px}
+html[data-look="nuovo"] .cv-full .cv-meta.cv-isbn{margin:8px 0 0;font-size:12.5px}
+/* tasti tondi 46: stella, desideri, condividi, matita, elimina in rosso */
+html[data-look="nuovo"] .cv-full .cv-page>.acts-main{display:flex;flex-wrap:nowrap;justify-content:center;gap:10px;margin-top:16px}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act{width:46px;min-width:46px;height:46px;min-height:46px;padding:0;margin:0!important;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act .al{display:none}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act svg{width:21px;height:21px}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act.fav.on{color:var(--brass);background:var(--surface)}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act.fav.on svg{fill:currentColor}
+html[data-look="nuovo"] .cv-full .acts-main .ico.act.danger{color:var(--bad);background:var(--surface)}
+html[data-look="nuovo"] .cv-full .acts-main .cv-editb.on{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .cv-full .kdp-hint{padding:14px;border-radius:var(--c-r);background:var(--surface)}
+/* riquadri */
+html[data-look="nuovo"] .cv-full .cv-readbox,html[data-look="nuovo"] .cv-full .cv-desc,html[data-look="nuovo"] .cv-full .filmbox,html[data-look="nuovo"] .cv-full details.quotes,
+html[data-look="nuovo"] .cv-full .cv-loan,html[data-look="nuovo"] .cv-full .cv-note,html[data-look="nuovo"] .cv-full .cv-tags,html[data-look="nuovo"] .cv-full .cv-ex{
+  margin-left:0!important;margin-right:0!important;padding:14px!important;border:0!important;border-radius:var(--c-r)!important;background:var(--surface)!important;box-shadow:var(--c-sh)!important}
+html[data-look="nuovo"] .cv-full .cv-page>.cv-desc,html[data-look="nuovo"] .cv-full .cv-page>.cv-note{margin-top:12px!important}
+html[data-look="nuovo"] .cv-full .cv-h,html[data-look="nuovo"] .cv-full .filmbox .fl-h{margin:0 0 10px;font:700 16px/1.2 var(--font-display);color:var(--ink);text-transform:none;letter-spacing:0}
+/* lettura: interruttore a schede, libricini, «Letto il» con il segnalibro */
+html[data-look="nuovo"] .cv-full .cv-readbox.cv-strip{gap:12px}
+html[data-look="nuovo"] .cv-full .cv-readbox>.seg{display:flex;padding:3px;gap:0;border:0;border-radius:14px;background:var(--surface2)}
+html[data-look="nuovo"] .cv-full .cv-readbox>.seg button{flex:1;min-height:38px;border:0!important;border-radius:11px!important;background:none;color:var(--muted);font:700 13.5px/1 var(--font-body);box-shadow:none}
+html[data-look="nuovo"] .cv-full .cv-readbox>.seg button.on,html[data-look="nuovo"] .cv-full .cv-readbox>.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .cv-full .cv-readbox .rate{justify-content:center;gap:10px}
+html[data-look="nuovo"] .cv-full .cv-readbox .rt-word{font:700 14px/1 var(--font-body)}
+html[data-look="nuovo"] .cv-full .cv-readbox .f-rd.cv-rdmeta{display:flex;align-items:baseline;gap:6px;position:relative;margin:0;padding:12px 0 0;border-top:1px solid var(--line);width:100%;font-size:14px;color:var(--ink)}
+html[data-look="nuovo"] .cv-full .cv-readbox .f-rd.cv-rdmeta>.lbl{display:inline!important;margin:0;font:400 14px/1.4 var(--font-body);color:var(--muted);text-transform:none;letter-spacing:0}
+html[data-look="nuovo"] .cv-full .cv-readbox .cv-rdmeta .rd-show{display:inline;font-size:14px;color:var(--ink);border-bottom:1px dotted var(--muted)}
+html[data-look="nuovo"] .cv-full .cv-readbox .cv-rdmeta .rd-show.none{color:var(--accent);font-style:normal;font-weight:600;border:0}
+html[data-look="nuovo"] .cv-full .cv-readbox .cv-rdmeta .rd-show svg{display:none}
+html[data-look="nuovo"] .cv-full .cv-readbox .cv-rdmeta input[data-k="rd"]{position:absolute;inset:0;width:100%;max-width:none;height:100%;min-height:0;opacity:0;cursor:pointer;border:0;padding:0}
+/* Descrizione: titolo sempre; se manca, «Tocca per cercarla» come tasto morbido */
+html[data-look="nuovo"] .cv-full .cv-desc::before{content:"Descrizione";display:block;margin:0 0 10px;font:700 16px/1.2 var(--font-display);color:var(--ink)}
+html[data-look="nuovo"] .cv-full .cv-desc:not([open])>summary{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border-radius:14px;background:var(--surface2);color:var(--accent);text-decoration:none;font:700 14px/1.2 var(--font-body);list-style:none}
+html[data-look="nuovo"] .cv-full .cv-desc:not([open])>summary::-webkit-details-marker{display:none}
+html[data-look="nuovo"] .cv-full .cv-desc:not([open])>summary .desc-h{display:none}
+html[data-look="nuovo"] .cv-full .cv-desc:not([open])>summary .desc-hint{font:inherit;color:inherit;text-decoration:none;margin:0}
+html[data-look="nuovo"] .cv-full .cv-desc:not([open])>summary .desc-hint::first-letter{text-transform:uppercase}
+html[data-look="nuovo"] .cv-full .cv-desc .desc-t{font-size:15px;line-height:1.55}
+/* Dal libro */
+html[data-look="nuovo"] .cv-full .filmbox .fl-row{display:flex;align-items:center;gap:12px;padding:10px 0;border:0;border-top:1px solid var(--line);border-radius:0;background:none;color:var(--ink);text-decoration:none}
+html[data-look="nuovo"] .cv-full .filmbox .fl-h+.fl-row,html[data-look="nuovo"] .cv-full .filmbox .fl-row:first-of-type{border-top:0;padding-top:0}
+html[data-look="nuovo"] .cv-full .filmbox .fl-e{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);font-size:18px}
+html[data-look="nuovo"] .cv-full .filmbox .fl-go{color:var(--muted);font-size:20px}
+/* Citazioni: la prima in vista; «Tutte ›» mostra le altre e i tasti */
+html[data-look="nuovo"] .cv-full details.quotes>summary{display:flex;align-items:center;gap:8px;min-height:0;margin:0 0 10px;padding:0;border:0;background:none;list-style:none;cursor:default}
+html[data-look="nuovo"] .cv-full details.quotes>summary::-webkit-details-marker,html[data-look="nuovo"] .cv-full details.quotes>summary::after{display:none}
+html[data-look="nuovo"] .cv-full details.quotes .desc-h{font:700 16px/1.2 var(--font-display);color:var(--ink)}
+html[data-look="nuovo"] .cv-full details.quotes .qn{font:500 13px/1 var(--font-body);color:var(--muted);margin:0}
+html[data-look="nuovo"] .cv-full details.quotes .qn:empty{display:none}
+html[data-look="nuovo"] .cv-full details.quotes .cv-qmore{margin-left:auto;color:var(--accent);font:600 14px/1 var(--font-body);cursor:pointer}
+html[data-look="nuovo"] .cv-full details.quotes .desc-b{padding:0}
+html[data-look="nuovo"] .cv-full details.quotes:not(.cv-qall) .qlist>li:nth-child(n+2),html[data-look="nuovo"] .cv-full details.quotes:not(.cv-qall) .desc-acts,
+html[data-look="nuovo"] .cv-full details.quotes:not(.cv-qall) .qbtns{display:none}
+html[data-look="nuovo"] .cv-full details.quotes .qlist{margin:0;padding:0;display:grid;gap:12px}
+html[data-look="nuovo"] .cv-full details.quotes .qcard{position:static;padding:0;border:0;background:none;box-shadow:none}
+html[data-look="nuovo"] .cv-full details.quotes .qcard .qitem{padding-bottom:0}
+html[data-look="nuovo"] .cv-full details.quotes .qbtns{position:static;display:flex;justify-content:flex-end;gap:4px;margin-top:4px}
+html[data-look="nuovo"] .cv-full details.quotes .qitem{display:block;width:100%;padding:0 0 0 12px;border:0;border-left:3px solid var(--brass);border-radius:0;background:none;text-align:left;color:var(--ink)}
+html[data-look="nuovo"] .cv-full details.quotes .qt{display:block;font:italic 500 15px/1.45 "Literata",Georgia,serif}
+html[data-look="nuovo"] .cv-full details.quotes .qp{display:block;margin-top:6px;font:400 12.5px/1.2 var(--font-body);color:var(--muted)}
+html[data-look="nuovo"] .cv-full details.quotes .desc-acts{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px}
+/* Prestito */
+html[data-look="nuovo"] .cv-full .cv-lst{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+html[data-look="nuovo"] .cv-full .cv-lst .tag.loan{background:var(--warn-bg);color:var(--warn);border:0}
+html[data-look="nuovo"] .cv-full .cv-lrow{display:grid!important;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;column-gap:12px;row-gap:2px;align-content:center;width:100%;min-height:48px;margin:0;padding:0!important;border:0!important;border-radius:0;background:none!important;color:var(--ink);text-align:left;box-shadow:none}
+html[data-look="nuovo"] .cv-full .cv-lrow svg{grid-row:1 / span 2;width:38px;height:38px;padding:9px;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+html[data-look="nuovo"] .cv-full .cv-lrow .al{display:block!important;font:700 15px/1.25 var(--font-body)}
+html[data-look="nuovo"] .cv-full .cv-lrow .cv-lsub{grid-column:2;font-size:12.5px;line-height:1.3;color:var(--muted)}
+html[data-look="nuovo"] .cv-full .cv-lrow .cv-chev{grid-column:3;grid-row:1 / span 2;color:var(--muted);font-size:20px}
+html[data-look="nuovo"] .cv-full .cv-lrow.on .al{color:var(--warn)}
+/* Nota */
+html[data-look="nuovo"] .cv-full .cv-note{font-size:14.5px;line-height:1.5;color:var(--ink)}
+html[data-look="nuovo"] .cv-full .cv-note::before{content:"Nota";display:block;margin:0 0 8px;font:700 16px/1.2 var(--font-display)}
+/* Vedi tutti i libri di */
+html[data-look="nuovo"] .cv-full .cv-tags{display:grid;gap:10px}
+html[data-look="nuovo"] .cv-full .cv-tags-h{font:700 16px/1.2 var(--font-display);color:var(--ink)}
+html[data-look="nuovo"] .cv-full .cv-tags-h svg{display:none}
+html[data-look="nuovo"] .cv-full .cv-tags .fchip{min-height:34px;padding:4px 12px;border:0;border-radius:999px;background:var(--surface2);color:var(--ink);font:600 13.5px/1 var(--font-body)}
+html[data-look="nuovo"] .cv-full .cv-tags .fchip .n{background:var(--surface);color:var(--muted)}
+/* modifica (matita): i campi nel loro posto, con lo stile dei campi */
+html[data-look="nuovo"] .cv-full.cv-ed .cv-ht-ed{justify-items:stretch;text-align:left;width:100%}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in textarea,html[data-look="nuovo"] .cv-full.cv-ed .cv-in input{padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in-t textarea{font:700 20px/1.2 var(--font-display)}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in textarea:focus,html[data-look="nuovo"] .cv-full.cv-ed .cv-in input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in-line{gap:10px}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in-y input{width:7ch}
+html[data-look="nuovo"] .cv-full.cv-ed .cv-in-pg input{width:8ch}
+html[data-look="nuovo"] .cv-full .cv-ex{gap:10px}
+html[data-look="nuovo"] .cv-full .cv-exr{grid-template-columns:84px minmax(0,1fr)}
+html[data-look="nuovo"] .cv-full .cv-add{border-style:dashed;background:var(--surface)}
+/* tablet e PC: la pagina resta in una colonna larga al massimo 600 px, come il profilo */
+@media (min-width:760px){
+  html[data-look="nuovo"][data-card="d"] .cv-full .cv-page{display:block}
+  html[data-look="nuovo"][data-card="d"] .cv-full .cv-page>.cv-hero{grid-template-columns:1fr}
+  html[data-look="nuovo"][data-card="d"] .cv-full .cv-cov,html[data-look="nuovo"][data-card="d"] .cv-full .cv-cov img,html[data-look="nuovo"][data-card="d"] .cv-full .cv-ph{width:150px;height:222px}
+  html[data-look="nuovo"][data-card="d"] .cv-full .cv-page>.cv-desc{max-width:none;padding-top:14px!important}
+}
+@media (min-width:880px){html[data-look="nuovo"][data-card="d"] .row.open.cv-full.cv-view{display:block;padding:calc(6px + env(safe-area-inset-top)) max(12px,calc(50% - 300px)) 110px!important}}
+html[data-look="nuovo"] .cv-full .cv-exr.cv-exr-n{grid-template-columns:minmax(0,1fr)}
+html[data-look="nuovo"] .cv-full .cv-exr-n .cv-in{border-left:0;padding-left:0}
+html[data-look="nuovo"] .cv-full .cv-lst .ret-btn{min-height:40px;height:auto;padding:8px 14px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:700 14px/1.2 var(--font-body);margin:0}
+html[data-look="nuovo"] .cv-full .cv-lst .tag{min-height:30px;display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font:600 13px/1.2 var(--font-body)}
+html[data-look="nuovo"] .cv-full .cv-nat .cv-flag{width:18px!important;height:auto!important;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.08)!important}
+
+/* ---------- 11. finestre dal basso (pezzo 3, Piero 19/11/2026) ---------- */
+/* foglio attaccato in basso, fondo della pagina, raggio 28 in alto, maniglia, titolo 19/800, × in tasto tondo; su schermi larghi al centro */
+html[data-look="nuovo"] .sheet{padding:0;align-items:flex-end;background:rgba(0,0,0,.42)}
+html[data-look="nuovo"] .sheet>.sheet-in{width:min(100%,640px);max-height:92vh;border-radius:28px 28px 0 0;background:var(--bg);padding:18px 16px calc(18px + env(safe-area-inset-bottom));gap:12px;box-shadow:0 -6px 24px rgba(0,0,0,.12)}
+html[data-look="nuovo"] .sheet>.sheet-in.wide{width:min(100%,760px)}
+@media (min-width:700px){
+  html[data-look="nuovo"] .sheet{align-items:center;padding:16px}
+  html[data-look="nuovo"] .sheet>.sheet-in{border-radius:28px;padding-bottom:18px}
+}
+html[data-look="nuovo"] .sheet-in::before{top:8px;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:var(--line)}
+html[data-look="nuovo"] .sheet-in>h2,html[data-look="nuovo"] .opt-head h2{margin:4px 44px 2px 2px;font:800 19px/1.2 var(--font-display);letter-spacing:-.01em}
+html[data-look="nuovo"] .sheet-in>.sh-x{width:34px;height:34px;min-width:34px;min-height:34px;margin:-4px -2px -34px 0;font-size:22px;background:var(--surface);color:var(--muted);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .opt-head{margin:0;gap:8px}
+html[data-look="nuovo"] .opt-head .ico{width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:22px;box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .opt-head h2{margin:0}
+html[data-look="nuovo"] .sheet h3{margin:8px 2px 0;font:700 16px/1.2 var(--font-display)}
+html[data-look="nuovo"] .sheet .hint,html[data-look="nuovo"] .sheet .msg{font-size:13.5px;line-height:1.45}
+/* pulsanti: secondario su --surface, principale pieno, pericolo rosso */
+html[data-look="nuovo"] .sheet .btn{min-height:44px;padding:8px 16px;border:0;border-radius:14px;background:var(--surface);color:var(--ink);font:600 14.5px/1.2 var(--font-body);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .sheet .btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+html[data-look="nuovo"] .sheet .btn.danger,html[data-look="nuovo"] .sheet .btn.bad{background:var(--bad-bg);color:var(--bad);box-shadow:none}
+html[data-look="nuovo"] .sheet .row-btns .btn{min-height:50px}
+/* campi: 48 alti, raggio 14, bordo sottile; attivo con l'alone */
+html[data-look="nuovo"] .sheet input:is([type="text"],[type="search"],[type="email"],[type="url"],[type="tel"],[type="number"],[type="date"],[type="password"],:not([type])),
+html[data-look="nuovo"] .sheet select,html[data-look="nuovo"] .sheet textarea{min-height:48px;padding:10px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:16px;box-shadow:none}
+html[data-look="nuovo"] .sheet textarea{min-height:96px}
+html[data-look="nuovo"] .sheet input:is([type="text"],[type="search"],[type="email"],[type="url"],[type="tel"],[type="number"],[type="date"],[type="password"],:not([type])):focus,
+html[data-look="nuovo"] .sheet select:focus,html[data-look="nuovo"] .sheet textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* scelte a schede (Tema, Autori…): pillola con la scelta piena */
+html[data-look="nuovo"] .sheet .seg{display:flex;padding:3px;gap:0;border:0;border-radius:14px;background:var(--surface2);overflow:visible}
+html[data-look="nuovo"] .sheet .seg>button,html[data-look="nuovo"] .sheet .seg>label{flex:1;min-height:38px;display:flex;align-items:center;justify-content:center;border:0!important;border-radius:11px;background:none;color:var(--muted);font:700 13.5px/1.1 var(--font-body);text-align:center}
+html[data-look="nuovo"] .sheet .seg>label>span{display:flex;align-items:center;justify-content:center;width:100%;min-height:38px;padding:4px 8px;border-radius:11px}
+html[data-look="nuovo"] .sheet .seg>label input{position:absolute;opacity:0;pointer-events:none}
+html[data-look="nuovo"] .sheet .seg>label:has(input:checked)>span,html[data-look="nuovo"] .sheet .seg>button[aria-pressed="true"],html[data-look="nuovo"] .sheet .seg>button.on{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .sheet .seg>label:has(input:focus-visible)>span{outline:2px solid var(--accent);outline-offset:1px}
+/* gruppi di scelte in riquadri */
+html[data-look="nuovo"] .sheet fieldset.choice{padding:14px;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .sheet fieldset.choice>legend{float:left;width:100%;margin:0 0 10px;padding:0;font:700 16px/1.2 var(--font-display);color:var(--ink)}
+html[data-look="nuovo"] .sheet fieldset.choice .seg{background:var(--surface2)}
+/* interruttori on/off: le caselle «check» diventano righe in un riquadro, con l'interruttore a destra */
+html[data-look="nuovo"] .sheet label.check{display:flex;align-items:center;gap:12px;margin:0;padding:12px 14px;background:var(--surface);border-radius:var(--c-r);box-shadow:var(--c-sh);font:600 15px/1.3 var(--font-body)}
+html[data-look="nuovo"] .sheet label.check>span{flex:1;min-width:0}
+html[data-look="nuovo"] .sheet label.check small{font:400 12.5px/1.35 var(--font-body)}
+html[data-look="nuovo"] .sheet label.check+label.check{margin-top:-12px;border-top-left-radius:0;border-top-right-radius:0;border-top:1px solid var(--line)}
+html[data-look="nuovo"] .sheet label.check:has(+label.check){border-bottom-left-radius:0;border-bottom-right-radius:0}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]{order:2;-webkit-appearance:none;appearance:none;flex:none;position:relative;width:46px;height:28px;margin:0;border-radius:999px;background:var(--line);cursor:pointer;transition:background .15s}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]::before{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]:checked{background:var(--accent)}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]:checked::before{transform:translateX(18px)}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+html[data-look="nuovo"] .sheet label.check input[type="checkbox"]:disabled{opacity:.5}
+/* elenchi con le righe (Per te, scelte) */
+html[data-look="nuovo"] .sheet .dlist.dmenu{gap:0;padding:2px 14px;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .sheet .dlist.dmenu>.dopt{min-height:56px;padding:10px 0;border-radius:0;background:none}
+html[data-look="nuovo"] .sheet .dlist.dmenu>.dopt+.dopt{border-top:1px solid var(--line)}
+/* Ricerca dei libri: i riquadri di Google Libri e del worker */
+html[data-look="nuovo"] .sheet .svc{border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .sheet .svc-box{border:0}
+@media (prefers-reduced-motion:reduce){html[data-look="nuovo"] .sheet label.check input[type="checkbox"],html[data-look="nuovo"] .sheet label.check input[type="checkbox"]::before{transition:none}}
+
+/* ---------- 12. finestra del + (pezzo 3): tre tasti tondi, poi Per autore e Ce l'ho già? ---------- */
+html[data-look="nuovo"] #layAdd .lay-dest{display:flex;padding:3px;border:0;border-radius:14px;background:var(--surface2)}
+html[data-look="nuovo"] #layAdd .lay-dest button{flex:1;min-height:38px;border:0;border-radius:11px;background:none;color:var(--muted);font:700 13.5px/1 var(--font-body);box-shadow:none}
+html[data-look="nuovo"] #layAdd .lay-dest button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] #layAdd .lay-big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0}
+html[data-look="nuovo"] #layAdd .lay-big3 button{display:grid;justify-items:center;gap:8px;min-height:0;padding:6px 2px;border:0;background:none;color:var(--ink);font:700 14px/1.2 var(--font-body);box-shadow:none;cursor:pointer}
+html[data-look="nuovo"] #layAdd .lay-big3 .c{width:64px;height:64px;display:grid;place-items:center;border-radius:50%;background:var(--surface);color:var(--accent);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #layAdd .lay-big3 .c svg{width:28px;height:28px}
+html[data-look="nuovo"] #layAdd .lay-big3 .pri .c{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] #layAdd .lay-big3 button:focus-visible .c{outline:3px solid var(--accent);outline-offset:2px}
+html[data-look="nuovo"] #layAdd .row-btns{display:none}
+
+/* ---------- 13. righe con l'icona nel quadratino (Menu e finestre) ---------- */
+html[data-look="nuovo"] .dico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+html[data-look="nuovo"] .dico svg{width:20px;height:20px}
+html[data-look="nuovo"] .dopt:has(>.dico){justify-content:flex-start;gap:12px}
+html[data-look="nuovo"] .dopt:has(>.dico)>span:not(.dico):not(.n):not(.dbadge){flex:1;min-width:0;text-align:left}
+html[data-look="nuovo"] .dopt .n{margin-left:auto}
+
+/* ---------- 14. Menu: una pagina intera (pezzo 3, Piero 19/11/2026) ---------- */
+html[data-look="nuovo"] .drawer{left:0;right:0;width:auto;max-width:none;z-index:20;background:var(--bg);border:0;border-radius:0;box-shadow:none;transform:translateY(12px);opacity:0;transition:transform .2s ease,opacity .2s ease}
+html[data-look="nuovo"] .drawer.open{transform:none;opacity:1}
+@media (prefers-reduced-motion:reduce){html[data-look="nuovo"] .drawer{transition:none;transform:none}}
+html[data-look="nuovo"] .drawer-scrim{display:none}
+html[data-look="nuovo"]:has(.drawer.open):not(:has(.sheet:not([hidden]))) .lay-nav{z-index:21}
+html[data-look="nuovo"] .drawer-head{width:100%;max-width:624px;margin:0 auto;justify-content:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 6px}
+html[data-look="nuovo"] .drawer-head h2{order:2;flex:1;margin:0;font:700 21px/1.1 var(--font-display)}
+html[data-look="nuovo"] .drawer-head .ico{order:1;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:24px;box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .drawer-head #drawerX{font-size:0}
+html[data-look="nuovo"] .drawer-head #drawerX::before{content:"‹";font-size:28px;line-height:1;margin-top:-3px}
+html[data-look="nuovo"] .drawer-head:has(#drawerBack:not([hidden])) #drawerX{order:3;font-size:24px}
+html[data-look="nuovo"] .drawer-head:has(#drawerBack:not([hidden])) #drawerX::before{content:none}
+html[data-look="nuovo"] .drawer-body{width:100%;max-width:624px;margin:0 auto;padding:0 12px calc(110px + env(safe-area-inset-bottom))}
+html[data-look="nuovo"] .drawer-foot{width:100%;max-width:624px;margin:0 auto;padding:10px 12px calc(96px + env(safe-area-inset-bottom));border-top:0}
+html[data-look="nuovo"] .drawer h3{margin:20px 12px 8px;font:700 12px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html[data-look="nuovo"] .drawer .dlist.dmenu{margin-top:12px;gap:0;padding:2px 14px;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .drawer h3+.dlist.dmenu{margin-top:0}
+html[data-look="nuovo"] .drawer .dmenu .dopt{min-height:58px;padding:10px 0;border-radius:0;background:none}
+html[data-look="nuovo"] .drawer .dmenu .dopt+.dopt,html[data-look="nuovo"] .drawer .dmenu .dsub>.dopt+.dopt{border-top:1px solid var(--line)}
+html[data-look="nuovo"] .drawer .dmenu .dopt b{font:700 15px/1.2 var(--font-body)}
+html[data-look="nuovo"] .drawer .dmenu .dopt small{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-look="nuovo"] .drawer .dmenu .dopt .n{color:var(--muted);font-size:20px}
+html[data-look="nuovo"] .drawer .dmenu .dopt:hover{background:none}
+/* Impostazioni e Info e aiuto: sempre aperti, con l'etichetta del gruppo sopra (scelta di Piero) */
+html[data-look="nuovo"] .drawer .dset{margin-top:20px;padding:0;background:none;box-shadow:none;border:0}
+/* il titolo del gruppo resta (per chi usa il lettore dello schermo), ma si vede come l'etichetta maiuscola */
+html[data-look="nuovo"] .drawer .dmenu .dopt.dset-t{min-height:0;margin:0 0 8px;padding:0 12px!important;pointer-events:none;border:0!important}
+html[data-look="nuovo"] .drawer .dset-t .dset-i,html[data-look="nuovo"] .drawer .dset-t small,html[data-look="nuovo"] .drawer .dset-t .n,html[data-look="nuovo"] .drawer .dset-t .dico{display:none!important}
+html[data-look="nuovo"] .drawer .dmenu .dset-t b{font:700 12px/1 var(--font-body)!important;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html[data-look="nuovo"] .drawer .dset>.dsub,html[data-look="nuovo"] .drawer .dset>.dsub[hidden]{display:grid!important;gap:0;margin:0;padding:2px 14px;border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .drawer .dsub>.dopt{padding-left:0}
+/* Sostieni: riquadro caldo con il boccale grande */
+html[data-look="nuovo"] .drawer .dlist.ddon{padding:0;background:none;box-shadow:none}
+html[data-look="nuovo"] .drawer .don-menu{min-height:0;padding:16px!important;gap:12px;border:0;border-radius:var(--c-r)!important;background:var(--warn-bg)!important;color:var(--warn)}
+html[data-look="nuovo"] .drawer .don-menu b{color:var(--warn);font:800 16px/1.2 var(--font-display)!important}
+html[data-look="nuovo"] .drawer .don-menu small{color:var(--warn)!important;opacity:.9;white-space:normal!important}
+html[data-look="nuovo"] .drawer .don-menu .don-cup{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--surface);color:var(--warn)}
+html[data-look="nuovo"] .drawer .don-menu .n{color:var(--warn)}
+html[data-look="nuovo"] .drawer .ver{text-align:center;color:var(--muted);font-size:12px}
+html[data-look="nuovo"] .dopt>.dico{flex:0 0 38px!important;width:38px;min-width:38px}
+html[data-look="nuovo"] .drawer .dmenu .dopt>span:not(.dico):not(.n):not(.dbadge):not(.don-cup):not(.dset-i){flex:1 1 auto;min-width:0;text-align:left}
+html[data-look="nuovo"] .drawer .dmenu .dopt{justify-content:flex-start;gap:12px}
+html[data-look="nuovo"] .drawer .dlist.dmenu.dset{margin-top:20px;padding:0;background:none;box-shadow:none;border:0}
+html[data-look="nuovo"] .drawer-head .ico:focus:not(:focus-visible){outline:0}
+html[data-look="nuovo"] .drawer-head .ico:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html[data-look="nuovo"] #layAdd .lay-big3 button:focus{outline:0}
+html[data-look="nuovo"] .sheet .seg>label:not(:has(input:checked))>span{background:transparent;box-shadow:none;border:0}
+
+/* ---------- 15. pagine intere: Per te, I tuoi amici, Chat (pezzo 4, Piero 19/11/2026) ---------- */
+/* come il profilo: foglio a tutto schermo sul fondo della pagina, barra in basso sopra (tranne nella chat aperta, dove serve il campo) */
+html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet){padding:0;align-items:stretch;background:var(--bg)}
+html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in{width:100%;max-width:none;max-height:none;height:100%;border-radius:0;background:var(--bg);box-shadow:none;
+  padding:calc(14px + env(safe-area-inset-top)) max(12px,calc(50% - 300px)) calc(110px + env(safe-area-inset-bottom));align-content:start}
+html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet)>.sheet-in::before{display:none}
+html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;min-height:38px;margin:0 0 -38px;font-size:24px}
+html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>h2{margin:2px 48px 4px 0;font:700 26px/1.15 var(--font-display)}
+html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.row-btns:last-child{display:none}
+html[data-look="nuovo"]:has(:is(#layYou,#friSheet,#chSheet:not([data-v="conv"])):not([hidden])):not(:has(.sheet:not([hidden]):not(#profSheet,#layYou,#friSheet,#chSheet))) .lay-nav{z-index:31}
+html[data-look="nuovo"]:has(#layYou:not([hidden])) .lay-nav [data-l="you"]{color:var(--accent);font-weight:700}
+/* Per te: scheda della stagione nei suoi colori, poi le righe */
+html[data-look="nuovo"] .lay-season{display:flex;align-items:center;gap:12px;width:100%;min-height:84px;padding:18px;border:0;border-radius:var(--c-r);text-align:left;cursor:pointer;
+  background:var(--sz-bg,var(--accent));color:var(--sz-ink,#fff);box-shadow:var(--c-sh);position:relative;overflow:hidden}
+html[data-look="nuovo"] .lay-season[hidden]{display:none}
+html[data-look="nuovo"] .lay-season::before,html[data-look="nuovo"] .lay-season::after{content:"";position:absolute;border-radius:50%;opacity:.55;pointer-events:none}
+html[data-look="nuovo"] .lay-season::before{width:120px;height:120px;right:-30px;top:-50px;background:var(--sz-2,transparent)}
+html[data-look="nuovo"] .lay-season::after{width:70px;height:70px;right:60px;bottom:-40px;background:var(--sz-3,transparent)}
+html[data-look="nuovo"] .lay-season .sz-t{flex:1;position:relative;z-index:1}
+html[data-look="nuovo"] .lay-season b{display:block;font:800 19px/1.2 var(--font-display)}
+html[data-look="nuovo"] .lay-season small{display:block;margin-top:4px;font-size:13.5px;opacity:.9}
+html[data-look="nuovo"] .lay-season .sz-go{position:relative;z-index:1;font-size:26px;line-height:1}
+html[data-look="nuovo"] #layYou .lay-yi{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+html[data-look="nuovo"] #layYou .lay-yi svg{width:20px;height:20px}
+html[data-look="nuovo"] #layYou .dopt{justify-content:flex-start;gap:12px}
+html[data-look="nuovo"] #layYou .dopt>span:not(.lay-yi):not(.n){flex:1;min-width:0;text-align:left}
+/* I tuoi amici: righe in riquadri, ricerca e campi come nel resto dell'app */
+html[data-look="nuovo"] .fri .fr-list{gap:0;padding:2px 14px;border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh);overflow:hidden}
+html[data-look="nuovo"] .fri .fr-row{padding:12px 0;border:0;border-radius:0;background:none}
+html[data-look="nuovo"] .fri .fr-row+.fr-row{border-top:1px solid var(--line)}
+html[data-look="nuovo"] .fri .fr-h{font:700 16px/1.2 var(--font-display)}
+html[data-look="nuovo"] .fri .fr-n{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .fri .fr-box{border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh);overflow:hidden}
+html[data-look="nuovo"] .fri .fr-list>.fr-row{border-bottom:0}
+html[data-look="nuovo"] .fri .fr-act .btn{min-height:34px;padding:4px 12px;border-radius:999px;background:var(--surface2);box-shadow:none;font-size:13px}
+/* Chat: elenco in riquadro; chat aperta con i fumetti dello stile base e il campo a pillola */
+html[data-look="nuovo"] #chSheet>.sheet-in{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;background:var(--bg);box-shadow:none;padding:env(safe-area-inset-top) max(0px,calc(50% - 312px)) 0}
+html[data-look="nuovo"] #chSheet:not([data-v="conv"])>.sheet-in{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+html[data-look="nuovo"] #chSheet .ch-head{border:0;padding:10px 12px 6px;gap:10px}
+html[data-look="nuovo"] #chSheet .ch-head .ico{width:38px;height:38px;min-width:38px;min-height:38px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #chSheet .ch-head h2,html[data-look="nuovo"] #chSheet .ch-t{font:700 21px/1.15 var(--font-display)}
+html[data-look="nuovo"] #chSheet[data-v="conv"] .ch-head h2,html[data-look="nuovo"] #chSheet[data-v="conv"] .ch-t{font-size:17px}
+html[data-look="nuovo"] #chSheet .ch-new{min-height:34px;padding:4px 14px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 13.5px/1 var(--font-body);box-shadow:none}
+html[data-look="nuovo"] #chSheet .ch-body{padding:6px 12px 10px}
+html[data-look="nuovo"] #chSheet .ch-list{gap:0;padding:2px 14px;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #chSheet .ch-list>li+li .ch-row,html[data-look="nuovo"] #chSheet .ch-list>li+li>.ch-row{border-top:1px solid var(--line)}
+html[data-look="nuovo"] #chSheet .ch-row{padding:12px 0;border-bottom:0}
+html[data-look="nuovo"] #chSheet .ch-reqs{border:0;border-radius:var(--c-r);background:var(--accent-soft);color:var(--accent)}
+html[data-look="nuovo"] #chSheet .ch-msg{max-width:80%;padding:9px 13px 6px;border-radius:20px;font-size:15px}
+html[data-look="nuovo"] #chSheet .ch-msg.it{background:var(--surface);border-bottom-left-radius:6px;box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #chSheet .ch-msg.me{background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:6px}
+html[data-look="nuovo"] #chSheet .ch-day{padding:4px 12px;border:0;border-radius:999px;background:var(--surface2);box-shadow:none}
+html[data-look="nuovo"] #chSheet .ch-foot{border:0;padding:8px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
+html[data-look="nuovo"] #chSheet .ch-form{align-items:center}
+html[data-look="nuovo"] #chSheet .ch-form textarea{min-height:46px;height:46px;padding:12px 16px;border:0;border-radius:999px;background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] #chSheet .ch-form textarea:focus{outline:0;box-shadow:0 0 0 3px var(--accent-soft)}
+html[data-look="nuovo"] #chSheet .ch-send{width:46px;height:46px;background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] #chSheet .ch-bkbtn{width:46px;height:46px;border-radius:50%;background:var(--surface);box-shadow:var(--c-sh);font-size:20px}
+html[data-look="nuovo"] #chSheet .ch-book{border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh)}
+
+/* ---------- 16. guida e percorso (pezzo 4): fondo chiaro, illustrazione in un riquadro, «Avanti» pieno ---------- */
+html[data-look="nuovo"] .guida{background:var(--bg);color:var(--ink)}
+html[data-look="nuovo"] .guida::before{display:none}
+html[data-look="nuovo"] .guida .gd-prog{gap:6px;align-items:center}
+html[data-look="nuovo"] .guida .gd-prog span{flex:0 0 8px;width:8px;height:8px;border-radius:999px;background:var(--line);transition:flex-basis .2s}
+html[data-look="nuovo"] .guida .gd-prog span.on{background:var(--line)}
+html[data-look="nuovo"] .guida .gd-prog span.cur,html[data-look="nuovo"] .guida .gd-prog span[aria-current]{flex-basis:22px;background:var(--accent)}
+html[data-look="nuovo"] .guida .gd-skip{color:var(--muted);font:600 15px/1 var(--font-body)}
+html[data-look="nuovo"] .guida .gd-ico{position:relative;overflow:hidden;width:100%;height:clamp(150px,26vh,210px);margin:0 0 20px;border-radius:24px;background:var(--surface);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .guida .gd-ico::before,html[data-look="nuovo"] .guida .gd-ico::after{content:"";position:absolute;border-radius:50%;background:var(--accent-soft)}
+html[data-look="nuovo"] .guida .gd-ico::before{width:190px;height:190px;left:-50px;top:-60px}
+html[data-look="nuovo"] .guida .gd-ico::after{width:120px;height:120px;right:-30px;bottom:-40px}
+html[data-look="nuovo"] .guida .gd-ico svg{position:relative;z-index:1;width:84px;height:84px;padding:20px;box-sizing:border-box;border-radius:22px;background:var(--accent);color:var(--accent-ink);transform:rotate(-8deg);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+html[data-look="nuovo"] .guida .gd-h{margin:0 0 12px;font:800 27px/1.15 var(--font-display);color:var(--ink)}
+html[data-look="nuovo"] .guida .gd-p{font-size:15.5px;line-height:1.55;opacity:1;color:var(--ink)}
+html[data-look="nuovo"] .guida .gd-more{background:var(--surface);color:var(--ink);border-radius:16px;box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .guida .gd-link{color:var(--accent)}
+html[data-look="nuovo"] .guida .gd-ex,html[data-look="nuovo"] .guida .gd-end{color:var(--muted);opacity:1}
+html[data-look="nuovo"] .guida .gd-try{min-height:46px;padding:0 20px;border-radius:14px;background:var(--surface);color:var(--accent);box-shadow:var(--c-sh)}
+html[data-look="nuovo"] .guida .gd-try::after{content:" ›"}
+html[data-look="nuovo"] .guida .gd-btn{color:var(--ink)}
+html[data-look="nuovo"] .guida .gd-btn.gd-next{min-height:50px;padding:0 26px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+html[data-look="nuovo"] .guida .gd-n{color:var(--accent);font:700 12px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;opacity:1}
+html[data-look="nuovo"] .guida :focus-visible{outline:2px solid var(--accent)}
+html[data-look="nuovo"][data-theme="dark"] .guida{background:var(--bg)}
+html[data-look="nuovo"][data-theme="dark"] .guida .gd-try{color:var(--accent)}
+@media (prefers-color-scheme:dark){html[data-look="nuovo"]:not([data-theme="light"]) .guida{background:var(--bg)}html[data-look="nuovo"]:not([data-theme="light"]) .guida .gd-try{color:var(--accent)}}
+html[data-look="nuovo"] .sheet #donOpt{background:var(--warn-bg);color:var(--warn)}
+
+/* ---------- 17. «Chiedimela» nel profilo dell'amico (Piero, 19/11/2026): avviso in pagina ---------- */
+html[data-look="nuovo"] .prof .pf-ask{display:grid;gap:10px;padding:14px;border:0;border-radius:var(--c-r);background:var(--accent-soft)!important;color:var(--ink)}
+html[data-look="nuovo"] .prof .pf-ask p{margin:0;font-size:14.5px;line-height:1.45}
+html[data-look="nuovo"] .prof .pf-ask .btn{justify-self:end;min-height:40px;padding:6px 18px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+html[data-look="nuovo"] .prof .pf-ask .pf-asked{justify-self:end;color:var(--accent);font:700 14px/1.2 var(--font-body)}
+
+/* ---------- 18. guida asciutta (Piero, 19/11/2026): icona piccola, frasi brevi una per riga, passi numerati ---------- */
+html[data-look="nuovo"] .guida .gd-stage{align-items:flex-start;padding-top:28px}
+html[data-look="nuovo"] .guida .gd-slide{max-width:460px}
+html[data-look="nuovo"] .guida .gd-ico{width:52px;height:52px;margin:0 0 22px;border-radius:16px;background:var(--accent-soft);color:var(--accent);box-shadow:none;display:grid;place-items:center;overflow:visible}
+html[data-look="nuovo"] .guida .gd-ico::before,html[data-look="nuovo"] .guida .gd-ico::after{display:none}
+html[data-look="nuovo"] .guida .gd-ico svg{width:26px;height:26px;padding:0;border-radius:0;background:none;color:inherit;transform:none;box-shadow:none}
+html[data-look="nuovo"] .guida .gd-h{margin:0 0 16px;font:800 28px/1.1 var(--font-display)}
+html[data-look="nuovo"] .guida .gd-lines{display:grid;gap:10px}
+html[data-look="nuovo"] .guida .gd-lines .gd-p{margin:0;font-size:17px;line-height:1.4;color:var(--ink)}
+html[data-look="nuovo"] .guida .gd-lines .gd-p.gd-m{font-size:15px;color:var(--muted)}
+html[data-look="nuovo"] .guida .gd-two{display:grid;gap:10px;margin-top:16px}
+html[data-look="nuovo"] .guida .gd-two p{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:center;margin:0;padding:12px 14px;border-radius:14px;background:var(--surface);box-shadow:var(--c-sh);font-size:16px;line-height:1.35}
+html[data-look="nuovo"] .guida .gd-two p span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:700 14px/1 var(--font-body)}
+html[data-look="nuovo"] .guida .gd-steps{list-style:none;counter-reset:gd;margin:4px 0 0;padding:0;display:grid;gap:14px}
+html[data-look="nuovo"] .guida .gd-steps li{counter-increment:gd;display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;font-size:16.5px;line-height:1.35}
+html[data-look="nuovo"] .guida .gd-steps li::before{content:counter(gd);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font:700 14px/1 var(--font-body)}
+html[data-look="nuovo"] .guida .gd-steps li span{padding-top:4px}
+html[data-look="nuovo"] .guida .gd-note{margin:18px 0 0;padding:12px 14px;border-radius:14px;background:var(--surface);box-shadow:var(--c-sh);font-size:14.5px;line-height:1.4;color:var(--muted)}
+html[data-look="nuovo"] .guida .gd-note b{color:var(--ink)}
+html[data-look="nuovo"] .guida .gd-acts{margin-top:22px}
+html[data-look="nuovo"] .guida .gd-end{margin-top:18px;font-size:13.5px;color:var(--muted)}
+html[data-look="nuovo"] .guida .gd-end .gd-link{font-size:13.5px}
+html[data-look="nuovo"] .guida .gd-pn{margin:0 0 8px;font:700 12px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+html[data-look="nuovo"] .guida.gd-path .gd-top .gd-n{display:none}
+html[data-look="nuovo"] .guida .gd-pacts{display:grid;gap:10px;margin-top:24px}
+html[data-look="nuovo"] .guida .gd-pacts .gd-try{width:100%;min-height:50px;justify-content:center}
+html[data-look="nuovo"] .guida .gd-pacts .gd-try:first-child{background:var(--accent);color:var(--accent-ink)}
+html[data-look="nuovo"] .guida .gd-pacts .gd-try::after,html[data-look="nuovo"] .guida .gd-pacts .gd-try:first-child::after{content:none}
+html[data-look="nuovo"] .guida .gd-later{display:block;margin:14px auto 0;border:0;background:none;color:var(--muted);font:600 14px/1 var(--font-body)}
+
+/* ---------- 19. testata sobria (Piero, 19/11/2026): titolo grande, numeri sotto, tasti tondi a destra ---------- */
+/* titolo «Libreria» / «Desideri» (app-strumenti.js renderOwner); foto e nome stanno nel Profilo; Amici in testata, nel Profilo e nel Menu */
+html[data-look="nuovo"] body header.top{align-items:flex-start;gap:6px;margin:0 0 16px;padding-top:4px!important}
+html[data-look="nuovo"] body header.top h1{order:1;flex:1 1 auto;display:block;font:800 30px/1.05 var(--font-display);letter-spacing:-.02em;padding-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-look="nuovo"] body header.top h1.h1-long{font-size:23px;padding-top:7px}
+html[data-look="nuovo"] body header.top h1 .prova-tag{display:inline-block;vertical-align:6px;margin-left:2px}
+html[data-look="nuovo"] body header.top>.ico:not(.beer-pill){width:36px;height:36px;min-width:36px;min-height:36px}
+html[data-look="nuovo"] body header.top>.ico:not(.beer-pill) svg{width:19px;height:19px}
+html[data-look="nuovo"] body header.top>.nt-top{order:3}
+html[data-look="nuovo"] body header.top>.ch-top{order:4}
+html[data-look="nuovo"] body header.top>.fri-top{order:5}   /* Amici torna in testata (Piero, 19/11/2026) */
+html[data-look="nuovo"] body header.top>#btnOpts{order:6}
+/* Sostieni: tasto tondo col boccale, nel colore caldo */
+html[data-look="nuovo"] body header.top .beer-top.beer-pill{order:2;width:36px;min-width:36px;height:36px;min-height:36px;margin:0;padding:0;display:grid;place-items:center;border-radius:50%;background:var(--warn-bg);color:var(--warn)}
+html[data-look="nuovo"] body header.top .beer-top.beer-pill .beer-t{display:none}
+html[data-look="nuovo"] body header.top .beer-top.beer-pill svg{width:19px;height:19px}
+/* sotto il titolo solo i numeri; nome e foto si vedono nella libreria di un amico e nell'esempio? no: il titolo li dice già */
+html[data-look="nuovo"] body header.top .top-meta{order:10;flex:1 1 100%;margin:2px 0 0!important;font-size:14px;color:var(--muted)}
+html[data-look="nuovo"] body header.top .top-meta .owner{display:none}
+html[data-look="nuovo"] body header.top .top-meta .summary{font-size:14px}
+@media (max-width:380px){
+  html[data-look="nuovo"] body header.top{gap:4px}
+  html[data-look="nuovo"] body header.top h1{font-size:26px;position:relative;overflow:visible}
+  html[data-look="nuovo"] body header.top h1.h1-long{font-size:20px}
+  /* con Amici in testata il titolo ha meno posto: «PROVA» piccola sopra il titolo, così «Libreria» si legge tutta */
+  html[data-look="nuovo"] body header.top h1 .prova-tag{position:absolute;left:0;top:-11px;margin:0;padding:1px 5px;font-size:8.5px;vertical-align:0}
+  html[data-look="nuovo"] body header.top>.ico:not(.beer-pill),html[data-look="nuovo"] body header.top .beer-top.beer-pill{width:34px;height:34px;min-width:34px;min-height:34px}
+}
+/* pillole: una riga sola, leggere (solo il bordo), scorrono di lato se non entrano */
+html[data-look="nuovo"] .sortbar{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;gap:6px;margin:0 -16px 12px;padding:0 16px}
+html[data-look="nuovo"] .sortbar::-webkit-scrollbar{display:none}
+html[data-look="nuovo"] .sortbar .dpick,html[data-look="nuovo"] .sortbar #btnFilters,html[data-look="nuovo"][data-layout="a"] .sortbar #btnFilters{flex:none;min-height:32px;height:32px;padding:0 11px;background:transparent;box-shadow:inset 0 0 0 1px var(--line);font-size:13px;white-space:nowrap}
+html[data-look="nuovo"] .sortbar #btnFilters[aria-pressed="true"],html[data-look="nuovo"] .sortbar #btnFilters:has(.badge:not([hidden])){box-shadow:none}
+html[data-look="nuovo"] .sortbar .dpick svg,html[data-look="nuovo"] .sortbar #btnFilters svg{width:15px;height:15px;color:var(--muted)}
+html[data-look="nuovo"] .chips .chip.share,html[data-look="nuovo"] .chips #btnNews{min-height:32px;background:transparent;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font-weight:500;font-size:13px}
+/* avvisi: una riga sottile (al massimo due righe di testo) */
+html[data-look="nuovo"] #notice{margin:0 0 14px;padding:8px 6px 8px 12px;gap:8px;border:0;border-radius:14px;font-size:13.5px;line-height:1.3}
+html[data-look="nuovo"] #notice #noticeTxt{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600}
+html[data-look="nuovo"] #notice #noticeBtn{min-height:32px;padding:0 4px;text-decoration:none;font-size:13px}
+html[data-look="nuovo"] #notice #noticeBtn::after{content:" ›"}
+html[data-look="nuovo"] #notice .x{min-width:32px;min-height:32px;font-size:20px}
+html[data-look="nuovo"] body header.top h1{flex:1 1 0}
+html[data-look="nuovo"] .grp-tools{gap:14px;justify-content:flex-end;margin:0 4px 10px}
+html[data-look="nuovo"] .grp-tools .gx{min-height:30px;padding:0;border:0;background:none;box-shadow:none;color:var(--accent);font:600 13px/1 var(--font-body)}
+html[data-look="nuovo"] .grp-tools .gx:disabled{color:var(--muted);opacity:.6}
+/* pallini degli avvisi in fila con il testo, a destra: l'avviso resta basso */
+html[data-look="nuovo"] #notice.lay-has-dots{padding-bottom:8px!important}
+html[data-look="nuovo"] #notice .lay-more{position:static;transform:none;order:5;padding:6px 4px;gap:5px}
+html[data-look="nuovo"] #notice .lay-more i{width:6px;height:6px}
+html[data-look="nuovo"] #notice #noticeX{order:6}
+html[data-look="nuovo"]:is(.guest,.esempio) body header.top h1 .prova-tag{display:none}
+html[data-look="nuovo"] .guida .gd-slide{margin:0 auto}
+html[data-look="nuovo"].guest body header.top h1{cursor:pointer}
+/* «Scopri di più» sull'API: finestra sopra la guida */
+html[data-look="nuovo"] .gd-info{margin:12px 0 0}
+.gd-infosheet{z-index:70}
+html[data-look="nuovo"] .gd-ilist{margin:0;padding:14px 16px 14px 34px;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh);display:grid;gap:10px;font-size:15px;line-height:1.4}
+html[data-look="nuovo"] .gd-ilist li::marker{color:var(--accent)}
+
+/* ---------- 19. guida e percorso verdi (Piero, 19/11/2026): fondo verde Bosco, icona grande verde chiaro,
+   una riga per frase con l'icona dell'app nel quadratino, tutto in verdi (nessun altro colore) ---------- */
+html[data-look="nuovo"] .guida{--gv-ink:#172420;--gv-lite:#8FD1AE;--gv-pale:#CFE6D8;background:linear-gradient(170deg,#24563F,#173A2A);color:#fff}
+html[data-look="nuovo"][data-theme="dark"] .guida{background:linear-gradient(170deg,#1B4230,#0E241A)}
+@media (prefers-color-scheme:dark){html[data-look="nuovo"]:not([data-theme="light"]) .guida{background:linear-gradient(170deg,#1B4230,#0E241A)}}
+html[data-look="nuovo"] .guida .gd-prog span,html[data-look="nuovo"] .guida .gd-prog span.on{background:rgba(207,230,216,.32)}
+html[data-look="nuovo"] .guida .gd-prog span.cur,html[data-look="nuovo"] .guida .gd-prog span[aria-current]{background:var(--gv-lite)}
+html[data-look="nuovo"] .guida .gd-skip{color:var(--gv-pale)}
+html[data-look="nuovo"] .guida .gd-stage{padding-top:18px}
+html[data-look="nuovo"] .guida .gd-ico{width:60px;height:60px;margin:0 0 14px;border-radius:18px;background:var(--gv-pale);color:#173A2A}
+html[data-look="nuovo"] .guida .gd-ico svg{width:30px;height:30px}
+html[data-look="nuovo"] .guida .gd-h{margin:0 0 14px;color:#fff;font:800 27px/1.12 var(--font-display)}
+html[data-look="nuovo"] .guida .gd-pn{color:var(--gv-lite)}
+html[data-look="nuovo"] .guida .gd-card{display:block;margin:0;padding:2px 14px;border-radius:20px;background:#fff;color:var(--gv-ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+html[data-look="nuovo"] .guida .gd-card+.gd-card{margin-top:12px}
+html[data-look="nuovo"] .guida .gd-r{display:flex;align-items:center;gap:12px;margin:0;padding:11px 0;border-bottom:1px solid #E3E9E5;font-size:16px;line-height:1.35;color:var(--gv-ink)}
+html[data-look="nuovo"] .guida .gd-r:last-child{border-bottom:0}
+html[data-look="nuovo"] .guida .gd-r.gd-m .gd-t{color:#58665F;font-size:15px}
+html[data-look="nuovo"] .guida .gd-r b{color:#173A2A}
+html[data-look="nuovo"] .guida .gd-sq{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#E0ECE5;color:#24563F}
+html[data-look="nuovo"] .guida .gd-k{flex:none;display:grid;place-items:center;width:22px;height:22px;margin-left:-4px;border-radius:50%;background:#24563F;color:#fff;font:700 12px/1 var(--font-body)}
+html[data-look="nuovo"] .guida .gd-two,html[data-look="nuovo"] .guida .gd-steps{display:block;gap:0;margin-top:0}
+html[data-look="nuovo"] .guida .gd-lab{margin:16px 4px 8px;font:700 12px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--gv-lite)}
+html[data-look="nuovo"] .guida .gd-note{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;padding:12px 14px;border-radius:16px;background:rgba(143,209,174,.16);box-shadow:none;color:#E2F1E8;font-size:14.5px;line-height:1.4}
+html[data-look="nuovo"] .guida .gd-note>span:first-child{flex:none;color:var(--gv-lite);margin-top:1px}
+html[data-look="nuovo"] .guida .gd-note b{color:#fff}
+html[data-look="nuovo"] .guida .gd-link{color:var(--gv-lite)}
+html[data-look="nuovo"] .guida .gd-info{margin:12px 0 0}
+html[data-look="nuovo"] .guida .gd-ex,html[data-look="nuovo"] .guida .gd-end{color:#C9D9D0}
+html[data-look="nuovo"] .guida .gd-acts{margin-top:16px}
+html[data-look="nuovo"] .guida .gd-try,html[data-look="nuovo"][data-theme="dark"] .guida .gd-try{width:100%;min-height:48px;border-radius:14px;background:var(--gv-lite);color:#0B2016;box-shadow:none;font-weight:700}
+@media (prefers-color-scheme:dark){html[data-look="nuovo"]:not([data-theme="light"]) .guida .gd-try{color:#0B2016}}
+html[data-look="nuovo"] .guida .gd-pacts .gd-try:first-child{background:var(--gv-lite);color:#0B2016}
+html[data-look="nuovo"] .guida .gd-try.gd-try2,html[data-look="nuovo"] .guida .gd-pacts .gd-try.gd-try2{background:rgba(255,255,255,.12);color:#fff;border:0}
+html[data-look="nuovo"] .guida .gd-later{color:var(--gv-pale)}
+html[data-look="nuovo"] .guida .gd-btn{color:#E2F1E8}
+html[data-look="nuovo"] .guida .gd-btn.gd-next{background:var(--gv-lite);color:#0B2016}
+html[data-look="nuovo"] .guida .gd-n{color:var(--gv-lite)}
+html[data-look="nuovo"] .guida :focus-visible{outline:2px solid var(--gv-lite)}
+html[data-look="nuovo"] .guida .gd-two .gd-r{display:flex;grid-template-columns:none;padding:11px 0;border-radius:0;background:none;box-shadow:none;font-size:16px}
+html[data-look="nuovo"] .guida .gd-two .gd-r span{width:auto;height:auto;border-radius:0;background:none;color:inherit;font:inherit;display:inline}
+html[data-look="nuovo"] .guida .gd-two .gd-r .gd-sq{display:grid;width:38px;height:38px;border-radius:12px;background:#E0ECE5;color:#24563F}
+html[data-look="nuovo"] .guida .gd-two .gd-r .gd-k{display:grid;width:22px;height:22px;border-radius:50%;background:#24563F;color:#fff;font:700 12px/1 var(--font-body)}

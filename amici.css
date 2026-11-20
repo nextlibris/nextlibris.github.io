@@ -185,7 +185,27 @@ html:not(.guest) header.top .top-meta .gb-icos{top:-8px;margin-top:0}
 .gb-key.gb-drop:hover,.gb-key.gb-drop:focus-visible{background:var(--bad-bg)}
 
 /* nome utente obbligatorio (19/11/2026): sopra tutto, guida compresa */
-.nm-ask{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
-.nm-box{width:min(100%,420px);background:var(--surface);color:var(--ink);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
-.nm-box h2{margin:0;font-size:20px}
-.nm-box .btn{width:100%}
+.nm-ask{position:fixed;inset:0;z-index:80;display:flex;justify-content:center;overflow-y:auto;color:#fff;background:linear-gradient(180deg,#24563F 0%,#173A2A 100%);
+  padding:calc(env(safe-area-inset-top,0px) + 22px) calc(22px + env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 22px) calc(22px + env(safe-area-inset-left,0px))}
+html[data-theme="dark"] .nm-ask{background:linear-gradient(180deg,#1B4230 0%,#0E241A 100%)}
+@media (prefers-color-scheme:dark){html:not([data-theme="light"]) .nm-ask{background:linear-gradient(180deg,#1B4230 0%,#0E241A 100%)}}
+.nm-box{width:min(100%,440px);display:flex;flex-direction:column;min-height:100%;font-family:var(--font-body)}
+.nm-art{flex:1;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.nm-ini{width:96px;height:96px;border-radius:999px;background:#CFE6D8;color:#24563F;display:grid;place-items:center;font:800 40px/1 var(--font-display)}
+.nm-hi{height:40px;padding:0 18px;border-radius:999px;background:rgba(143,209,174,.18);color:#8FD1AE;display:flex;align-items:center;font:700 16px/1 var(--font-body);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm-hi[hidden]{display:none}
+.nm-box h2{margin:0 0 10px;font:800 31px/1.08 var(--font-display);letter-spacing:-.01em;color:#fff}
+.nm-sub{margin:0 0 18px;font-size:16px;line-height:1.4;color:#CFE6D8}
+.nm-lab{font:700 13px/1.2 var(--font-body);color:#CFE6D8;margin:0 0 6px}
+.nm-box input{height:54px;border-radius:14px;border:2px solid #8FD1AE;background:#fff;color:#16231C;font:500 16px var(--font-body);padding:0 16px;box-sizing:border-box;width:100%;margin:0 0 10px}
+.nm-box input:focus{outline:3px solid rgba(143,209,174,.45);outline-offset:1px}
+.nm-err{margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.1);color:#FFD9D2;font-size:14px;line-height:1.35}
+.nm-err[hidden]{display:none}
+.nm-btn{margin-top:12px;height:54px;border-radius:16px;border:0;background:#8FD1AE;color:#0E241A;font:700 17px var(--font-body);width:100%;cursor:pointer}
+.nm-btn:disabled{opacity:.7}
+.nm-btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+/* «Chiedila a un amico» (giro 12) */
+.fri .kw-askh{margin-top:16px}
+.fri .kw-ask .fr-row{align-items:center;padding:8px 10px 8px 14px}
+.fri .kw-asked{font-size:13px;color:var(--muted)}

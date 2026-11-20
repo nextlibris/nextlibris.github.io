@@ -3,6 +3,18 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 111 · 20/11/2026
+> **Un aspetto nuovo** Pagine color carta, segnalibri sul lato per passare da Libri a Desideri, Per te, Amici, Chat e Tu, e l’Indice al posto del menu. Su tablet e computer la pagina sta al centro, con i segnalibri sempre a portata.
+> **Benvenuto in quattro schede** Chi apre l’app la prima volta trova quattro schede brevi e poi un percorso in tre passi: installa, entra con Google, scegli la tua API Google Libri (gratis) o fattela prestare.
+> **«Chiedimela»** Accanto agli amici che hanno un’API Google Libri loro puoi chiedergliela in prestito con un tocco; a loro arriva un avviso con «Prestala».
+> **Ricerca per titolo più furba** Se Google non risponde cerchiamo in Open Library; scrivi anche l’editore o l’anno («L’isola del tesoro BUR 1996») e i risultati più vicini vengono per primi.
+> **Libri che nessuno conosce** Un libro scritto a mano (per esempio autopubblicato) si propone all’archivio comune: dopo un controllo lo trovano anche gli altri.
+> **La pagina del libro** Tocchi la matita e modifichi tutto lì dove lo leggi; accanto a ogni autore la bandiera del suo paese.
+- **Profilo:** i numeri sulla pagina, con «Da sempre» in elenco; prima di condividere l’immagine (profilo e stagione in libri) vedi l’anteprima.
+- **Nome «API Google Libri»** in tutta l’app, con la spiegazione che crearla è gratis e aiuta Next Libris a crescere.
+- **Messaggi più chiari** quando cerchi senza un’API Google Libri o quando l’API prestata non c’è più (prima diceva «Google al limite»).
+- **Aspetto:** nastro e segnalibri anche a sinistra (Indice › Aspetto); finestre centrate su tablet e computer.
+
 ## Versione 110 · 19/11/2026
 > **Ogni libro con la sua pagina** Anche un libro con solo il codice ISBN si apre come gli altri, con la sua pagina; lo completi con la matita. Nelle librerie degli amici niente più campi da riempire.
 - **Copertine:** il titolo e l'autore sotto le copertine restano sempre, qualunque numero per riga scegli.

@@ -202,6 +202,32 @@
       };
     }).filter(function (c) { return c.t; });
   }
+  /* ricerca per titolo in Open Library (20/11/2026, Piero): gratis e senza chiave, di riserva quando Google non risponde o non trova.
+     Con lang=it Open Library sceglie per ogni opera l'edizione italiana, se c'e' (editions.*). */
+  var OL_SEARCH = 'https://openlibrary.org/search.json?limit=10&lang=it&fields=key,title,subtitle,author_name,first_publish_year,language,cover_i,' +
+    'editions,editions.key,editions.title,editions.subtitle,editions.isbn,editions.language,editions.publisher,editions.publish_date,editions.cover_i&q=';
+  function parseOlSearch(json) {
+    var docs = (json && Array.isArray(json.docs)) ? json.docs : [];
+    return docs.map(function (d) {
+      var e = (d.editions && Array.isArray(d.editions.docs) && d.editions.docs[0]) || {};
+      var langs = Array.isArray(e.language) && e.language.length ? e.language : (Array.isArray(d.language) ? d.language : []);
+      var it = langs.indexOf('ita') >= 0;
+      var ids = (Array.isArray(e.isbn) ? e.isbn : []).map(toIsbn13).filter(Boolean);
+      if (it) ids.sort(function (x, y) { return (/^97(888|912)/.test(y) ? 1 : 0) - (/^97(888|912)/.test(x) ? 1 : 0); });   // prima gli ISBN italiani
+      var t = str(e.title || d.title), sub = str(e.subtitle || d.subtitle);
+      if (t && sub) t += ': ' + sub;
+      var pd = Array.isArray(e.publish_date) ? e.publish_date[0] : e.publish_date;
+      var cov = e.cover_i || d.cover_i;
+      return {
+        id: 'o:' + str(e.key || d.key), t: t,
+        a: Array.isArray(d.author_name) ? d.author_name.map(str).filter(Boolean).slice(0, 3).join(', ') : '',
+        e: str(Array.isArray(e.publisher) ? e.publisher[0] : e.publisher), y: yearOf(pd || d.first_publish_year),
+        i: ids[0] || '', isbns: ids,
+        img: cov ? 'https://covers.openlibrary.org/b/id/' + encodeURIComponent(String(cov)) + '-M.jpg' : '',
+        lang: it ? 'it' : str(langs[0] || ''), gen: '', pg: '', ds: '', src: 'Open Library'
+      };
+    }).filter(function (c) { return c.t; });
+  }
   function parseOpenLibrary(json, isbn) {
     var d = json && (json['ISBN:' + isbn] || json[Object.keys(json || {})[0]]);
     if (!d || typeof d !== 'object') return [];
@@ -321,9 +347,10 @@
     var f = opts.fetch || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);
     if (!f) throw { code: 'network', detail: ['nessun accesso a internet'] };
     var key = opts.gbKey ? '&key=' + encodeURIComponent(opts.gbKey) : '';
-    var errors = [], rate = false;
+    var errors = [], rate = false, nokey = false;
     function note(src, e) {
       if (e && e.status === 429) rate = true;
+      if (e && e.status === 403) nokey = true;   // API prestata tolta (20/11/2026)
       errors.push(src + ': ' + (e && e.local ? 'limite giornaliero raggiunto (richieste sospese fino a domani)' : e && e.status ? 'errore ' + e.status : (e && e.bad ? 'risposta non valida' : 'nessuna risposta')));
     }
     var got = { g: null, o: null, s: null, c: null };
@@ -387,7 +414,7 @@
     }
     var book = best();
     if (!book) {
-      if (gFailed || oFailed) throw { code: rate ? 'rate' : 'network', detail: errors };
+      if (gFailed || oFailed) throw { code: rate || nokey ? 'rate' : 'network', nokey: nokey, detail: errors };
       return null;
     }
     book.i = isbn;
@@ -466,6 +493,7 @@
     if (!f) throw { code: 'network' };
     var key = opts.gbKey ? '&key=' + encodeURIComponent(opts.gbKey) : '';
     var base = 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=10&printType=books' + key;
+    var gErr = '', res = [];
     try {
       /* giro 10 (Piero, 18/11/2026): prima le edizioni italiane. Una sola ricerca se ne trova almeno 3; altrimenti una seconda
          senza limiti di lingua, e le italiane restano in cima */
@@ -473,8 +501,19 @@
       if (it.length >= 3) return it;
       var seen = {};
       it.forEach(function (c) { seen[c.id] = 1; });
-      return it.concat(parseGoogle(await getJson(f, base, opts)).filter(function (c) { return !seen[c.id]; }));
-    } catch (e) { throw { code: e && e.status === 429 ? 'rate' : 'network' }; }
+      res = it.concat(parseGoogle(await getJson(f, base, opts)).filter(function (c) { return !seen[c.id]; }));
+    } catch (e) { gErr = e && e.status === 429 ? 'rate' : e && e.status === 403 ? 'nokey' : 'network'; }   // 403 = API prestata tolta (20/11/2026)
+    if (res.length) return res;
+    /* 20/11/2026 (Piero): se Google non risponde o non trova, si cerca in Open Library */
+    try {
+      var ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(query), opts));
+      /* Open Library vuole tutte le parole: con l'editore aggiunto («l'isola del tesoro bur») puo' non trovare niente, si riprova senza l'ultima */
+      var words = String(query).trim().split(/\s+/);
+      if (!ol.length && words.length > 2) ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(words.slice(0, -1).join(' ')), opts));
+      if (ol.length) { ol.via = 'ol'; ol.gErr = gErr; return ol; }
+    } catch (e2) { /* anche Open Library non risponde: vale l'errore di Google */ }
+    if (gErr) throw { code: gErr };
+    return [];
   }
 
   /* ---------- lettura della copertina (OCR) ---------- */
@@ -1161,7 +1200,7 @@
     sortKeyTitle: sortKeyTitle, sortKeyAuthor: sortKeyAuthor, authorParts: authorParts, authorInv: authorInv,
     isbnClean: isbnClean, isbn13Valid: isbn13Valid, isbn10Valid: isbn10Valid, isbn10to13: isbn10to13, isbn13to10: isbn13to10,
     toIsbn13: toIsbn13, fmtIsbn: fmtIsbn, extractIsbns: extractIsbns, ocrIsbns: ocrIsbns, parseIsbnList: parseIsbnList,
-    parseGoogle: parseGoogle, parseOpenLibrary: parseOpenLibrary, lookupIsbn: lookupIsbn, parseCrossref: parseCrossref, isbnPrefix: isbnPrefix, guessPublisher: guessPublisher, diagnose: diagnose, openLibrarySearch: openLibrarySearch, searchText: searchText,
+    parseGoogle: parseGoogle, parseOlSearch: parseOlSearch, parseOpenLibrary: parseOpenLibrary, lookupIsbn: lookupIsbn, parseCrossref: parseCrossref, isbnPrefix: isbnPrefix, guessPublisher: guessPublisher, diagnose: diagnose, openLibrarySearch: openLibrarySearch, searchText: searchText,
     tokens: tokens, fuzzyHas: fuzzyHas, splitTitleAuthor: splitTitleAuthor, ocrLines: ocrLines, goodLines: goodLines, topLines: topLines, buildQueries: buildQueries,
     scoreCandidate: scoreCandidate, rankCandidates: rankCandidates, strongMatch: strongMatch, buildShare: buildShare, parseShare: parseShare, shareHeading: shareHeading, shareLabel: shareLabel, shareText: shareText, SHARE_MAX: SHARE_MAX,
     csvCell: csvCell, buildCSV: buildCSV, buildTSV: buildTSV, rowsFor: rowsFor, colsFor: colsFor, itDate: itDate,

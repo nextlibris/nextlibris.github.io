@@ -55,36 +55,75 @@ function openIsbnSheet() {
 }
 /* ---------- ricerca per titolo (per esempio un libro consigliato da un amico) ---------- */
 var titleSeq = 0, titleCands = [], titleText = '';
+/* perché i risultati vengono da Open Library (20/11/2026, Piero: senza API non è «Google non ha risposto») */
+function olWhy(gErr) {
+  if (gErr === 'nokey') return 'L’API Google Libri che ti avevano prestato non è più disponibile: questi li trova Open Library. ';
+  if (!settings.gbKey) return 'Senza un’API Google Libri cerco in Open Library: ecco cosa trova. ';
+  if (gErr) return 'Google Libri non ha risposto: questi li trova Open Library. ';
+  return 'Google Libri non ha trovato niente: questi li trova Open Library. ';
+}
+/* ordine dei risultati per titolo (20/11/2026, Piero): prima i titoli più vicini a quello scritto; poi chi corrisponde all'anno
+   o all'editore scritti accanto («l'isola del tesoro bur», «l'isola del tesoro 1996»); poi le edizioni italiane, quelle con ISBN e
+   copertina, e le più recenti */
+var STOPW = { l: 1, il: 1, lo: 1, la: 1, i: 1, gli: 1, le: 1, un: 1, una: 1, uno: 1, di: 1, del: 1, della: 1, dello: 1, dei: 1, degli: 1, delle: 1, e: 1, ed: 1, a: 1, al: 1, the: 1, of: 1, and: 1, d: 1 };
+function qParts(text) {
+  var m = String(text).match(/\b(1[4-9]\d\d|20\d\d)\b/), y = m ? m[1] : '';
+  var q = y ? String(text).replace(m[0], ' ').replace(/\s+/g, ' ').trim() : String(text).trim();
+  return { y: y, q: q || String(text).trim() };
+}
+function toks(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter(function (w) { return w && !STOPW[w]; });
+}
+function rankCands(qp, list) {
+  var qt = toks(qp.q);
+  return list.map(function (c, i) {
+    var tt = toks(c.t), inT = tt.filter(function (w) { return qt.indexOf(w) >= 0; }).length;
+    var fit = tt.length ? inT / tt.length : 0;                       // 1 = il titolo è fatto solo di parole scritte
+    var extra = qt.filter(function (w) { return tt.indexOf(w) < 0; });
+    var more = toks(c.e + ' ' + c.a), hit = extra.filter(function (w) { return more.indexOf(w) >= 0; }).length;   // editore o autore scritti
+    return { c: c, i: i, tier: fit >= 0.999 ? 2 : fit >= 0.6 ? 1 : 0, bonus: hit + (qp.y && c.y === qp.y ? 2 : 0),
+      it: c.lang === 'it' ? 1 : 0, full: (c.i && c.img) ? 1 : 0, y: Number(c.y) || 0 };
+  }).sort(function (a, b) {
+    return (b.tier - a.tier) || (b.bonus - a.bonus) || (b.it - a.it) || (b.full - a.full) || (b.y - a.y) || (a.i - b.i);
+  }).map(function (x) { return x.c; });
+}
 function looksLikeTitle(s) { return (String(s).replace(/isbn/ig, '').match(/[a-zàèéìòùç]/ig) || []).length >= 3; }
 function whereTxt() { return tab === 'wish' ? 'ai Desideri' : 'alla Libreria'; }
 async function searchTitle(text) {
   var my = ++titleSeq;
   titleText = text; titleCands = [];
-  $('#isbnErr').hidden = true;
+  $('#isbnErr').hidden = true; $('#isbnKey').hidden = true;
   $('#isbnResBox').hidden = false;
   $('#isbnResMsg').textContent = 'Cerco «' + text + '»…';
   $('#isbnRes').innerHTML = '';
   var asIs = $('#isbnAsIs');
   asIs.textContent = 'Aggiungi solo «' + (text.length > 40 ? text.slice(0, 38) + '…' : text) + '», senza cercare'; asIs.hidden = true;
   var res;
-  try { res = await L.searchText(text, lookupOpts()); }
+  var qp = qParts(text);
+  try { res = await L.searchText(qp.q, lookupOpts()); }
   catch (e) {
     if (my !== titleSeq) return;
-    $('#isbnResMsg').textContent = e && e.code === 'rate' ? 'Google Libri è al limite di richieste: riprova tra poco, oppure aggiungi solo il titolo e completalo dopo.' : 'Non riesco a cercare: controlla la connessione. Puoi aggiungere solo il titolo e completarlo dopo.';
+    /* 20/11/2026 (Piero): senza API, o con l'API prestata tolta, non è «Google al limite»: si spiega come averne una */
+    var noKey = !settings.gbKey || /^prestata/i.test(settings.gbKey) && e && e.code === 'nokey';
+    $('#isbnResMsg').textContent = e && e.code === 'nokey' ? 'L’API Google Libri che ti avevano prestato non è più disponibile. Puoi crearne una tua: è gratis e bastano pochi minuti. Intanto aggiungi solo il titolo e completalo dopo.'
+      : e && e.code === 'rate' && !settings.gbKey ? 'Senza un’API Google Libri, Google limita la ricerca per titolo. Puoi crearne una tua (è gratis) o chiederla in prestito a un amico. Intanto aggiungi solo il titolo e completalo dopo.'
+      : e && e.code === 'rate' ? 'Google Libri è al limite di richieste: riprova tra poco, oppure aggiungi solo il titolo e completalo dopo.'
+      : 'Non riesco a cercare: controlla la connessione. Puoi aggiungere solo il titolo e completarlo dopo.';
+    $('#isbnKey').hidden = !(e && (e.code === 'nokey' || (e.code === 'rate' && noKey)));
     asIs.hidden = false; return;
   }
   if (my !== titleSeq || $('#isbnSheet').hidden) return;
   // prima le edizioni italiane, poi quelle con l'ISBN; per il resto l'ordine di Google
-  titleCands = res.map(function (c, i) { return { c: c, i: i }; }).sort(function (x, y) {
-    return ((y.c.lang === 'it') - (x.c.lang === 'it')) || ((!!y.c.i) - (!!x.c.i)) || (x.i - y.i);
-  }).map(function (x) { return x.c; }).slice(0, 8);
+  titleCands = rankCands(qp, res).slice(0, 10);
   $('#isbnRes').innerHTML = titleCands.map(function (c, i) {
     var have = (c.isbns || []).map(findByIsbn).filter(Boolean)[0];
     var badge = have ? '<span class="tag ' + (have.w ? 'loan' : 'warn') + '">' + (have.w ? 'Già nei Desideri' : 'Ce l\'hai già') + '</span>' : '';
     return '<li><button class="cand" data-i="' + i + '"><span class="cimg">' + (c.img ? '<img src="' + esc(c.img) + '" alt="" referrerpolicy="no-referrer" data-rm>' : '') + '</span><span><b>' + esc(c.t) + '</b>' +
       '<span>' + esc(c.a || 'Autore non indicato') + '</span><span>' + esc([c.e, c.y].filter(Boolean).join(', ') || 'Editore e anno non indicati') + '</span>' + badge + '</span></button></li>';
   }).join('');
-  $('#isbnResMsg').textContent = titleCands.length ? 'Tocca il libro giusto per aggiungerlo ' + whereTxt() + ':' : 'Non ho trovato libri per «' + text + '». Prova con meno parole, o aggiungi l\'autore.';
+  var viaOl = res.via === 'ol';
+  $('#isbnKey').hidden = !(viaOl && (!settings.gbKey || res.gErr === 'nokey'));
+  $('#isbnResMsg').textContent = titleCands.length ? (viaOl ? olWhy(res.gErr) : '') + 'Tocca il libro giusto per aggiungerlo ' + whereTxt() + ':' : 'Non ho trovato libri per «' + text + '». Prova con meno parole, o aggiungi l\'autore.';
   asIs.hidden = false;
 }
 function addedToast(b) {
@@ -126,6 +165,7 @@ function addTitleAsIs() {
 }
 $('#isbnRes').addEventListener('click', function (e) { var b = e.target.closest('[data-i]'); if (b) pickTitle(+b.dataset.i); });
 $('#isbnAsIs').addEventListener('click', addTitleAsIs);
+$('#isbnKey').addEventListener('click', function () { $('#isbnSheet').hidden = true; if (window.NLRicerche && window.NLRicerche.guide) window.NLRicerche.guide(); else if (NL.openOptions) NL.openOptions('search'); });
 $('#isbnText').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !e.shiftKey && looksLikeTitle(e.target.value)) { e.preventDefault(); submitIsbn(); }
 });
@@ -291,7 +331,7 @@ function backupName() {
 }
 function coverIds() { return Object.keys(coverURL).filter(function (id) { return !!get(id); }).concat(quotePhKeys().filter(function (k) { return !!qphURL[k]; })); }
 /* Senza foto tue il backup e' pronto subito; con le foto va preparato prima (si leggono dal telefono), cosi' la condivisione parte al tocco. */
-/* nel backup vanno anche worker SBN e chiave Google (in uso e salvati): ripristinando su un altro telefono tornano anche loro */
+/* nel backup vanno anche worker SBN e API Google (in uso e salvati): ripristinando su un altro telefono tornano anche loro */
 function backupCfg() { return { sbnUrl: mine('sbn'), gbKey: mine('key'), saved: { sbn: saved.sbn.slice(), key: saved.key.slice() } }; }
 function backupData() { return coverIds().length ? backupReady : JSON.stringify({ app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }); }
 async function buildBackup() {
@@ -414,7 +454,7 @@ function restoreCfg(c) {
   ls.set(LS_SAVED, JSON.stringify(saved));
   var w = okW(c.sbnUrl), k2 = okK(c.gbKey);
   if (w && !settings.sbnUrl) { setSvc('sbn', w); put.push('il worker SBN'); }
-  if (k2 && !settings.gbKey) { setSvc('key', k2); put.push('la chiave Google'); }
+  if (k2 && !settings.gbKey) { setSvc('key', k2); put.push('l’API Google'); }
   renderSvc();
   return put.join(' e ');
 }
