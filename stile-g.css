@@ -305,3 +305,13 @@ html.g-look .row.open.cv-full .status.cv-status .btn{align-self:center;min-heigh
 html.g-look .row.open.cv-full .status.cv-status .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 html.g-look .row.open.cv-full .status.cv-status .cv-st-b{display:flex;flex-wrap:wrap;gap:8px}
 
+
+/* G26 (Piero, 20/11/2026): pillola «BETA» accanto a NEXT LIBRIS nella testatina; nella copia di prova una seconda pillola «prova» sotto */
+html.g-look .g-run{flex:0 1 auto}
+html.g-look .g-beta{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+html.g-look .g-beta b{display:inline-block;padding:2px 7px;border-radius:999px;font:700 9.5px/1.2 var(--font-body);letter-spacing:.1em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent)}
+html.g-look .g-beta b.g-prova{background:var(--warn-bg,var(--surface2));color:var(--ink);letter-spacing:.06em;text-transform:none}
+/* G27 (20/11/2026): «Vedi tutti i libri di» resta dentro la pagina; le etichette lunghe finiscono con i puntini */
+html.g-look .cv-page .cv-tags{min-width:0;max-width:100%;grid-template-columns:minmax(0,1fr)}
+html.g-look .cv-page .cv-tags .cv-chips{min-width:0;max-width:100%}
+html.g-look .cv-page .cv-tags .fchip{min-width:0;max-width:100%}

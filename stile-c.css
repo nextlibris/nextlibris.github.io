@@ -457,6 +457,7 @@ html[data-look="nuovo"] .fri .fr-n{background:var(--accent);color:var(--accent-i
 html[data-look="nuovo"] .fri .fr-box{border:0;border-radius:var(--c-r);background:var(--surface);box-shadow:var(--c-sh);overflow:hidden}
 html[data-look="nuovo"] .fri .fr-list>.fr-row{border-bottom:0}
 html[data-look="nuovo"] .fri .fr-act .btn{min-height:34px;padding:4px 12px;border-radius:999px;background:var(--surface2);box-shadow:none;font-size:13px}
+html[data-look="nuovo"] .fri .fr-act .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}   /* Accetta, Chiedi l'amicizia, Presta: pieni (20/11/2026; prima testo chiaro su fondo chiaro) */
 /* Chat: elenco in riquadro; chat aperta con i fumetti dello stile base e il campo a pillola */
 html[data-look="nuovo"] #chSheet>.sheet-in{width:100%;max-width:none;height:100%;max-height:none;border-radius:0;background:var(--bg);box-shadow:none;padding:env(safe-area-inset-top) max(0px,calc(50% - 312px)) 0}
 html[data-look="nuovo"] #chSheet:not([data-v="conv"])>.sheet-in{padding-bottom:calc(96px + env(safe-area-inset-bottom))}

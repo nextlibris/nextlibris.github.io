@@ -3,6 +3,12 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 114 · 20/11/2026
+> **Next Libris è in BETA** Accanto al nome, in alto, c'è la scritta BETA: l'app cresce ancora e i tuoi consigli contano.
+> **Correzioni** Nella libreria di un amico la freccia ‹ della pagina di un libro torna di nuovo indietro; i tasti «Accetta» e «Chiedi l'amicizia» si leggono bene.
+- **Pagina del libro:** «Vedi tutti i libri di» resta dentro la pagina anche con un genere molto lungo (finisce con i puntini); nella libreria di un amico funziona anche il tasto ⋯.
+- **Amici:** «Accetta», «Chiedi l'amicizia» e «Presta» sono di nuovo pieni del colore dell'app.
+
 ## Versione 113 · 20/11/2026
 > **Più pulita e più leggera** Tolti i resti del vecchio aspetto: resta quello nuovo, con le pagine color carta e i segnalibri.
 > **Avvisi dove servono** Se un libro non si trova o manca la rete lo leggi anche nella sua pagina; se il telefono non riesce a salvare, l'app te lo dice e ti propone il backup.

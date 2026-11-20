@@ -101,6 +101,7 @@ function paintHead() {
   var lib = all.filter(function (b) { return !b.w; }), ws = all.filter(function (b) { return b.w; });
   var n = wish ? ws.length : lib.length, rib = $('#gRib'), pr = $('#gProse'), run = $('#gRun'), bk = $('#gBack');
   if (!rib) return;
+  var gb = $('#gBeta'); if (gb && typeof PROVA !== 'undefined' && PROVA && !gb.querySelector('.g-prova')) gb.insertAdjacentHTML('beforeend', '<b class="g-prova">prova</b>');   // BETA per tutti, «prova» sotto solo nella copia di prova (Piero, 20/11/2026)
   var who = guest ? String(NL.guest() || '') : '';
   rib.innerHTML = '<b>' + n + '</b>' + (wish ? SV(IC.desideri, 13) : '<small>libri</small>');
   run.textContent = guest ? (who || 'Libreria di un amico') : 'Next Libris';

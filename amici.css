@@ -98,7 +98,7 @@ html.guest #notice,html.guest #nxBox,html.guest #wrapAsk,html.guest #donAsk,html
 html.guest .notice-tri,html.guest #btnShareWish,html.guest #btnTodo,html.guest #fltGuess,html.guest .ret-btn{display:none!important}
 /* scheda: si guarda, non si cambia (restano copertina, autore, etichette-filtro, descrizione, cerca sul web, chiudi) */
 html.guest #list .row :is(button,input,select,textarea,label,[data-act]){pointer-events:none}
-html.guest #list .row :is([data-act="zoom"],[data-act="auinfo"],[data-act="facet"],[data-act="serall"],.g-wish,.g-wish *,.cv-dmore,[data-act="descmore"],[data-act="websearch"],[data-act="toggle"],.chev-btn,.sum,.cv-guest,.cv-guest *){pointer-events:auto}
+html.guest #list .row :is([data-act="zoom"],[data-act="auinfo"],[data-act="facet"],[data-act="serall"],.g-wish,.g-wish *,.cv-dmore,[data-act="descmore"],[data-act="websearch"],[data-act="toggle"],.chev-btn,.sum,.cv-guest,.cv-guest *,.cv-bar,.cv-bar *){pointer-events:auto}   /* ‹ e ⋯ della pagina del libro anche nella libreria di un amico (20/11/2026) */
 html.guest #list .row.open .acts-main > :not(.g-wish),html.guest #list .row.open :is(.cv-editb,[data-act="del"],[data-act="loan"],[data-act="share"],[data-act="addcopy"],[data-act="lookup"],.quotes,.cv-note,.f-n,.f-sh,.f-c,.cv-ph small){display:none!important}
 .cv-guest{display:grid;gap:8px;margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:var(--surface2);grid-template-columns:minmax(0,1fr)}
 .cv-guest .cvg-h{margin:0;font-size:13px;font-weight:700;color:var(--muted);text-transform:none}
