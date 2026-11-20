@@ -98,13 +98,12 @@ var S = [
     note: ['beer', 'È gratis. Se ti piace, puoi sostenerla.'] },
   { art: 'books', h: 'I tuoi libri in un tocco',
     p: [['code', 'Inquadra il codice, fotografa la copertina o scrivi il titolo.'], ['star', 'Segna cosa leggi e cosa ti è piaciuto.'], ['mark', 'Tieni i Desideri e i libri prestati.']] },
-  { art: 'api', h: 'L’API Google Libri è gratis', pills: ['Gratis', 'La ricevi', 'La presti'], sub: 'Con l’API trovi molti più libri, con copertine e descrizioni.',
-    p: [['key', 'Crearla non costa nulla: la fai in autonomia, in pochi passi.'], ['get', 'Non ce l’hai? Chiedila in prestito a un amico.'], ['give', 'Ce l’hai? Prestala: a te non costa niente e l’app cresce.']] },
-  { art: 'inst', h: 'Installa l’app', inst: true, sub: 'Si apre come le altre app, a schermo intero, e ti avvisa quando arriva un messaggio.',
-    p: [['share', '<b>iPhone:</b> tocca ··· › Condividi › Aggiungi alla schermata Home e lascia acceso «Apri come app web».'], ['down', '<b>Android:</b> tocca «Installa» qui sotto.']],
-    p2: [['share', '<b>iPhone:</b> tocca ··· › Condividi › Aggiungi alla schermata Home e lascia acceso «Apri come app web».'], ['down', '<b>Android:</b> dal menu del browser (⋮) tocca «Installa app».']] }   // p2: il browser non offre il tasto
+  { art: 'api', h: 'L’API Google Libri è gratis', pills: ['Gratis', 'Tua', 'Si presta'], sub: 'Con l’API trovi molti più libri, con copertine e descrizioni.',
+    p: [['key', 'Crearla non costa nulla: la fai in autonomia, in 5 minuti.'], ['swap', 'Quando avrai degli amici su Next Libris, potrete prestarvela.']],
+    pInv: [['key', 'Crearla non costa nulla: la fai in autonomia, in 5 minuti.'], ['users', '<b>{inv}</b> è su Next Libris: se ha un’API, può prestartela.']] }   // pInv: arrivato con il link d'invito (20/11/2026)
 ];
-function screens() { return S.filter(function (s) { return !s.inst || (NL.inst && !NL.inst.standalone()); }); }
+function screens() { return S; }   // la scheda «Installa l’app» non c’è più: sui telefoni si installa prima (app-avvio.js, 20/11/2026)
+function inviter() { try { var A = window.NLAmici, st = A && A.state && A.state(); return st && st.invite ? String(st.invite) : ''; } catch (e) { return ''; } }
 function canInst() { return !!(NL.inst && NL.inst.can && NL.inst.can() && !NL.inst.ios()); }
 function needLogin() { return !!window.NLSocial && !ptLogged(); }
 
@@ -163,7 +162,7 @@ function paint() {
   st.innerHTML = '<div class="wc-slide" data-gs="' + G.i + '"><div class="wc-art" aria-hidden="true">' + ART[s.art]() + '</div>' +
     (s.pills ? '<p class="wc-pills">' + s.pills.map(function (p) { return '<span>' + esc(p) + '</span>'; }).join('') + '</p>' : '') +
     '<h2 class="wc-h">' + esc(s.h) + '</h2>' + (s.sub ? '<p class="wc-sub">' + esc(s.sub) + '</p>' : '') +
-    '<div class="wc-rows">' + ((s.inst && !inst ? s.p2 : s.p) || []).map(wrow).join('') + '</div>' +
+    '<div class="wc-rows">' + ((s.inst && !inst ? s.p2 : s.pInv && inviter() ? s.pInv.map(function (r) { return [r[0], r[1].replace('{inv}', esc(inviter()))]; }) : s.p) || []).map(wrow).join('') + '</div>' +
     (s.note ? '<p class="wc-note">' + wi(s.note[0], 22, 1.8) + '<span>' + s.note[1] + '</span></p>' : '') + '</div>';
   ft.innerHTML = inst ? '<button type="button" class="wc-btn gd-next" data-gd="inst">' + wi('down', 20, 2.2) + 'Installa</button>'
     : '<button type="button" class="wc-btn gd-next" data-gd="next">Avanti' + wi('next', 20, 2.2) + '</button>';
@@ -334,6 +333,7 @@ var PT = { el: null, t: 0 };
 if (cfg.path == null && !cfg.seen && NL.firstRun && NL.firstRun()) { cfg.path = 1; save(); }
 function ptLogged() { var so = window.NLSocial; return !!(so && so.auth && so.auth()); }
 function ptKey() { var A = window.NLAmici, st = NL.settings || {}; return !!st.gbKey || !!(A && A.hasAny && A.hasAny()); }
+function ptLender() { var A = window.NLAmici; return !!(A && A.lenders && A.lenders() > 0); }   // amici con un’API loro (20/11/2026)
 function ptBooks() { try { return (NL.myBooks ? NL.myBooks() : NL.books()).length; } catch (e) { return 0; } }
 function pathStep() {
   var n = cfg.path || 0; if (!n) return 0;
@@ -356,26 +356,28 @@ function pathShow() {
   var n = pathStep(); if (!n) { pathHide(); return; }
   if (!PT.el) {
     var el = document.createElement('div');
-    el.id = 'percorso'; el.className = 'guida gd-path'; el.hidden = true;
+    el.id = 'percorso'; el.className = 'wc gd-path'; el.hidden = true;   // stessa grafica delle schede di benvenuto (20/11/2026)
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Primi passi con Next Libris');
-    el.innerHTML = '<div class="gd-top"><div class="gd-prog" id="ptProg" aria-hidden="true"></div><span class="gd-n" id="ptN"></span></div><div class="gd-stage" id="ptStage" aria-live="polite"></div>';
+    el.innerHTML = '<div class="wc-top"><div class="wc-dots" id="ptProg" aria-hidden="true"></div><span class="gd-n wc-pn" id="ptN"></span></div><div class="wc-stage" id="ptStage" aria-live="polite"></div><div class="wc-foot" id="ptFoot"></div>';
     document.body.appendChild(el); PT.el = el;
     el.addEventListener('click', function (e) { var b = e.target.closest('[data-pt]'); if (b) pathDo(b.dataset.pt); });
   }
   var T = {   // testi brevi (Piero, 19/11/2026)
     1: { ico: 'user', h: 'Accedi con Google', p: [['books', 'I tuoi libri si salvano online.'], ['users', 'Trovi gli amici e ti fai prestare un’API.'], ['user', '~Ti chiediamo solo un nome.']],
       b: [['login', 'Accedi con Google']] },
-    2: { ico: 'apikey', h: 'Trova più libri', p: [['search', 'Con un’API Google Libri l\'app trova più libri, con copertine e descrizioni.'], ['spark', '<b>È gratis</b>: crearla non costa nulla.'], ['users', '~Creala tu o chiedila a un amico.']],
-      b: [['make', 'Crea la tua (gratis)']].concat(ptLogged() && window.NLAmici && window.NLAmici.keys ? [['askf', 'Chiedila a un amico']] : []) },
+    2: { ico: 'apikey', h: 'Trova più libri', p: [['search', 'Con un’API Google Libri l\'app trova più libri, con copertine e descrizioni.'], ['spark', '<b>È gratis</b>: crearla non costa nulla.'], ptLogged() && ptLender() ? ['users', '~Creala tu o chiedila a un amico.'] : ['apikey', '~La crei in 5 minuti, con la guida.']],
+      b: [['make', 'Crea la tua (gratis)']].concat(ptLogged() && ptLender() ? [['askf', 'Chiedila a un amico']] : []) },
     3: { ico: 'scan', h: 'Aggiungi il primo libro', p: [['scan', 'Inquadra il codice a barre sul retro.'], ['cam', '~Oppure fotografa la copertina o scrivi il titolo.']],
       b: [['add', 'Aggiungi un libro']] }
   }[n];
-  $('#ptProg').innerHTML = [1, 2, 3].map(function (k) { return '<span class="' + (k <= n ? 'on' : '') + (k === n ? ' cur' : '') + '"></span>'; }).join('');
+  $('#ptProg').innerHTML = [1, 2, 3].map(function (k) { return '<span class="' + (k === n ? 'cur' : '') + '"></span>'; }).join('');
   $('#ptN').textContent = 'Passo ' + n + ' di 3';
-  $('#ptStage').innerHTML = '<div class="gd-slide" data-ps="' + n + '"><span class="gd-ico" aria-hidden="true">' + gi(T.ico) + '</span><p class="gd-pn">Passo ' + n + ' di 3</p><h2 class="gd-h">' + esc(T.h) + '</h2>' +
-    lines(T.p) +
-    '<div class="gd-acts gd-pacts">' + T.b.map(function (b, k) { return '<button type="button" class="btn primary gd-try' + (k ? ' gd-try2' : '') + '" data-pt="' + b[0] + '">' + esc(b[1]) + '</button>'; }).join('') + '</div>' +
-    '<button type="button" class="gd-later" data-pt="later">Più tardi</button></div>';
+  $('#ptStage').innerHTML = '<div class="wc-slide" data-ps="' + n + '"><div class="wc-art" aria-hidden="true"><div class="wc-a" style="width:220px;height:220px">' +
+    circ('left:25px;top:25px;width:170px;height:170px;background:rgba(143,209,174,.14)', '<span class="wc-sq wc-big" style="width:104px;height:104px;border-radius:32px">' + gi(T.ico) + '</span>') + '</div></div>' +
+    '<h2 class="wc-h gd-h">' + esc(T.h) + '</h2><div class="wc-rows">' +
+    T.p.map(function (r) { var lo = r[1].charAt(0) === '~'; return '<p class="wc-r' + (lo ? ' wc-lo' : '') + '"><span class="wc-ic">' + gi(r[0]) + '</span><span>' + (lo ? r[1].slice(1) : r[1]) + '</span></p>'; }).join('') + '</div></div>';
+  $('#ptFoot').innerHTML = T.b.map(function (b, k) { return '<button type="button" class="wc-btn gd-try' + (k ? ' gd-try2 wc-btn2' : '') + '" data-pt="' + b[0] + '">' + esc(b[1]) + '</button>'; }).join('') +
+    '<button type="button" class="wc-ghost gd-later" data-pt="later">Più tardi</button>';
   PT.el.hidden = false; document.body.classList.add('guida-open');
 }
 function pathDo(a) {

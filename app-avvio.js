@@ -699,37 +699,67 @@ async function doInstall() {
   if (out && out.outcome === 'dismissed') toast('Va bene. Quando vuoi: Indice › Impostazioni › Installazione sul telefono.');
   updateInstallUi();
 }
-/* iPhone nel browser (giro 11F, Piero 19/11/2026): prima si mette nella schermata Home, poi si comincia.
-   Su iPhone l'app della schermata Home e Safari tengono i dati separati, Safari puo' cancellarli dopo settimane senza aperture
-   e le notifiche arrivano solo all'app: per questo si chiede di installarla subito. «Continua nel browser» resta, con l'avviso. */
+/* Installazione obbligatoria sui telefoni (Piero, 20/11/2026; prima, dal giro 11F, solo iPhone e con «Continua nel browser»).
+   Nel browser di un telefono (Android o iPhone, non tablet né PC) c'è solo questa schermata: si installa e si apre dall'icona.
+   Le schede di benvenuto, l'accesso, il nome e il percorso arrivano nell'app installata (guida.js aspetta finché c'è #iosGate).
+   Grafica «Fondo Bosco» delle schede di benvenuto (classi wc-* di guida.css). Su iPhone l'app installata e Safari tengono i dati separati:
+   chi arriva con il link d'invito legge il nome di chi l'ha invitato, da cercare in Amici; chi ha già dei libri nel browser fa prima il backup. */
+function gatePhone() { var k = browserKind(); if (k === 'desktop') return false; try { return Math.min(screen.width, screen.height) < 600; } catch (e) { return true; } }
+var GATE_I = {
+  ok: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', down: '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', book: '<path d="M3 6a9 9 0 0 1 9 0v13a9 9 0 0 0-9 0z"/><path d="M21 6a9 9 0 0 0-9 0v13a9 9 0 0 1 9 0z"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'
+};
+function gateIc(n, s) { return '<svg width="' + (s || 20) + '" height="' + (s || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + GATE_I[n] + '</svg>'; }
+var gateInv = '';
+function gateInvite() {
+  if (!gateInv) { try { gateInv = String(new URLSearchParams(location.search).get('amico') || JSON.parse(ls.get('catalogo-libri-amici-invito') || 'null') || '').trim().slice(0, 40); } catch (e) { gateInv = ''; } }
+  return gateInv;
+}
+var gateDone = false;
+function gatePaint(d) {
+  var k = browserKind(), h = INST_STEPS[k], ios = /^ios/.test(k), btn = !ios && !!deferred && !gateDone;
+  var inv = gateInvite(), mine = (state.books || []).filter(function (b) { return !b.w; }).length;
+  var steps = gateDone ? ['Trovi <b>Next Libris</b> tra le app del telefono.', 'Aprila dall\'icona: lì cominci.']
+    : btn ? ['Tocca <b>Installa</b> qui sotto e conferma.', 'Poi apri <b>Next Libris</b> dall\'icona tra le app.'] : h.steps;
+  var rows = steps.map(function (x, i) { return '<p class="wc-r"><span class="wc-ic ig-n">' + (gateDone && !i ? gateIc('ok') : i + 1) + '</span><span>' + x + '</span></p>'; }).join('');
+  var notes = '';
+  if (inv && !gateDone) notes += '<p class="wc-note" data-ig-note="inv">' + gateIc('user', 22) + '<span>' + (ios
+    ? '<b>Ti ha invitato ' + esc(inv) + (/\.$/.test(inv) ? '' : '.') + '</b> Nell\'app installata cerca «' + esc(inv) + '» in Amici.'
+    : '<b>Ti ha invitato ' + esc(inv) + (/\.$/.test(inv) ? '' : '.') + '</b> Nell\'app installata trovi l\'invito in Amici.') + '</span></p>';
+  if (ios && mine && !gateDone) notes += '<p class="wc-note" data-ig-note="books">' + gateIc('book', 22) + '<span>Hai <b>' + mine + (mine === 1 ? ' libro' : ' libri') + '</b> in questo browser: su iPhone l\'app installata parte vuota. Prima fai il backup (con l\'account tornano da soli).</span></p>';
+  var foot = '';
+  if (btn) foot += '<button type="button" class="wc-btn" data-ig="inst">' + gateIc('down', 20) + 'Installa</button>';
+  if (ios && mine && !gateDone) foot += '<button type="button" class="wc-btn' + (btn ? ' ig-2' : '') + '" data-ig="backup">Fai il backup</button>';
+  if (h.copy && !btn && !gateDone) foot += '<button type="button" class="wc-ghost" data-ig="copy">' + gateIc('link', 18) + ' Copia il link</button>';
+  d.innerHTML = '<div class="ig-in"><div class="ig-head"><img class="ig-ico" src="icons/next-libris-192.png" alt="" width="76" height="76">' +
+    '<h2 class="wc-h" id="iosGateH">' + (gateDone ? 'Fatto!' : ios ? 'Mettila sul tuo iPhone' : 'Installa Next Libris') + '</h2>' +
+    '<p class="wc-sub">' + (gateDone ? 'Next Libris è installata.' : 'Next Libris si usa come app: l\'icona sul telefono, a schermo intero, con le notifiche e i libri al sicuro.') + '</p></div>' +
+    (gateDone || btn ? '' : '<p class="ig-lead">' + h.lead + '</p>') + '<div class="wc-rows">' + rows + '</div>' + notes + '</div>' +
+    (foot ? '<div class="wc-foot ig-foot">' + foot + '</div>' : '');
+}
 function iosGate() {
-  var k = browserKind();
-  if (!/^ios/.test(k) || isStandalone() || settings.iosWeb) return;
-  if (document.getElementById('iosGate')) return;
-  var h = INST_STEPS[k], d = document.createElement('div');
-  d.id = 'iosGate'; d.className = 'ios-gate'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'iosGateH');
-  d.innerHTML = '<div class="ig-in"><img class="ig-ico" src="icons/next-libris-192.png" alt="" width="72" height="72">' +
-    '<h2 id="iosGateH">Prima mettila sul tuo iPhone</h2>' +
-    '<p class="ig-lead">Su iPhone Next Libris si usa dalla <b>schermata Home</b>: così i tuoi libri restano al sicuro, funziona anche senza internet e ti arrivano le notifiche.</p>' +
-    '<p class="ig-sub">' + h.lead + '</p><ol class="ig-steps">' + h.steps.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' +
-    '<p class="ig-note">' + h.note + '</p>' +
-    (h.copy ? '<button class="btn" type="button" data-ig="copy">Copia il link</button>' : '') +
-    '<button class="link ig-web" type="button" data-ig="web">Continua nel browser</button></div>';
+  if (!gatePhone() || isStandalone()) return;
+  var d = document.getElementById('iosGate');
+  if (d) { gatePaint(d); return; }
+  d = document.createElement('div');
+  d.id = 'iosGate'; d.className = 'wc ios-gate'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'iosGateH');
+  gatePaint(d);
   document.body.appendChild(d); document.documentElement.classList.add('ios-gated');
   d.addEventListener('click', function (e) {
     var b = e.target.closest('[data-ig]'); if (!b) return;
-    if (b.dataset.ig === 'copy') { try { navigator.clipboard.writeText(APP_URL).then(function () { toast('Link copiato: incollalo in Safari.'); }); } catch (x) { nlErr(x); } return; }
-    if (b.dataset.ig === 'web') {
-      if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = 'Continua lo stesso'; var w = document.createElement('p'); w.className = 'ig-warn';
-        w.textContent = 'Nel browser le notifiche non arrivano e, se non apri Next Libris per qualche settimana, Safari può cancellare i tuoi libri. Quando la metterai nella schermata Home, lì l\'app ripartirà vuota (con l\'account i libri tornano da soli, le foto no).';
-        b.parentNode.insertBefore(w, b); return; }
-      settings.iosWeb = true; saveSettings(); d.remove(); document.documentElement.classList.remove('ios-gated');
+    if (b.dataset.ig === 'copy') { copyText(APP_URL).then(function (ok) { toast(ok ? 'Link copiato: incollalo nel browser.' : 'Il link è ' + APP_URL); }); return; }
+    if (b.dataset.ig === 'inst') { doInstall(); return; }
+    if (b.dataset.ig === 'backup') {   // la finestra del backup si apre sopra: la schermata torna quando si chiude
+      d.hidden = true; document.documentElement.classList.remove('ios-gated'); backupTap();
+      setTimeout(function back() { if (document.querySelector('.sheet:not([hidden])')) { setTimeout(back, 600); return; } d.hidden = false; document.documentElement.classList.add('ios-gated'); }, 900);
     }
   });
 }
-window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; updateInstallUi(); });
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; updateInstallUi(); try { iosGate(); } catch (x) { nlErr(x); } });
 window.addEventListener('appinstalled', function () {
   deferred = null; settings.installed = true; settings.instScope = APP_SCOPE; saveSettings(); updateInstallUi();
+  gateDone = true; try { iosGate(); } catch (x) { nlErr(x); }
   toast('Next Libris è installata: la trovi tra le app del telefono.');
 });
 $('#btnInstall').addEventListener('click', doInstall);

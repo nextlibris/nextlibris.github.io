@@ -129,3 +129,11 @@ html[data-theme="dark"] .wc{background:linear-gradient(180deg,#1B4230 0%,#0E241A
 .wc-err[hidden]{display:none}
 .wc-link{display:block;margin:12px auto 0;padding:4px 0;border:0;background:none;color:#CFE6D8;font:500 14px/1.35 var(--font-body);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .wc-ghost{display:block;height:44px;margin-top:6px;border:0;background:none;color:#CFE6D8;font:600 15px/1 var(--font-body);width:100%;cursor:pointer}
+
+/* percorso con la grafica delle schede di benvenuto (20/11/2026) */
+.wc.gd-path{z-index:61}
+.wc .wc-pn{font:700 12px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:#8FD1AE}
+.wc .wc-big svg{width:52px;height:52px;stroke-width:1.7}
+.wc .wc-r.wc-lo{color:#CFE6D8;font-weight:400;font-size:15px}
+.wc-foot .wc-btn+.wc-btn{margin-top:10px}
+.wc .wc-btn2{background:rgba(255,255,255,.12);color:#fff}
