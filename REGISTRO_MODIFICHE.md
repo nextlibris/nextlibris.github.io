@@ -3,6 +3,13 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo al menu.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 112 · 20/11/2026
+> **Il catalogo delle biblioteche è incluso** I dati delle biblioteche italiane (SBN: editore, anno e pagine più precisi) arrivano a tutti, senza creare niente: non serve più il «worker». Con l'account 500 ricerche al giorno, senza 50.
+> **Si presta solo l'API** Tra amici si presta solo l'API Google Libri: la finestra si chiama ora «API Google Libri».
+- **Ricerca dei libri:** al posto del riquadro del worker c'è la riga «Catalogo delle biblioteche italiane (SBN) · Incluso», con le ricerche di oggi.
+- **Indice:** i puntini dei capitoli stanno sulla riga sotto, dopo il sottotitolo; in «I tuoi amici» scorre solo l'elenco, così «Aggiungi un amico» resta a portata.
+- **Privacy:** spiegato che le ricerche nel catalogo SBN passano dal server di Next Libris, che conta solo quante ne fai al giorno.
+
 ## Versione 111 · 20/11/2026
 > **Un aspetto nuovo** Pagine color carta, segnalibri sul lato per passare da Libri a Desideri, Per te, Amici, Chat e Tu, e l’Indice al posto del menu. Su tablet e computer la pagina sta al centro, con i segnalibri sempre a portata.
 > **Benvenuto in quattro schede** Chi apre l’app la prima volta trova quattro schede brevi e poi un percorso in tre passi: installa, entra con Google, scegli la tua API Google Libri (gratis) o fattela prestare.

@@ -43,8 +43,8 @@ function nice(e) {
   if (/check|23514/.test(m)) return RULES;
   if (/troppe richieste/.test(m)) return 'Hai già tante richieste in attesa: aspetta che qualcuno risponda.';
   if (/non amici/.test(m)) return 'Non siete più amici su Next Libris.';
-  if (/non tua/.test(m)) return 'Questa API o questo worker te li ha prestati un amico: puoi prestare solo i tuoi.';
-  if (/worker non valido|chiave non valida|niente da prestare/.test(m)) return 'Puoi prestare solo un’API o un worker tuoi.';
+  if (/non tua/.test(m)) return 'Questa API te l’ha prestata un amico: puoi prestare solo la tua.';
+  if (/worker non valido|chiave non valida|niente da prestare/.test(m)) return 'Puoi prestare solo un’API tua.';
   return 'Non ci riesco (' + m + '). Riprova tra poco.';
 }
 
@@ -256,7 +256,7 @@ function paint() {
     if (se.length) h += '<section class="fr-sec"><h3 class="fr-h">Richieste che hai mandato</h3><ul class="fr-list">' + se.map(function (x) {
       return row(x, '<span class="fr-tag">In attesa</span><button class="link" type="button" data-f="drop" data-id="' + esc(x.id) + '">Annulla</button>');
     }).join('') + '</ul></section>';
-    h += '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="opts">Impostazioni degli amici<small>Il tuo nome, chi vede cosa, API e worker</small></button><span class="n" aria-hidden="true">›</span></li></ul>';
+    h += '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-f="opts">Impostazioni degli amici<small>Il tuo nome, chi vede cosa, API Google Libri</small></button><span class="n" aria-hidden="true">›</span></li></ul>';
   }
   body.innerHTML = h;
   var fq = document.getElementById('friFQ'); if (fq && friQv) pickFilter(fq);   // il giro di controllo ridisegna: la ricerca resta
@@ -376,7 +376,7 @@ function paintMenu() {
     m.querySelector('#goFri').addEventListener('click', function () { NL.fromMenu(open); });
     /* «Il mio profilo» sta in cima al Menu (giro 7, profilo.js) */
   }
-  ownKeyIco();   // «API Google e worker» sotto «I tuoi amici» (18/11/2026)
+  ownKeyIco();   // «API Google Libri» sotto «I tuoi amici» (18/11/2026)
   var t, rec = received().length, fr = friends().length;
   if (!uid()) t = 'Entra per trovare gli amici';
   else if (!me || !list) t = 'Richieste e amici';
@@ -449,9 +449,9 @@ function friendView() {
     return '<li class="fr-row"><span class="fr-who fr-swap">' + txt + '<small>' + esc(L_date(s.creato)) + '</small></span></li>';
   }).join('') + '</ul>' : '<p class="fr-small">Nessun prestito o regalo in corso.</p>';
   h += '<p class="fr-small">Per prestargli o regalargli un libro: apri il libro › «Presta, vendi o regala» › scegli ' + n + '. Lo vedrà subito nella sua Libreria.</p></section>';
-  /* API Google e worker: si prestano da qui (l'icona nella sua libreria compare solo quando sono prestati; Piero, 17/11/2026 notte) */
+  /* API Google Libri: si presta da qui (l'icona nella sua libreria compare solo quando è prestata; Piero, 17/11/2026 notte) */
   var own = ownKeys(), ok = outKey(view);
-  if (own.gb || own.sbn) h += '<section class="fr-sec"><h3 class="fr-h">API Google e worker</h3><div class="fr-row"><span class="fr-who">' + (ok ? esc(lentLabel(ok)) : 'Non gli presti niente') + '</span>' +
+  if (own.gb) h += '<section class="fr-sec"><h3 class="fr-h">API Google Libri</h3><div class="fr-row"><span class="fr-who">' + (ok ? esc(lentLabel(ok)) : 'Non la presti') + '</span>' +
     '<span class="fr-act"><button class="btn" type="button" data-f="keyshare" data-id="' + esc(view) + '">' + (ok ? 'Cambia' : 'Presta') + '</button></span></div></section>';
   h += '<button class="btn" type="button" data-f="friend" data-id="' + esc(view) + '">Guarda la sua libreria</button>';
   h += confirmId === view ? '<div class="fr-conf"><p>Togli <b>' + n + '</b> dagli amici?</p><div class="row-btns"><button class="btn" type="button" data-f="cancel">Annulla</button><button class="btn primary" type="button" data-f="drop" data-id="' + esc(view) + '">Togli</button></div></div>'
@@ -535,12 +535,12 @@ function guestBar() {
       sw.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg>';
     }
   } else if (sw) sw.hidden = true;
-  /* chiave e worker (Piero, 17/11/2026): sempre l'icona se ne hai da prestare; accesa con ✓ se gliele presti; il tocco apre la scelta */
-  if (own.gb || own.sbn) {
+  /* API (Piero, 17/11/2026): sempre l'icona se ne hai una da prestare; accesa con ✓ se gliela presti; il tocco apre la scelta */
+  if (own.gb) {
     if (!kb && box) { kb = document.createElement('button'); kb.type = 'button'; kb.id = 'guestKey'; kb.className = 'ico gb-key'; kb.addEventListener('click', function () { keySheet(gId); }); }
     if (kb && box) {
       if (kb.parentNode !== box) box.appendChild(kb);
-      var tl = out ? lentLabel(out) + ' ' + aNome(NL.guest()) : 'Presta la tua API Google o il worker ' + aNome(NL.guest());
+      var tl = out ? lentLabel(out) + ' ' + aNome(NL.guest()) : 'Presta la tua API Google ' + aNome(NL.guest());
       kb.hidden = false; kb.classList.toggle('on', !!out); kb.title = tl; kb.setAttribute('aria-label', tl);
       kb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>' + (out ? '<span class="gk-ok" aria-hidden="true">✓</span>' : '');
     }
@@ -558,7 +558,7 @@ function guestBar() {
   if (meta && box) meta.style.paddingRight = (box.offsetWidth + 8) + 'px';   // il nome dell'amico va a capo, non sotto le icone
 }
 /* nella propria libreria (e nei Desideri): icona dell’API sempre in alto a destra sulla riga «Libreria di …»; apre la finestra dell’API,
-   accesa se hai chiave o worker (tuoi o prestati). Senza API: la finestra porta alla guida «Crea la tua API Google» (giro 1, 18/11/2026) */
+   accesa se hai un’API (tua o prestata). Senza API: la finestra porta alla guida «Crea la tua API Google» (giro 1, 18/11/2026) */
 /* 18/11/2026 (Piero): l’API esce dalla testata; sta in Impostazioni, nel Menu (sotto «I tuoi amici») e nel tuo profilo */
 function ownKeyIco() {
   var kb0 = document.getElementById('ownKey'); if (kb0) kb0.remove();
@@ -567,11 +567,11 @@ function ownKeyIco() {
   if (!g) {
     var fm = document.getElementById('friMenu'); if (!fm) return;
     g = document.createElement('button'); g.type = 'button'; g.className = 'dopt dgo'; g.id = 'goKeys';
-    g.innerHTML = '<span><b>API Google e worker</b><small id="goKeysTxt"></small></span><span class="n" aria-hidden="true">›</span>';
+    g.innerHTML = '<span><b>API Google Libri</b><small id="goKeysTxt"></small></span><span class="n" aria-hidden="true">›</span>';
     fm.appendChild(g); g.addEventListener('click', function () { NL.fromMenu(keyWin); });
   }
-  var own = ownKeys(), b = borrowed(), on = !!(own.gb || own.sbn || (b && (b.gb || b.sbn)));
-  document.getElementById('goKeysTxt').textContent = on ? (own.gb || own.sbn ? 'Le tue, da prestare agli amici' : 'Prestate da un amico') : 'Crea la tua API, è gratis';
+  var own = ownKeys(), b = borrowed(), on = !!(own.gb || (b && b.gb));
+  document.getElementById('goKeysTxt').textContent = on ? (own.gb ? 'La tua, da prestare agli amici' : 'Prestata da un amico') : 'Crea la tua API, è gratis';
 }
 function okRefresh() { ownKeyIco(); }
 NL.on('keys', okRefresh); NL.on('optclose', okRefresh);
@@ -792,7 +792,7 @@ async function wishAsk(b) {
 }
 NL.on('saved', function () { clearTimeout(wishT); wishT = setTimeout(wishCheck, 1500); });
 
-/* ---------- Impostazioni degli amici: nome, chi vede cosa, API e worker ---------- */
+/* ---------- Impostazioni degli amici: nome, chi vede cosa, API ---------- */
 function optsView() {
   var h = '<button class="link fr-back" type="button" data-f="optsback">‹ Amici</button>';
   h += '<div class="fr-me"><span class="fr-me-n"><small>Il tuo nome</small><b>' + esc(me.utente) + '</b></span><button class="link" type="button" data-f="name">Cambia</button></div>';
@@ -879,16 +879,16 @@ document.addEventListener('input', function (e) {
   pickFilter(e.target);
 });
 
-/* ---------- API Google e worker SBN condivisi con un amico: li usano tutti e due (Piero, 16/11/2026) ---------- */
-function borrowed() { return rd(K_KEY); }                      // { da, nome, gb, sbn } se stai usando quelli di un amico
+/* ---------- API Google Libri condivisa con un amico: la usano tutti e due (Piero, 16/11/2026).
+   Il worker SBN non si presta più (031, 20/11/2026: è uno solo, della casa): i campi «sbn» restano sempre vuoti. ---------- */
+function borrowed() { return rd(K_KEY); }                      // { da, nome, gb } se stai usando l'API di un amico
 function ownKeys() {   // le tue, anche mentre usi quelle di un amico (tenute da parte in «chiavi-mie»)
   var st = NL.settings || {}, b = borrowed() || {}, m = rd('catalogo-libri-amici-chiavi-mie') || {};
-  var o = { gb: st.gbKey && st.gbKey !== b.gb ? st.gbKey : (b.gb && m.gb) || '', sbn: st.sbnUrl && st.sbnUrl !== b.sbn ? st.sbnUrl : (b.sbn && m.sbn) || '' };
+  var o = { gb: st.gbKey && st.gbKey !== b.gb ? st.gbKey : (b.gb && m.gb) || '', sbn: '' };
   if (/^prestata:/.test(o.gb)) o.gb = '';                       // i segni di quelle prestate non sono mai tue (026)
-  if (/worker-prestato\.invalid/.test(o.sbn)) o.sbn = '';
   return o;
 }
-/* 026 (Piero, 18/11/2026): chiavi e worker di un amico copiati sul telefono prima del giro 8 sembravano tuoi (e si potevano prestare).
+/* 026 (Piero, 18/11/2026): le API di un amico copiate sul telefono prima del giro 8 sembravano tuoi (e si potevano prestare).
    Il server dice quali dei valori che hai sono di un altro: si tolgono dal telefono; se quell'amico te li presta, li usi dal server. */
 var ownChecked = '';
 async function ownCheck() {
@@ -897,43 +897,44 @@ async function ownCheck() {
   var rows = (await rpc('chiavi_controlla', { valori: vals })) || [];
   ownChecked = sig;
   if (!rows.length) return;
-  var bad = rows.map(function (r) { return r.v; }), st = NL.settings || {}, wasGb = bad.indexOf(st.gbKey) >= 0, wasSbn = bad.indexOf(st.sbnUrl) >= 0;
-  var m = rd('catalogo-libri-amici-chiavi-mie'); if (m) { if (bad.indexOf(m.gb) >= 0) m.gb = ''; if (bad.indexOf(m.sbn) >= 0) m.sbn = ''; wr('catalogo-libri-amici-chiavi-mie', m); }
+  var bad = rows.map(function (r) { return r.v; }), st = NL.settings || {}, wasGb = bad.indexOf(st.gbKey) >= 0;
+  var m = rd('catalogo-libri-amici-chiavi-mie'); if (m) { if (bad.indexOf(m.gb) >= 0) m.gb = ''; m.sbn = ''; wr('catalogo-libri-amici-chiavi-mie', m); }
   NL.svcPurge(bad); ownChecked = NL.svcAll().join('|');
   var lender = rows.filter(function (r) { return r.da; })[0], k = lender && keys.filter(function (x) { return x.a === uid() && x.da === lender.da; })[0];
-  if (k && !borrowed() && (wasGb || wasSbn)) {
+  if (k && k.gb_key && !borrowed() && wasGb) {
     wr('catalogo-libri-amici-chiavi-mie', ownKeys());
-    setKeys(k.gb_key || st.gbKey, k.sbn || st.sbnUrl);
-    wr(K_KEY, { da: k.da, nome: k.nome, gb: k.gb_key || '', sbn: k.sbn || '' });
-    NL.toast('L’API e il worker di ' + k.nome + ' ora passano dal server: sul telefono non ci sono più.');
-  } else NL.toast('Tolti dal telefono un’API o un worker che non erano tuoi.');
+    setKeys(k.gb_key);
+    wr(K_KEY, { da: k.da, nome: k.nome, gb: k.gb_key, sbn: '' });
+    NL.toast('L’API di ' + k.nome + ' ora passa dal server: sul telefono non c’è più.');
+  } else NL.toast('Tolta dal telefono un’API che non era tua.');
   NL.emit && NL.emit('keys');
 }
 function keysInner(full) {
   var own = ownKeys(), fr = friends(), out = keys.filter(function (k) { return k.da === uid(); }), inn = keys.filter(function (k) { return k.a === uid(); }), b = borrowed(), h = '';
-  if ((own.gb || own.sbn) && fr.length) {
-    h += '<p class="fr-small">Prestarli non ti costa niente e puoi smettere quando vuoi. Tocca un amico per scegliere cosa prestargli.</p>' +   // testo approvato (giro 5)
+  if (own.gb && fr.length) {
+    h += '<p class="fr-small">Prestarla non ti costa niente e puoi smettere quando vuoi. Tocca un amico per prestargliela.</p>' +   // testo approvato (20/11/2026)
       pickerHTML(fr, 'data-f="keyshare" data-id', function (x) { return !!outKey(x.id); }, function (x) { var k = outKey(x.id); return k ? lentLabel(k) : ''; }) +
       '<p class="fr-small kw-n">' + lentText(lentCount()) + '.</p>' +
       '<p class="fr-small kw-uff">Incolla l’API solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>';   // indirizzo ufficiale (Piero, 18/11/2026)
   }
   inn.forEach(function (k) {
-    var using = b && b.da === k.da, what = k.gb_key && k.sbn ? 'la sua API Google e il worker SBN' : k.gb_key ? 'la sua API Google' : 'il suo worker SBN';
-    h += '<div class="fr-row fr-key"><span class="fr-who">' + esc(k.nome) + ' condivide con te ' + what + (using ? '<small>La stai usando</small>' : (own.gb && k.gb_key) || (own.sbn && k.sbn) ? '<small>Hai già i tuoi: usandoli prendono il loro posto</small>' : '') + '</span><span class="fr-act">' +
+    if (!k.gb_key) return;
+    var using = b && b.da === k.da;
+    h += '<div class="fr-row fr-key"><span class="fr-who">' + esc(k.nome) + ' condivide con te la sua API Google' + (using ? '<small>La stai usando</small>' : own.gb ? '<small>Hai già la tua: usandola prende il suo posto</small>' : '') + '</span><span class="fr-act">' +
       (using ? '<button class="link" type="button" data-f="keyoff" data-id="' + esc(k.da) + '">Non usarla più</button>' : '<button class="btn primary" type="button" data-f="keyuse" data-id="' + esc(k.da) + '">Usala</button>') + '</span></div>';
   });
-  if (!h && full) h = '<p class="fr-small">Non hai ancora un’API Google o un worker SBN da condividere: si impostano in Menu › Impostazioni › Ricerca dei libri. Se un amico condivide i suoi con te, li trovi qui.</p>';
+  if (!h && full) h = '<p class="fr-small">Non hai ancora un’API Google da condividere: si imposta in Indice › Impostazioni › Ricerca dei libri. Se un amico condivide la sua con te, la trovi qui.</p>';
   return h;
 }
 function lentCount() { var m = {}; keys.forEach(function (k) { if (k.da === uid()) m[k.a] = 1; }); return Object.keys(m).length; }   // amici a cui presti (chi la riceve con il link non si conta; giro 5)
 function lentText(n) { return n === 0 ? 'Non la usa ancora nessun amico' : n === 1 ? 'La usa 1 amico' : 'La usano ' + n + ' amici'; }
-function keysHTML(full) { var h = keysInner(full); return h ? '<section class="fr-sec" id="friKeys"><h3 class="fr-h">API Google e worker SBN</h3>' + h + '</section>' : ''; }
+function keysHTML(full) { var h = keysInner(full); return h ? '<section class="fr-sec" id="friKeys"><h3 class="fr-h">API Google Libri</h3>' + h + '</section>' : ''; }
 
-/* ---------- finestra «API Google e worker» (da Condivisione; Piero, 16/11/2026): solo l’API, e chiudendo torni dove eri ---------- */
+/* ---------- finestra «API Google Libri» (da Condivisione; Piero, 16/11/2026): solo l’API, e chiudendo torni dove eri ---------- */
 function kwSheet() {
   var el = document.getElementById('kwSheet'); if (el) return el;
   el = document.createElement('div'); el.className = 'sheet fri'; el.id = 'kwSheet'; el.hidden = true;
-  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="kwH"><h2 id="kwH">API Google e worker</h2><div id="kwBody" class="fr-sec"></div>' +
+  el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="kwH"><h2 id="kwH">API Google Libri</h2><div id="kwBody" class="fr-sec"></div>' +
     '<div class="row-btns"><button class="btn" type="button" id="kwClose">Chiudi</button></div></div>';
   document.body.appendChild(el);
   var shut = function () { el.hidden = true; };
@@ -953,31 +954,31 @@ function kwSheet() {
 function kwRow(k, t, sub) { return '<ul class="fr-list fr-box"><li class="fr-row fr-go"><button class="fr-who fr-open" type="button" data-kw="' + k + '">' + esc(t) + '<small>' + esc(sub) + '</small></button><span class="n" aria-hidden="true">›</span></li></ul>'; }
 function paintKw() {
   var el = document.getElementById('kwSheet'), body = document.getElementById('kwBody'); if (!el || el.hidden || !body) return;
-  var own = ownKeys(), b = borrowed(), h = '', intro = '<p class="fr-small kw-intro">Un’API Google Libri fa 1.000 ricerche al giorno. Con un uso normale bastano per te e per decine di amici. Il primo giorno, quando un amico carica la sua libreria, ne consuma di più: puoi aiutare fino a <b>6 amici nuovi al giorno</b> (50 libri ciascuno). Il worker ne regge migliaia.</p>';   // testo approvato (giro 5)
+  var own = ownKeys(), b = borrowed(), h = '', intro = '<p class="fr-small kw-intro">Un’API Google Libri fa 1.000 ricerche al giorno. Con un uso normale bastano per te e per decine di amici. Il primo giorno, quando un amico carica la sua libreria, ne consuma di più: puoi aiutare fino a <b>6 amici nuovi al giorno</b> (50 libri ciascuno).</p>';   // testo approvato (20/11/2026)
   if (!uid()) {
-    h = '<p class="fr-small">Per prestarli agli amici, o per usare quelli che un amico ti presta, serve l\'account.</p><button class="btn primary" type="button" data-kw="login">Entra con il tuo account</button>';
+    h = '<p class="fr-small">Per prestarla agli amici, o per usare quella che un amico ti presta, serve l\'account.</p><button class="btn primary" type="button" data-kw="login">Entra con il tuo account</button>';
   } else if (!list) {
     h = '<p class="fr-small">' + (err ? esc(err) : 'Un momento…') + '</p>';
   } else {
     h = keysInner(false);
-    if ((own.gb || own.sbn) && !friends().length) h += '<p class="fr-small">Per prestarli serve almeno un amico su Next Libris.</p>' + kwRow('friends', 'Aggiungi un amico', 'Cercalo per nome o mandagli il tuo invito.');
-    if (!h) h = '<p class="fr-small">Non hai ancora un’API Google o un worker SBN tuoi. Se un amico ti presta i suoi, li trovi qui.</p>';
+    if (own.gb && !friends().length) h += '<p class="fr-small">Per prestarla serve almeno un amico su Next Libris.</p>' + kwRow('friends', 'Aggiungi un amico', 'Cercalo per nome o mandagli il tuo invito.');
+    if (!h) h = '<p class="fr-small">Non hai ancora un’API Google tua. Se un amico ti presta la sua, la trovi qui.</p>';
   }
   if (!own.gb) h += kwRow('guide', 'Crea la tua API Google', 'È gratis: 1.000 ricerche al giorno solo per te.');
   h += askHTML(own);
   body.innerHTML = intro + h;
 }
 /* ---------- «Chiedila a un amico» (giro 12, 19/11/2026; database 030) ----------
-   Ogni telefono dice al server solo un sì/no: «ho un’API mia», «ho un worker mio» (declareKeys; l’API resta sul telefono).
+   Ogni telefono dice al server solo un sì/no: «ho un’API mia» (declareKeys; l’API resta sul telefono).
    Chi non ha un’API vede gli amici che ne hanno una, con «Chiedimela»: all'amico arriva un avviso con «Prestala».
    Una richiesta allo stesso amico ogni 7 giorni (lo decide il server); chi la riceve può anche ignorarla. */
 var K_SAID = 'catalogo-libri-amici-chiavi-dette', saying = false;
 function declareKeys() {
   if (!uid() || saying) return;
-  var o = ownKeys(), sig = uid() + ':' + (o.gb ? 1 : 0) + (o.sbn ? 1 : 0);
+  var o = ownKeys(), sig = uid() + ':' + (o.gb ? 1 : 0) + '0';
   if (rd(K_SAID) === sig) return;
   saying = true;
-  rpc('chiavi_dichiara', { gb: !!o.gb, sbn: !!o.sbn }).then(function () { wr(K_SAID, sig); }).catch(function (e) { if (window.console) console.warn('chiavi_dichiara', e); }).then(function () { saying = false; });
+  rpc('chiavi_dichiara', { gb: !!o.gb, sbn: false }).then(function () { wr(K_SAID, sig); }).catch(function (e) { if (window.console) console.warn('chiavi_dichiara', e); }).then(function () { saying = false; });
 }
 var WEEK = 7 * 864e5;
 function askedLately(id) { var f = fkeys[id]; return !!(f && f.chiesta && Date.now() - Date.parse(f.chiesta) < WEEK); }
@@ -1021,11 +1022,11 @@ function keyWin() {
 function outKey(id) {
   var k = keys.filter(function (x) { return x.da === uid() && x.a === id; })[0]; if (!k) return null;
   var own = ownKeys(), known = k.gb_key || k.sbn;
-  return { gb: known ? !!k.gb_key : !!own.gb, sbn: known ? !!k.sbn : !!own.sbn };
+  return { gb: known ? !!k.gb_key : !!own.gb, sbn: false };
 }
-function whatOf(gb, sbn) { return gb && sbn ? 'API Google e worker' : gb ? 'l’API Google' : 'il worker'; }
-function lentLabel(k) { return k.gb && k.sbn ? 'Prestati: API Google e worker' : k.gb ? 'Prestata: API Google' : 'Prestato: worker'; }
-/* finestra «Presta API Google e worker»: si sceglie se prestare tutte e due o una sola (Piero, 16/11/2026) */
+function whatOf() { return 'l’API Google'; }
+function lentLabel() { return 'Prestata: API Google'; }
+/* finestra «Presta a …»: si presta l'API Google (il worker non si presta più: 031, 20/11/2026) */
 var keyTo = '';
 /* prestiti e regali tra te e un amico (icona ⇄ nella sua libreria): «In corso» sopra, poi «Già restituiti e regali» (Piero, 17/11/2026) */
 function aNome(n) { return (/^[aA]/.test(n || '') ? 'ad ' : 'a ') + n; }   // «ad Anna», «a Bruno»
@@ -1093,13 +1094,13 @@ function dropSheet(id) {
   el.hidden = false;
 }
 function keySheet(id) {
-  var own = ownKeys(); if (!own.gb && !own.sbn) return;
+  var own = ownKeys(); if (!own.gb) return;
   keyTo = id;
   var el = document.getElementById('keySheet');
   if (!el) {
     el = document.createElement('div'); el.className = 'sheet fri'; el.id = 'keySheet'; el.hidden = true;
     el.innerHTML = '<div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="keyH"><h2 id="keyH"></h2>' +
-      '<p class="fr-small">Li usate tutti e due e puoi smettere quando vuoi. Le API non si vedono: passano dal server.</p>' +
+      '<p class="fr-small">La usate tutti e due e puoi smettere quando vuoi. L’API non si vede: passa dal server.</p>' +
       '<div class="fr-share" id="keyOpts"></div>' +
       '<div class="row-btns"><button class="btn" type="button" id="keyNo">Annulla</button><button class="btn primary" type="button" id="keyGo">Presta</button></div></div>';
     document.body.appendChild(el);
@@ -1109,13 +1110,13 @@ function keySheet(id) {
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !el.hidden) shut(); });
     el.addEventListener('change', keyBtn);
     el.querySelector('#keyGo').addEventListener('click', async function () {
-      var id = keyTo, o = ownKeys(), gb = document.getElementById('keyGb'), sb = document.getElementById('keySbn');
-      var pg = !!(gb && gb.checked && o.gb), ps = !!(sb && sb.checked && o.sbn), was = outKey(id), name = friendName(id);
-      if (!pg && !ps && !was) return;
+      var id = keyTo, o = ownKeys(), gb = document.getElementById('keyGb');
+      var pg = !!(gb && gb.checked && o.gb), was = outKey(id), name = friendName(id);
+      if (!pg && !was) return;
       this.disabled = true;
       try {
-        if (!pg && !ps) { await rpc('riprendi_chiavi', { a: id }); NL.toast('Non presti più niente a ' + name + '.'); }
-        else { await rpc('presta_chiavi', { a: id, gb_key: pg ? o.gb : '', sbn: ps ? o.sbn : '' }); NL.toast((pg && ps ? 'Chiave API e worker prestati' : pg ? 'Chiave API prestata' : 'Worker prestato') + ' a ' + name + '.'); }
+        if (!pg) { await rpc('riprendi_chiavi', { a: id }); NL.toast('Non presti più l’API a ' + name + '.'); }
+        else { await rpc('presta_chiavi', { a: id, gb_key: o.gb, sbn: '' }); NL.toast('API prestata a ' + name + '.'); }
         shut();
       } catch (e) { NL.toast(nice(e)); }
       this.disabled = false;
@@ -1129,31 +1130,29 @@ function keySheet(id) {
   document.body.appendChild(el);   // sopra la finestra da cui si apre
   document.getElementById('keyH').textContent = 'Presta a ' + friendName(id);
   document.getElementById('keyOpts').innerHTML =
-    opt('keyGb', cur ? cur.gb : true, !!own.gb, 'API Google Libri', 'Più libri trovati, con copertina e descrizione. Resta al sicuro: l\'amico non la vede e può fare 300 ricerche al giorno.') +
-    opt('keySbn', cur ? cur.sbn : true, !!own.sbn, 'Worker SBN', 'Cerca nel catalogo delle biblioteche italiane.');
+    opt('keyGb', cur ? cur.gb : true, !!own.gb, 'API Google Libri', 'Più libri trovati, con copertina e descrizione. Resta al sicuro: l\'amico non la vede e può fare 300 ricerche al giorno.');
   keyBtn();
   el.hidden = false;
 }
 function keyBtn() {
   var b = document.getElementById('keyGo'); if (!b) return;
-  var gb = document.getElementById('keyGb'), sb = document.getElementById('keySbn'), any = (gb && gb.checked) || (sb && sb.checked), was = !!outKey(keyTo);
+  var gb = document.getElementById('keyGb'), any = !!(gb && gb.checked), was = !!outKey(keyTo);
   b.textContent = !any && was ? 'Smetti di prestare' : was ? 'Salva' : 'Presta';
   b.disabled = !any && !was;
 }
-function setKeys(gb, sbn) { var st = NL.settings; if (!st) return; st.gbKey = gb || ''; st.sbnUrl = sbn || ''; NL.saveSettings && NL.saveSettings(); }
+function setKeys(gb) { var st = NL.settings; if (!st) return; st.gbKey = gb || ''; st.sbnUrl = ''; NL.saveSettings && NL.saveSettings(); }
 async function keyAct(a, id) {
   try {
     if (a === 'keyshare') {
       var on = keys.some(function (k) { return k.da === uid() && k.a === id; }), own = ownKeys();
       if (on) { await rpc('riprendi_chiavi', { a: id }); NL.toast('Non la condividi più con ' + friendName(id) + '.'); }
-      else { await rpc('presta_chiavi', { a: id, gb_key: own.gb, sbn: own.sbn }); NL.toast('Condivisa con ' + friendName(id) + ': la usate tutti e due.'); }
+      else { await rpc('presta_chiavi', { a: id, gb_key: own.gb, sbn: '' }); NL.toast('Condivisa con ' + friendName(id) + ': la usate tutti e due.'); }
     } else if (a === 'keyuse') {
-      var k = keys.filter(function (x) { return x.a === uid() && x.da === id; })[0]; if (!k) return;
-      var b = borrowed(), st = NL.settings || {};
-      wr('catalogo-libri-amici-chiavi-mie', ownKeys());   // le tue, da rimettere quando smetti (anche se ne usavi gia' una parte)
-      setKeys(k.gb_key || st.gbKey, k.sbn || st.sbnUrl);
-      wr(K_KEY, { da: k.da, nome: k.nome, gb: k.gb_key || '', sbn: k.sbn || '' });
-      NL.toast('Ora usi ' + (k.gb_key ? 'l’API' : 'il worker') + ' di ' + k.nome + '.');
+      var k = keys.filter(function (x) { return x.a === uid() && x.da === id; })[0]; if (!k || !k.gb_key) return;
+      wr('catalogo-libri-amici-chiavi-mie', ownKeys());   // la tua, da rimettere quando smetti
+      setKeys(k.gb_key);
+      wr(K_KEY, { da: k.da, nome: k.nome, gb: k.gb_key, sbn: '' });
+      NL.toast('Ora usi l’API di ' + k.nome + '.');
     } else if (a === 'keyoff') { stopBorrow(''); }
   } catch (e) { NL.toast(nice(e)); }
   try { keys = (await rpc('chiavi_mie')) || []; } catch (e) { if (window.nlErr) nlErr(e); }
@@ -1162,20 +1161,19 @@ async function keyAct(a, id) {
 function stopBorrow(msg) {
   var b = borrowed(); if (!b) return;
   var st = NL.settings || {}, back = rd('catalogo-libri-amici-chiavi-mie') || {};
-  setKeys(st.gbKey === b.gb ? back.gb : st.gbKey, st.sbnUrl === b.sbn ? back.sbn : st.sbnUrl);
+  setKeys(st.gbKey === b.gb ? back.gb : st.gbKey);
   wr(K_KEY, null); wr('catalogo-libri-amici-chiavi-mie', null);
-  NL.toast(msg || 'Non usi più quelli di ' + b.nome + '.');
+  if (msg !== false) NL.toast(msg || 'Non usi più l’API di ' + b.nome + '.');
   paintKw(); NL.emit && NL.emit('keys');
 }
-/* «Usa la tua» in Ricerca dei libri (Piero, 17/11/2026): smetti di usare solo l’API (p = 'gb') o solo il worker ('sbn') dell'amico
-   e rimetti il tuo; se non ne avevi uno, il campo torna vuoto per incollarlo. Ognuno deve poter usare i suoi. */
-function ownPart(p) {
+/* «Usa la tua» in Ricerca dei libri (Piero, 17/11/2026): smetti di usare l’API dell'amico e rimetti la tua; se non ne avevi
+   una, il campo torna vuoto per incollarla. Ognuno deve poter usare la sua. */
+function ownPart() {
   var b = borrowed(); if (!b) return '';
-  var st = NL.settings || {}, m = rd('catalogo-libri-amici-chiavi-mie') || {}, mine = m[p] || '';
-  if (p === 'gb') setKeys(mine, st.sbnUrl); else setKeys(st.gbKey, mine);
-  b[p] = ''; b['no' + p] = true; m[p] = '';
-  if (!b.gb && !b.sbn) { wr(K_KEY, null); wr('catalogo-libri-amici-chiavi-mie', null); } else { wr(K_KEY, b); wr('catalogo-libri-amici-chiavi-mie', m); }
-  NL.toast(mine ? (p === 'gb' ? 'Ora usi la tua API Google.' : 'Ora usi il tuo worker.') : (p === 'gb' ? 'Incolla la tua API Google.' : 'Incolla l\'indirizzo del tuo worker.'));
+  var m = rd('catalogo-libri-amici-chiavi-mie') || {}, mine = m.gb || '';
+  setKeys(mine);
+  wr(K_KEY, null); wr('catalogo-libri-amici-chiavi-mie', null);
+  NL.toast(mine ? 'Ora usi la tua API Google.' : 'Incolla la tua API Google.');
   paintKw(); NL.emit && NL.emit('keys');
   return mine;
 }
@@ -1192,10 +1190,11 @@ function checkKeys() {
   var b = borrowed(), inn = keys.filter(function (k) { return k.a === uid(); });
   if (b) {
     var k = inn.filter(function (x) { return x.da === b.da; })[0];
-    if (!k) stopBorrow(b.nome + ' non condivide più la sua API: torni alle tue impostazioni.');
+    if (!b.gb) stopBorrow(false);                              // usavi solo il worker di un amico: non esiste più (031), senza avvisi
+    else if (!k) stopBorrow(b.nome + ' non condivide più la sua API: torni alle tue impostazioni.');
     else {
-      var gb = b.nogb ? '' : (k.gb_key || ''), sb = b.nosbn ? '' : (k.sbn || '');   // la parte che hai sostituito con la tua resta tua
-      if (gb !== b.gb || sb !== b.sbn) { var st = NL.settings || {}; setKeys(b.nogb ? st.gbKey : (gb || st.gbKey), b.nosbn ? st.sbnUrl : (sb || st.sbnUrl)); wr(K_KEY, { da: k.da, nome: k.nome, gb: gb, sbn: sb, nogb: b.nogb, nosbn: b.nosbn }); }
+      var gb = k.gb_key || '';
+      if (gb !== b.gb || b.sbn) { var st = NL.settings || {}; setKeys(gb || st.gbKey); wr(K_KEY, { da: k.da, nome: k.nome, gb: gb, sbn: '' }); }
     }
   }
 }

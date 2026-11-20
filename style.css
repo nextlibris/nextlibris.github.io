@@ -933,6 +933,11 @@ button.svc-h.svc-tog{width:100%;min-height:44px;margin:-6px 0 0;padding:4px 0;bo
 .svc-chev{flex:none;width:10px;height:10px;margin:0 4px 4px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
 .svc-fold.open .svc-chev{transform:rotate(-135deg);margin-bottom:-4px}
 .svc-desc{font-size:14px;line-height:1.4}
+.svc-inc{gap:6px}   /* catalogo SBN: riga fissa «Incluso» (031) */
+.svc-inc .svc-h{flex-wrap:wrap;align-items:center;gap:4px 10px}   /* titolo lungo: lo stato «Incluso» va a capo sotto, mai titolo su tre righe */
+.svc-inc .svc-t{flex:1 1 auto;min-width:0;font:600 18px/1.2 var(--font-display)}
+.svc-inc .svc-st{margin-top:0}
+@media (max-width:480px){.svc-inc .svc-t{flex-basis:100%}}
 .btn.svc-guide{justify-self:start;min-height:40px;padding:6px 14px;font-size:14px}
 .btn.svc-guide[hidden]{display:none}
 .svc-b{display:grid;gap:10px;padding-top:8px;border-top:1px solid var(--line);margin-top:4px}

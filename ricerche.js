@@ -1,7 +1,7 @@
 /* Next Libris · modulo «Ricerche condivise» (16/11/2026, nella copia di prova). Scelte di Piero del 16/11/2026.
-   1) Contatore condiviso: chi usa la stessa API Google (o lo stesso worker SBN) ha un solo conto del giorno, su Supabase
+   1) Contatore condiviso: chi usa la stessa API Google ha un solo conto del giorno, su Supabase
       (conta_ricerche, per sha256 dell’API: l’API non esce dal telefono). Le soglie dell'app valgono sul totale:
-      700 niente copertine grandi, suggerimenti e novità; 950 i dati arrivano solo da Open Library e SBN. Worker: 95.000.
+      700 niente copertine grandi, suggerimenti e novità; 950 i dati arrivano solo da Open Library e SBN. Il catalogo SBN lo conta il server (funzione «libri», 031).
    2) A 950 il database manda a chi la sta usando una notifica «limite» (campanella); aprendola si vede la guida
       «Crea la tua API Google Libri: è gratis», con i passaggi e i link.
    3) Archivio comune per ISBN: prima di Google si guarda se qualcuno ha già cercato quel libro (da_archivio);
@@ -28,9 +28,9 @@ function lender(key) { try { var b = JSON.parse(NL.ls.get(K_LENT) || 'null'); re
 
 /* ---------- contatore condiviso ---------- */
 NL.on('apiCall', function (k) {
-  if (!uid() || (k !== 'g' && k !== 's')) return;
-  var sv = NL.svc(); if (!(k === 'g' ? sv.gbKey : sv.sbnUrl)) return;
-  if (k === 'g' && /^prestata:/.test(sv.gbKey)) return;            // API prestata: conta il server (funzione «libri», giro 8)
+  if (!uid() || k !== 'g') return;
+  var sv = NL.svc(); if (!sv.gbKey) return;
+  if (/^prestata:/.test(sv.gbKey)) return;            // API prestata: conta il server (funzione «libri», giro 8)
   pend[k]++;
   schedule(pend.g + pend.s >= 10 ? 0 : 3000);                       // a gruppi: una richiesta a Supabase ogni ~10 ricerche o 3 secondi
 });

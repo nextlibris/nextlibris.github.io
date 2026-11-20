@@ -302,7 +302,7 @@
       return { id: 'c:' + title, t: title, a: names.join(', '), e: str(it.publisher), y: yearOf(dp ? dp[0] : ''), i: isbn, isbns: [isbn], img: '', lang: '', src: 'Crossref' };
     }).filter(function (c) { return c.t; });
   }
-  /* ---------- catalogo SBN (biblioteche italiane), tramite il tuo intermediario Cloudflare ---------- */
+  /* ---------- catalogo SBN (biblioteche italiane), tramite il server di Next Libris (worker della casa, 031) ---------- */
   function sbnClean(t) { return str(t).replace(/\*/g, '').replace(/\s*\[[^\]]*\]\s*/g, ' ').replace(/\s+/g, ' ').trim(); }
   function sentenceCase(t) { t = str(t).toLowerCase(); return t.charAt(0).toUpperCase() + t.slice(1); }
   /* classificazione Dewey: "823.7 NARRATIVA INGLESE" (testo, elenco o oggetti) -> "Narrativa inglese" */
@@ -481,9 +481,9 @@
       function (j) { return (j && j.message) ? 'risponde' : 'risposta non valida'; });
     if (opts.sbnUrl) {
       var su = sbnUrl(opts.sbnUrl, '9788806219352');
-      if (!su) out.push({ name: 'Catalogo SBN', ok: false, msg: 'indirizzo dell\'intermediario non valido (deve iniziare con https://)' });
-      else await probe('Catalogo SBN', su, function (j) { var l = parseSbn(j, '9788806219352'); return l ? 'risponde: ' + l.t + (l.e ? ' (' + l.e + ', ' + l.y + ')' : '') : (j && j.error ? 'l\'intermediario risponde ma dice: ' + j.error : 'risponde ma non trova il libro di prova'); },
-        'nessuna risposta: controlla l\'indirizzo dell\'intermediario Cloudflare');
+      if (!su) out.push({ name: 'Catalogo SBN', ok: false, msg: 'non disponibile' });
+      else await probe('Catalogo SBN', su, function (j) { var l = parseSbn(j, '9788806219352'); return l ? 'risponde: ' + l.t + (l.e ? ' (' + l.e + ', ' + l.y + ')' : '') : (j && j.error ? 'risponde ma dice: ' + j.error : 'risponde ma non trova il libro di prova'); },
+        'nessuna risposta: riprova tra poco');
     }
     return out;
   }

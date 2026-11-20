@@ -1,7 +1,7 @@
 /* Next Libris · modulo «Notifiche» (16/11/2026, nella copia di prova). Scelte di Piero del 16/11/2026.
    Campanella in alto, accanto all'icona Amici, con il numero delle notifiche non lette. Dentro: richieste e amicizie accettate,
    prestiti e regali ricevuti, restituzioni (segnalate, confermate, non ancora ricevute), «Me lo presti?» e le risposte,
-   libri consigliati, chiave e worker condivisi, API Google arrivata al limite (guida per crearne una gratis, ricerche.js). Aprendo la campanella si segnano tutte lette (le nuove restano evidenziate).
+   libri consigliati, API condivisa, API Google arrivata al limite (guida per crearne una gratis, ricerche.js). Aprendo la campanella si segnano tutte lette (le nuove restano evidenziate).
    Toccandone una si apre il libro o la finestra Amici.
    Le notifiche le scrive il database (trigger, supabase/011_notifiche.sql nel ramo prove): «letto» vale su tutti i dispositivi,
    si tengono 30 giorni. Si leggono insieme agli amici (apertura, ritorno all'app, ogni ~3 minuti) e quando arriva un push (push.js).

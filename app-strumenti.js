@@ -220,31 +220,31 @@ async function checkIncoming() {
   hashBusy = true;
   try { history.replaceState(history.state, '', location.pathname + location.search); } catch (e) { nlErr(e); }
   try {
-    if (m[1] === 'k') { toast('I link con API e worker non si usano più: chiedi all\'amico di prestarteli da Next Libris (Menu › API Google e worker).'); hashBusy = false; return; }   // giro 8: si presta solo dentro l'app
+    if (m[1] === 'k') { toast('I link con l’API non si usano più: chiedi all\'amico di prestartela da Next Libris (Indice › API Google Libri).'); hashBusy = false; return; }   // giro 8: si presta solo dentro l'app
     else openImport(await decodeShare(m[2]));
   }
-  catch (e) { toast(e && e.message === 'vecchio' ? 'Questo browser è troppo vecchio per aprire il link: aggiorna Chrome e riprova.' : (m[1] === 'k' ? 'Il link non contiene un’API o un worker validi' : 'Il link non contiene una lista valida') + ': forse è stato tagliato. Fattelo rimandare.'); }
+  catch (e) { toast(e && e.message === 'vecchio' ? 'Questo browser è troppo vecchio per aprire il link: aggiorna Chrome e riprova.' : (m[1] === 'k' ? 'Il link non contiene un’API valida' : 'Il link non contiene una lista valida') + ': forse è stato tagliato. Fattelo rimandare.'); }
   hashBusy = false;
 }
 window.addEventListener('hashchange', checkIncoming);
 async function shareWish() { shareList(); }
-/* ---------- API Google e worker SBN: si prestano solo dentro l'app (amici.js); il link «#k=...» è stato tolto (giro 8, Piero 18/11/2026) ---------- */
+/* ---------- API Google Libri: si presta solo dentro l'app (amici.js); il link «#k=...» è stato tolto (giro 8, Piero 18/11/2026).
+   Il worker SBN non si presta più: è uno solo, della casa (031, 20/11/2026). ---------- */
 function cleanKey(v) { v = String(v || '').replace(/\s+/g, ''); return /^[A-Za-z0-9_-]{20,80}$/.test(v) ? v : ''; }
-function okWorker(v) { v = cleanWorker(v); return /^https:\/\/[^\s/]+\.[^\s]+$/.test(v) && v.length <= 200 ? v : ''; }
-/* Condivisione › «API Google e worker», su misura (Piero, 16/11/2026): chi ha i suoi li presta; chi usa quelli di un amico
+/* Condivisione › «API Google Libri», su misura (Piero, 16/11/2026): chi ha la sua la presta; chi usa quella di un amico
    lo vede scritto e può smettere; chi non ha la sua trova la guida per crearla (è gratis). Il resto sta nella finestra dell’API (amici.js). */
 function svcRow(k, t, sub) { return '<button type="button" class="dopt dgo svc-go" data-svc="' + k + '"><span><b>' + esc(t) + '</b><small>' + esc(sub) + '</small></span><span class="n" aria-hidden="true">›</span></button>'; }
 function renderSvcShare() {
   var nm = ($('#optName').value || settings.name || 'Piero').trim();
   $('#optNameHint').textContent = 'Compare quando condividi un libro o una lista: «I consigli di ' + nm + '», «' + nm + ' ti consiglia un libro». Per un libro apri la sua scheda e tocca «Condividi»; per una lista usa «Condividi la lista» sopra l\'elenco, oppure Esporta.';
-  var msb = mine('sbn'), mgk = mine('key'), b = lent(), bg = !!(b.gb && b.gb === settings.gbKey), bs = !!(b.sbn && b.sbn === settings.sbnUrl), h = '';
+  var mgk = mine('key'), b = lent(), bg = !!(b.gb && b.gb === settings.gbKey), h = '';
   var A = window.NLAmici, nUse = A && A.lentCount ? A.lentCount() : -1;   // contatore: solo gli amici (giro 5)
-  if (msb || mgk) h += svcRow('lend', 'Presta a un amico', (mgk && msb ? 'La tua API Google e il tuo worker SBN' : mgk ? 'La tua API Google' : 'Il tuo worker SBN') + ': li usate tutti e due e smetti quando vuoi.' + (nUse >= 0 ? ' ' + A.lentText(nUse) + '.' : ''));
-  var off = !bg && !bs && A && A.offers ? A.offers() : [];
-  if (off.length) h += svcRow('offer', off[0].nome + (off.length > 1 ? ' e altri ' + (off.length - 1) : '') + ' ti ' + (off.length > 1 ? 'prestano' : 'presta') + ' ' + (off[0].gb && off[0].sbn ? 'API Google e worker' : off[0].gb ? 'l’API Google' : 'il worker SBN'), 'Tocca per usarli: la ricerca trova più libri.');
-  if (bg || bs) h += svcRow('used', 'Usi ' + (bg && bs ? 'l’API Google e il worker SBN' : bg ? 'l’API Google' : 'il worker SBN') + ' di ' + (b.nome || 'un amico'), 'Prestati da un amico: tocca per vedere o per smettere di usarli.');
+  if (mgk) h += svcRow('lend', 'Presta a un amico', 'La tua API Google: la usate tutti e due e smetti quando vuoi.' + (nUse >= 0 ? ' ' + A.lentText(nUse) + '.' : ''));
+  var off = !bg && A && A.offers ? A.offers() : [];
+  if (off.length) h += svcRow('offer', off[0].nome + (off.length > 1 ? ' e altri ' + (off.length - 1) : '') + ' ti ' + (off.length > 1 ? 'prestano' : 'presta') + ' l’API Google', 'Tocca per usarla: la ricerca trova più libri.');
+  if (bg) h += svcRow('used', 'Usi l’API Google di ' + (b.nome || 'un amico'), 'Prestata da un amico: tocca per vedere o per smettere di usarla.');
   if (!mgk) {
-    if (!bg && !bs && !msb && !off.length) h += '<p class="hint">Con un’API Google tua la ricerca trova più libri, con copertina e descrizione. Se un amico ti presta la sua, la vedi qui.</p>';
+    if (!bg && !off.length) h += '<p class="hint">Con un’API Google tua la ricerca trova più libri, con copertina e descrizione. Se un amico ti presta la sua, la vedi qui.</p>';
     h += svcRow('guide', 'Crea la tua API Google', 'È gratis: 1.000 ricerche al giorno solo per te, in circa 5 minuti.');
   }
   $('#svcBox').innerHTML = h;

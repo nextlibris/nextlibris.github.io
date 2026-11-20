@@ -79,6 +79,12 @@ async function token() {
 }
 /* richiesta con l'accesso dell'utente che restituisce la risposta così com'è (stato e intestazioni): per la funzione «libri» (giro 8) */
 async function raw(path) { return fetch(CFG.url + path, { headers: { apikey: CFG.key, Authorization: 'Bearer ' + (await token()) }, cache: 'no-store' }); }
+/* come raw, ma va anche senza account (catalogo SBN della casa, 031): con l'account manda l'accesso, senza solo la chiave pubblica */
+async function rawOpen(path) {
+  var h = { apikey: CFG.key };
+  if (auth) { try { h.Authorization = 'Bearer ' + (await token()); } catch (e) { if (auth) throw e; } }
+  return fetch(CFG.url + path, { headers: h, cache: 'no-store' });
+}
 var authFns = [];                                    // moduli che vogliono sapere quando si entra o si esce (amici.js)
 function authChanged() { authFns.forEach(function (f) { try { f(auth); } catch (e) { if (window.nlErr) nlErr(e); } }); }
 function setAuth(j) {
@@ -458,6 +464,6 @@ document.addEventListener('visibilitychange', function () { if (document.visibil
 if (/(access_token|error_code)=/.test(location.hash)) fromLink(); else if (auth) schedule(1500);
 window.addEventListener('hashchange', function () { if (/(access_token|error_code)=/.test(location.hash)) fromLink(); });   // link aperto nella stessa scheda dell'app
 window.NLSocial = { run: run, open: open, state: function () { return { auth: auth, sync: sync, busy: !!busy, err: lastErr }; }, hash: hash,   // per le prove
-  call: call, raw: raw, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home,
+  call: call, raw: raw, rawOpen: rawOpen, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home,
   gButton: gButton, google: google };   // per le schede di benvenuto (guida.js)   // per gli altri moduli (amici.js)
 })();

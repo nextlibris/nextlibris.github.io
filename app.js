@@ -126,7 +126,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 111, date: '2026-11-20', note: 'Un aspetto nuovo: pagine color carta, segnalibri sul lato e l’Indice' };
+var APP_VERSION = { v: 112, date: '2026-11-20', note: 'Catalogo delle biblioteche (SBN) incluso per tutti; si presta solo l\'API' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -163,11 +163,14 @@ function newId() { return 'b' + Date.now().toString(36) + Math.random().toString
 function get(id) { for (var i = 0; i < state.books.length; i++) if (state.books[i].id === id) return state.books[i]; return null; }
 function smallImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.img || b.imgL || s.thumb || ''; }
 function bigImg(b) { var s = S[b.id] || {}; return coverURL[b.id] || b.imgL || b.img || s.big || s.thumb || ''; }
-/* Richieste di oggi a Google Libri e al worker SBN. Il giorno di Google finisce a mezzanotte ora del Pacifico (le 9 da noi),
-   quello di Cloudflare a mezzanotte UTC (l'1 o le 2 di notte da noi). */
-var G_LIMIT = 1000, G_STOP = 950, G_EXTRA = 700, S_STOP = 95000;          // con l’API: 1.000 al giorno; le copertine grandi si fermano prima
+/* Richieste di oggi a Google Libri e al catalogo SBN. Il giorno di Google finisce a mezzanotte ora del Pacifico (le 9 da noi),
+   quello del catalogo SBN a mezzanotte UTC (l'1 o le 2 di notte da noi). */
+var G_LIMIT = 1000, G_STOP = 950, G_EXTRA = 700;          // con l’API: 1.000 al giorno; le copertine grandi si fermano prima
 var quota = { d: '', g: 0, ds: '', s: 0 };
-var shared = { g: 0, d: '', s: 0, ds: '' };   // totale di oggi di chi usa la stessa chiave o lo stesso worker (modulo ricerche.js, Supabase)
+var SBN_CASA = 'https://sbn-casa.invalid/', SBN_MAX = 500, SBN_FREE = 50, LS_SBN = 'catalogo-libri-sbn-casa';
+var sbnDay = { d: '', mio: 0, stop: '', said: '' };
+try { var sbn0 = JSON.parse(ls.get(LS_SBN) || 'null'); if (sbn0 && sbn0.d) sbnDay = { d: String(sbn0.d), mio: sbn0.mio | 0, stop: String(sbn0.stop || ''), said: String(sbn0.said || '') }; } catch (e) { nlErr(e); }
+var shared = { g: 0, d: '' };   // totale di oggi di chi usa la stessa API (modulo ricerche.js, Supabase)
 function pacificDay() { try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } }
 function utcDay() { return new Date().toISOString().slice(0, 10); }
 function loadQuota() { try { var q = JSON.parse(ls.get('catalogo-libri-quota') || '{}'); if (q && q.d) quota = { d: q.d, g: q.g | 0, ds: q.ds || q.d, s: q.s | 0 }; } catch (e) { nlErr(e); } }
@@ -178,7 +181,6 @@ function rollQuota() {
 }
 function countCall(k) { rollQuota(); quota[k]++; ls.set('catalogo-libri-quota', JSON.stringify(quota)); emit('apiCall', k); if ($('#optSheet').hidden) return; updateQuotaInfo(); }
 function gUsed() { rollQuota(); return Math.max(quota.g, shared.d === quota.d ? shared.g : 0); }
-function sUsed() { rollQuota(); return Math.max(quota.s, shared.ds === quota.ds ? shared.s : 0); }
 /* API Google prestata da un amico (giro 8, Piero 18/11/2026): sul telefono c'è solo il segno «prestata:<id di chi presta>»,
    l’API vera resta sul server. Le ricerche passano dalla funzione «libri» di Supabase, che conta: 300 al giorno per amico
    (x-nl-stop: mio), 950 in tutto per l’API (pieno), prestito tolto (no). */
@@ -203,106 +205,99 @@ function lentFetch(u, da) {
   });
 }
 function updateQuotaInfo() {
-  var nf = new Intl.NumberFormat('it-IT'), g = gUsed(), sb = sUsed();
-  var withG = g > quota.g ? ' (con chi usa la stessa API)' : '', withS = sb > quota.s ? ' (con chi usa lo stesso worker)' : '';
+  var nf = new Intl.NumberFormat('it-IT'), g = gUsed();
+  var withG = g > quota.g ? ' (con chi usa la stessa API)' : '';
   $('#gbCount').innerHTML = 'Richieste oggi: <b>' + nf.format(g) + '</b>' + (settings.gbKey
     ? withG + ' su 1.000 · si azzera verso le 9' + (g >= G_STOP ? '. Limite quasi raggiunto: le ricerche riprendono domattina' : g >= G_EXTRA ? '. Le copertine grandi aspettano domani' : '')
     : ' · senza API il limite lo decide Google');
-  $('#sbnCount').innerHTML = 'Richieste oggi: <b>' + nf.format(sb) + '</b>' + (settings.sbnUrl ? withS + ' su 100.000 · si azzera nella notte' + (sb >= S_STOP ? '. Limite quasi raggiunto: il catalogo SBN riprende domani' : '') : '');
+  sbnRoll();
+  var acc = sbnAuth(), max = acc ? SBN_MAX : SBN_FREE, n = Math.min(max, acc ? sbnDay.mio : quota.s);
+  $('#sbnCount').innerHTML = 'Non devi fare niente. Ricerche di oggi: <b>' + nf.format(n) + '</b> su ' + nf.format(max) + '.';   // testo approvato (20/11/2026)
 }
-/* Worker SBN e API Google: quelli usati restano tra i «salvati» (anche dopo «Cancella») per rimetterli con un tocco */
+/* API Google: quelle usate restano tra le «salvate» (anche dopo «Cancella») per rimetterle con un tocco.
+   I worker SBN propri non esistono più (031, 20/11/2026: worker della casa): quelli salvati si tolgono dal telefono, senza avvisi. */
 var LS_SAVED = 'catalogo-libri-saved', saved = { sbn: [], key: [] };
 function loadSaved() {
   try {
     var o = JSON.parse(ls.get(LS_SAVED) || '{}');
-    ['sbn', 'key'].forEach(function (k) { saved[k] = Array.isArray(o[k]) ? o[k].filter(function (x) { return typeof x === 'string' && x; }).slice(0, 4) : []; });
+    saved.key = Array.isArray(o.key) ? o.key.filter(function (x) { return typeof x === 'string' && x; }).slice(0, 4) : [];
+    if (Array.isArray(o.sbn) && o.sbn.length) ls.set(LS_SAVED, JSON.stringify(saved));   // via i worker salvati
   } catch (e) { nlErr(e); }
-  if (settings.sbnUrl && saved.sbn.indexOf(settings.sbnUrl) < 0) remember('sbn', settings.sbnUrl);
   if (settings.gbKey && saved.key.indexOf(settings.gbKey) < 0) remember('key', settings.gbKey);
   var b = lent(), dirty = false;   // tolte dai salvati quelle di un amico finite lì prima del 16/11/2026
-  ['sbn', 'key'].forEach(function (k) { var v = k === 'sbn' ? b.sbn : b.gb; if (v && saved[k].indexOf(v) >= 0) { saved[k] = saved[k].filter(function (x) { return x !== v; }); dirty = true; } });
+  if (b.gb && saved.key.indexOf(b.gb) >= 0) { saved.key = saved.key.filter(function (x) { return x !== b.gb; }); dirty = true; }
   if (dirty) ls.set(LS_SAVED, JSON.stringify(saved));
 }
-/* chiave e worker prestati da un amico (amici.js li mette nelle impostazioni per usarli): mai mostrati, salvati, esportati o prestati (Piero, 16/11/2026) */
+/* API prestata da un amico (amici.js la mette nelle impostazioni per usarla): mai mostrata, salvata, esportata o prestata (Piero, 16/11/2026) */
 function lent() { try { return JSON.parse(ls.get('catalogo-libri-amici-chiave-in-uso') || 'null') || {}; } catch (e) { return {}; } }
-function isLent(k, v) { var b = lent(); return !!v && (k === 'sbn' ? b.sbn === v : b.gb === v); }
+function isLent(k, v) { return k !== 'sbn' && !!v && lent().gb === v; }
 function mine(k) {   // il tuo, anche mentre usi quello di un amico (amici.js tiene da parte il tuo)
+  if (k === 'sbn') return '';
   var v = svcVal(k); if (!isLent(k, v)) return v || '';
-  try { var m = JSON.parse(ls.get('catalogo-libri-amici-chiavi-mie') || 'null') || {}; return (k === 'sbn' ? m.sbn : m.gb) || ''; } catch (e) { return ''; }
+  try { var m = JSON.parse(ls.get('catalogo-libri-amici-chiavi-mie') || 'null') || {}; return m.gb || ''; } catch (e) { return ''; }
 }
-function remember(k, v) { if (!v || isLent(k, v)) return; saved[k] = [v].concat(saved[k].filter(function (x) { return x !== v; })).slice(0, 4); ls.set(LS_SAVED, JSON.stringify(saved)); }
-function svcVal(k) { return k === 'sbn' ? settings.sbnUrl : settings.gbKey; }
-function svcShort(k, v) { return k === 'sbn' ? v.replace(/^https:\/\//, '') : (v.length > 14 ? v.slice(0, 6) + '…' + v.slice(-4) : v); }
+function remember(k, v) { if (k === 'sbn' || !v || isLent(k, v)) return; saved[k] = [v].concat(saved[k].filter(function (x) { return x !== v; })).slice(0, 4); ls.set(LS_SAVED, JSON.stringify(saved)); }
+function svcVal(k) { return k === 'sbn' ? '' : settings.gbKey; }
+function svcShort(k, v) { return v.length > 14 ? v.slice(0, 6) + '…' + v.slice(-4) : v; }
 function setSvc(k, v) {
-  if (k === 'sbn') settings.sbnUrl = v; else settings.gbKey = v;
+  if (k === 'sbn') return;                               // niente worker propri (031)
+  settings.gbKey = v;
   backupReady = null;
   saveSettings(); remember(k, v); renderSvc();
-  if (k !== 'sbn' && v && !isLent('key', v)) emit('ownkey', v);   // giro 8: chi la presta la aggiorna per tutti gli amici
+  if (v && !isLent('key', v)) emit('ownkey', v);   // giro 8: chi la presta la aggiorna per tutti gli amici
 }
-/* guida del worker nell'app, non nel LEGGIMI (Piero, 17/11/2026): «Copia il codice del worker» */
-$('#sbnCopy').addEventListener('click', async function () {
-  try {
-    var r = await fetch('cloudflare-sbn-worker.js', { cache: 'no-cache' }); if (!r.ok) throw new Error('file');
-    await navigator.clipboard.writeText(await r.text());
-    toast('Codice copiato: incollalo in «Edit code» su Cloudflare.');
-  } catch (e) { window.open('cloudflare-sbn-worker.js', '_blank', 'noopener'); toast('Non riesco a copiarlo: si apre il codice, selezionalo tutto e copialo.'); }
-});
 $('#optSheet').addEventListener('click', function (e) {
   var b = e.target.closest('.svc-own'); if (!b || !window.NLAmici || !window.NLAmici.ownPart) return;
-  var p = b.dataset.own, had = window.NLAmici.ownPart(p);
-  if (!had) { svcFold(p === 'sbn' ? 'sbn' : 'key', true); if (p !== 'sbn') gbShown = true; }
+  var had = window.NLAmici.ownPart('gb');
+  if (!had) { svcFold('key', true); gbShown = true; }
   renderSvc();
-  if (!had) setTimeout(function () { try { $(p === 'sbn' ? '#sbnUrl' : '#gbKey').focus(); } catch (x) {} }, 50);
+  if (!had) setTimeout(function () { try { $('#gbKey').focus(); } catch (x) {} }, 50);
 });
-/* sezioni «Google Libri» e «Worker SBN» richiudibili (giro 5): chiuse si vedono stato, due righe e la guida */
+/* sezione «Google Libri» richiudibile (giro 5): chiusa si vedono stato, due righe e la guida. Il catalogo SBN è una riga fissa («Incluso», 031) */
 var svcOpenK = {}, gbShown = false;
 function svcFold(k, open) {
-  var box = $(k === 'sbn' ? '#svcSbn' : '#svcKey'); if (!box) return;
+  var box = k === 'key' ? $('#svcKey') : null; if (!box) return;
   var o = open == null ? !svcOpenK[k] : !!open; svcOpenK[k] = o;
   box.querySelector('.svc-tog').setAttribute('aria-expanded', o ? 'true' : 'false'); box.querySelector('.svc-b').hidden = !o; box.classList.toggle('open', o);
 }
 function gbMask(v) { return v.length > 10 ? v.slice(0, 4) + '…' + v.slice(-3) : '…'; }   // «AIza…7Gt»: l’API non resta in vista (giro 5)
 $('#optSheet').addEventListener('click', function (e) {
   if (e.target.closest('#gbLeak')) { window.NLRicerche.leak(); return; }
-  var t = e.target.closest('.svc-tog'); if (t) { svcFold(t.closest('.svc').id === 'svcSbn' ? 'sbn' : 'key'); return; }
+  var t = e.target.closest('.svc-tog'); if (t) { svcFold('key'); return; }
   var g = e.target.closest('.svc-guide'); if (!g) return;
   var k = g.dataset.guide, R = window.NLRicerche;
   if (k === 'key' && R && R.guide) { R.guide(true); return; }
   svcFold(k, true);
-  var d = $(k === 'sbn' ? '#sbnHow' : '#svcKey .svc-how'); if (d) { d.open = true; try { d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (x) {} }
+  var d = $('#svcKey .svc-how'); if (d) { d.open = true; try { d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (x) {} }
 });
 function renderSvc() {
-  var sb = settings.sbnUrl, gk = settings.gbKey, ls_ = isLent('sbn', sb), lk = isLent('key', gk), who = lent().nome || 'un amico';
-  if (document.activeElement !== $('#sbnUrl')) $('#sbnUrl').value = ls_ ? '' : sb;
+  var gk = settings.gbKey, lk = isLent('key', gk), who = lent().nome || 'un amico';
   var gi = $('#gbKey'), masked = !!gk && !lk && !gbShown;
   if (document.activeElement !== gi) { gi.value = lk ? '' : masked ? gbMask(gk) : gk; gi.readOnly = masked; gi.dataset.mask = masked ? '1' : ''; }
   $('#gbShow').hidden = !gk || lk; $('#gbShow').textContent = gbShown ? 'Nascondi' : 'Mostra'; $('#gbShow').setAttribute('aria-pressed', gbShown ? 'true' : 'false');
-  $('#sbnSt').textContent = ls_ ? 'Prestato da ' + who : sb ? 'In uso' : 'Non impostato'; $('#sbnSt').className = 'svc-st' + (sb ? ' on' : '');
   $('#gbSt').textContent = lk ? 'Prestata da ' + who : gk ? 'In uso' : 'Nessuna API'; $('#gbSt').className = 'svc-st' + (gk ? ' on' : '');
-  $('#gbGuide').hidden = !!mine('key'); $('#sbnGuide').hidden = !!mine('sbn');
-  $('#sbnClear').hidden = !sb || ls_; $('#gbClear').hidden = !gk || lk;
+  $('#gbGuide').hidden = !!mine('key');
+  $('#gbClear').hidden = !gk || lk;
   $('#gbLeak').hidden = !mine('key') || !(window.NLRicerche && window.NLRicerche.leak);
-  [['sbn', ls_, 'il worker SBN di '], ['key', lk, 'l’API Google di ']].forEach(function (x) {
-    var box = $(x[0] === 'sbn' ? '#svcSbn' : '#svcKey'), row = box.querySelector('.svc-row'), note = box.querySelector('.svc-lent');
+  [['key', lk, 'l’API Google di ']].forEach(function (x) {
+    var box = $('#svcKey'), row = box.querySelector('.svc-row'), note = box.querySelector('.svc-lent');
     row.hidden = x[1];
     if (x[1] && !note) { note = document.createElement('p'); note.className = 'hint svc-lent'; row.parentNode.insertBefore(note, row); }
     if (note) { note.hidden = !x[1]; if (x[1]) { var my = mine(x[0]);   // «Usa la tua»: ognuno deve poter usare i suoi (Piero, 17/11/2026)
-      note.innerHTML = 'Usi ' + esc(x[2] + who) + ': non si vede e non si può prestare ad altri. <button type="button" class="link svc-own" data-own="' + (x[0] === 'sbn' ? 'sbn' : 'gb') + '">' +
-        (my ? (x[0] === 'sbn' ? 'Usa il tuo worker' : 'Usa la tua API') + ' (' + esc(svcShort(x[0], my)) + ')' : (x[0] === 'sbn' ? 'Inserisci il tuo worker' : 'Inserisci la tua API')) + '</button>'; } }
+      note.innerHTML = 'Usi ' + esc(x[2] + who) + ': non si vede e non si può prestare ad altri. <button type="button" class="link svc-own" data-own="gb">' +
+        (my ? 'Usa la tua API (' + esc(svcShort(x[0], my)) + ')' : 'Inserisci la tua API') + '</button>'; } }
   });
-  ['sbn', 'key'].forEach(function (k) {
-    var cur = svcVal(k), box = $(k === 'sbn' ? '#sbnSaved' : '#gbSaved'), html = '';
+  ['key'].forEach(function (k) {
+    var cur = svcVal(k), box = $('#gbSaved'), html = '';
     saved[k].forEach(function (x, i) {
       if (x === cur || isLent(k, x)) return;
       html += '<span class="schip"><button type="button" class="schip-use" data-k="' + k + '" data-i="' + i + '" title="Usa ' + esc(svcShort(k, x)) + '">' + esc(svcShort(k, x)) + '</button>' +
         '<button type="button" class="schip-x" data-k="' + k + '" data-forget="' + i + '" aria-label="Togli ' + esc(svcShort(k, x)) + ' dai salvati">×</button></span>';
     });
-    box.innerHTML = html ? '<span class="svc-saved-l">' + (k === 'sbn' ? 'Worker salvati:' : 'API salvate:') + '</span>' + html : '';
+    box.innerHTML = html ? '<span class="svc-saved-l">API salvate:</span>' + html : '';
     box.hidden = !html;
   });
-  var rs = !sb && saved.sbn.length, rk = !gk && saved.key.length;   // (con quelli di un amico in uso sb/gk ci sono: niente «Rimetti»)
-  $('#svcRestore').hidden = !(rs || rk);
-  $('#svcRestore').textContent = rs && rk ? 'Rimetti API e worker salvati' : rs ? 'Rimetti il worker salvato' : 'Rimetti l’API salvata';
+  $('#svcRestore').hidden = !(!gk && saved.key.length);   // (con quella di un amico in uso gk c'è: niente «Rimetti»)
   updateQuotaInfo();
 }
 /* fetch che conta le richieste e, con l’API, non supera il limite giornaliero di Google (ne lascia un margine) */
@@ -314,53 +309,73 @@ function apiFetch(url, init) {
     countCall('g');
     var lm = /[?&]key=prestata(?:%3A|:)([0-9a-f-]{36})/i.exec(u);
     if (lm) return lentFetch(u, lm[1]);
-  } else if (settings.sbnUrl && u.indexOf(settings.sbnUrl) === 0) {
-    countCall('s');
-    var wm = /^https:\/\/worker-prestato\.invalid\/([0-9a-f-]{36})\b.*[?&]isbn=([0-9Xx]+)/i.exec(u);   // worker di un amico: passa dal server (026)
-    if (wm) return lentWorker(wm[1], wm[2]);
+  } else if (u.indexOf(SBN_CASA) === 0) {                   // catalogo SBN: passa dal server (031)
+    var cm = /[?&]isbn=([0-9Xx]+)/.exec(u);
+    return cm ? casaFetch(cm[1]) : Promise.resolve({ ok: false, status: 400, local: true, json: function () { return Promise.resolve({}); } });
   }
   return fetch(url, init);
 }
-/* worker SBN prestato (026, Piero 18/11/2026): l'indirizzo vero resta sul server, la funzione «libri» fa la richiesta */
-/* giro 11A (Piero 18/11/2026): 3.000 ricerche al giorno per amico col worker prestato (giorno UTC, come Cloudflare); poi x-nl-stop: mio */
-var LENTW_STOP = 'catalogo-libri-prestato-w-stop', lentWStopD = '';
-try { lentWStopD = ls.get(LENTW_STOP) || ''; } catch (e) { nlErr(e); }
-function lentWOut() { rollQuota(); return !!lentWStopD && lentWStopD === quota.ds && /worker-prestato\.invalid/.test(settings.sbnUrl || ''); }
-function lentWorker(da, isbn) {
+/* Catalogo SBN «della casa» (031, scelte di Piero del 20/11/2026): un solo worker per tutti, dietro la funzione «libri» del
+   server; il suo indirizzo non arriva mai al telefono. Con l'account 500 ricerche al giorno (le conta il server: x-nl-stop
+   «mio»); senza account 50 al giorno per telefono (contate qui, in quota.s) e 3.000 in tutto (x-nl-stop «tetto»). Giorno UTC.
+   Al limite la ricerca va avanti con le altre fonti; ogni avviso si dice una volta al giorno. */
+function sbnRoll() { rollQuota(); if (sbnDay.d !== quota.ds) sbnDay = { d: quota.ds, mio: 0, stop: '', said: '' }; }
+function sbnAuth() { var S = window.NLSocial; return !!(S && S.auth && S.auth()); }
+function sbnSay(k, msg, enter) {
+  if (sbnDay.said === k) return;
+  sbnDay.said = k; ls.set(LS_SBN, JSON.stringify(sbnDay));
+  toast(msg, enter ? { label: 'Entra', fn: function () { if (window.NLSocial) window.NLSocial.open(); } } : undefined);
+}
+function sbnOut() {                                       // per oggi il catalogo SBN è finito
+  sbnRoll();
+  return sbnAuth() ? sbnDay.stop === 'mio' : (sbnDay.stop === 'tetto' || quota.s >= SBN_FREE);
+}
+function sbnNow(tell) {                                   // l'indirizzo finto da dare alla ricerca, oppure '' se per oggi è finito
+  if (!sbnOut()) return SBN_CASA;
+  if (tell && !sbnAuth() && sbnDay.stop !== 'tetto') sbnSay('qui', 'Senza account il catalogo delle biblioteche (SBN) fa 50 ricerche al giorno. Entra con Google per averne 500.', true);
+  return '';
+}
+function casaFetch(isbn) {
   var S = window.NLSocial, no = { ok: false, status: 503, local: true, json: function () { return Promise.resolve({}); } };
-  if (!S || !S.raw || !S.auth() || lentWOut()) return Promise.resolve(no);
-  return S.raw('/functions/v1/libri?da=' + da + '&isbn=' + encodeURIComponent(isbn)).then(function (r) {
-    var stop = r.headers.get('x-nl-stop') || '';
-    if (stop === 'no') emit('lentGone');
-    else if (stop === 'mio' && lentWStopD !== quota.ds) {
-      rollQuota(); lentWStopD = quota.ds; ls.set(LENTW_STOP, lentWStopD);
-      toast('Per oggi hai finito le ricerche con il worker di ' + (lent().nome || 'un amico') + '. Fino a domattina l\'app cerca in Open Library e con Google.');
+  if (!S || !S.rawOpen || sbnOut()) return Promise.resolve(no);
+  countCall('s');
+  return S.rawOpen('/functions/v1/libri?isbn=' + encodeURIComponent(isbn)).then(function (r) {
+    var stop = r.headers.get('x-nl-stop') || '', mio = Number(r.headers.get('x-nl-mio')) || 0;
+    sbnRoll();
+    if (mio > sbnDay.mio) sbnDay.mio = mio;
+    if (stop === 'mio') {
+      sbnDay.stop = 'mio'; sbnDay.mio = Math.max(sbnDay.mio, SBN_MAX);
+      sbnSay('mio', 'Per oggi hai finito le ricerche nel catalogo delle biblioteche (SBN). Fino a domattina l\'app cerca in Open Library e con Google.');
+    } else if (stop === 'tetto') {
+      sbnDay.stop = 'tetto';
+      sbnSay('tetto', 'Oggi il catalogo delle biblioteche (SBN) è al completo per chi non ha l\'account. Entra con Google per usarlo subito.', true);
     }
+    ls.set(LS_SBN, JSON.stringify(sbnDay));
+    if (!$('#optSheet').hidden) updateQuotaInfo();
     return r;
   });
 }
-/* chiavi e worker di un altro rimasti sul telefono (copiati prima del giro 8): si tolgono da impostazioni e salvati (026) */
+/* API di un altro rimaste sul telefono (copiate prima del giro 8): si tolgono da impostazioni e salvate (026) */
 function svcAll() {
-  var out = [settings.gbKey, settings.sbnUrl].concat(saved.key, saved.sbn);
-  try { var m = JSON.parse(ls.get('catalogo-libri-amici-chiavi-mie') || 'null') || {}; out.push(m.gb, m.sbn); } catch (e) { nlErr(e); }
+  var out = [settings.gbKey].concat(saved.key);
+  try { var m = JSON.parse(ls.get('catalogo-libri-amici-chiavi-mie') || 'null') || {}; out.push(m.gb); } catch (e) { nlErr(e); }
   return out.filter(function (v, i, a) { return v && !/^prestata:/.test(v) && !/worker-prestato\.invalid/.test(v) && a.indexOf(v) === i; }).slice(0, 20);
 }
 function svcPurge(vals) {
   if (!vals || !vals.length) return;
-  ['key', 'sbn'].forEach(function (k) { saved[k] = saved[k].filter(function (x) { return vals.indexOf(x) < 0; }); });
+  saved.key = saved.key.filter(function (x) { return vals.indexOf(x) < 0; });
   ls.set(LS_SAVED, JSON.stringify(saved));
   if (vals.indexOf(settings.gbKey) >= 0) settings.gbKey = '';
-  if (vals.indexOf(settings.sbnUrl) >= 0) settings.sbnUrl = '';
   backupReady = null; saveSettings();
   if (!$('#optSheet').hidden) renderSvc();
 }
-function lookupOpts() { return { gbKey: settings.gbKey, sbnUrl: settings.sbnUrl && sUsed() < S_STOP && !lentWOut() ? settings.sbnUrl : '', fetch: apiFetch, lean: !googleLeft(true) }; }
+function lookupOpts(tell) { return { gbKey: settings.gbKey, sbnUrl: sbnNow(tell), fetch: apiFetch, lean: !googleLeft(true) }; }   // tell: ricerca per ISBN (se il catalogo SBN è finito lo dice)
 /* ricerca per ISBN: prima l'archivio comune (modulo ricerche.js: libri gia' cercati da altri, senza Google), poi le banche dati; il risultato va nell'archivio */
 async function findIsbn(code) {
   var A = window.NL && window.NL.archive;
   var hit = null;
   if (A && A.get) { try { hit = await A.get(code); if (hit && !hit.part) return hit; } catch (e) { nlErr(e); } }
-  var res = await L.lookupIsbn(code, lookupOpts());
+  var res = await L.lookupIsbn(code, lookupOpts(true));
   if (res && A && A.put) { try { A.put(code, res); } catch (e) { nlErr(e); } }
   if (!res && hit) { delete hit.part; return hit; }   // solo l'archivio lo conosce (es. libro scritto a mano e approvato, 029)
   return res;
@@ -530,7 +545,7 @@ function loadAll() {
     if (!s.cols3) settings.cols = 3;               // 3 per riga di partenza, per tutti, anche per chi le aveva cambiate (una volta sola; Piero, 18/11/2026)
     settings.cols3 = true;
     settings.openAll = s.openAll === true && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);   // «schede sempre aperte» tolta il 16/11/2026: resta solo per le prove automatiche
-    settings.sbnUrl = /^https:\/\//.test(L.str(s.sbnUrl)) ? L.str(s.sbnUrl) : '';
+    settings.sbnUrl = '';                               // niente worker propri (031): quello salvato si toglie, senza avvisi
     settings.loanSnooze = Number(s.loanSnooze) || 0;
     settings.swiped = s.swiped === true;
     settings.pubFix = s.pubFix === true;

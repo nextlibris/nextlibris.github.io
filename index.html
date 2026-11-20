@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
 <!-- Content-Security-Policy (17/11/2026): script solo dai file dell'app e dall'accesso con Google, niente script scritti nella pagina.
-     connect-src e img-src ammettono https: perché il worker SBN e le copertine possono stare su indirizzi scelti dall'utente. -->
+     connect-src e img-src ammettono https: perché le copertine possono stare su tanti indirizzi (il catalogo SBN passa dal server, 031). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://accounts.google.com; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' data: blob: https:; worker-src 'self' blob:; frame-src https://accounts.google.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>Next Libris</title>
 <meta name="application-name" content="Next Libris">
@@ -626,10 +626,10 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       </fieldset>
     </section>
     <section class="opt-sec" data-sec="search" data-title="Ricerca dei libri">
-      <p class="hint">API e worker sono facoltativi: servono a trovare più libri e ad avere dati più precisi.</p>
-      <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti API e worker salvati</button>
+      <p class="hint">L’API Google Libri è facoltativa: serve a trovare più libri e ad avere dati più precisi.</p>
+      <button class="btn primary" id="svcRestore" type="button" hidden>Rimetti l’API salvata</button>
 
-      <div class="svc svc-fold" id="svcKey">   <!-- sezioni richiudibili, Google sopra il worker (giro 5) -->
+      <div class="svc svc-fold" id="svcKey">   <!-- sezione richiudibile, Google sopra il catalogo SBN (giro 5) -->
         <button type="button" class="svc-h svc-tog" aria-expanded="false" aria-controls="svcKeyB">
           <span class="svc-t">Google Libri</span>
           <span class="svc-st" id="gbSt"></span>
@@ -664,38 +664,13 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       </div>
 
 
-      <div class="svc svc-fold" id="svcSbn">
-        <button type="button" class="svc-h svc-tog" aria-expanded="false" aria-controls="svcSbnB">
-          <span class="svc-t">Worker SBN</span>
-          <span class="svc-st" id="sbnSt"></span>
-          <span class="svc-chev" aria-hidden="true"></span>
-        </button>
-        <p class="hint svc-desc">Aggiunge i dati delle biblioteche italiane: editore, anno e pagine più precisi. Il worker è un piccolo intermediario gratuito su Cloudflare (100.000 richieste al giorno).</p>
-        <button class="btn svc-guide" type="button" data-guide="sbn" id="sbnGuide">Come si crea il worker (gratis)</button>
-        <div class="svc-b" id="svcSbnB" hidden>
+      <div class="svc svc-inc" id="svcSbn">   <!-- catalogo SBN della casa (031, 20/11/2026): incluso per tutti, niente da impostare -->
+        <div class="svc-h">
+          <span class="svc-t">Catalogo delle biblioteche italiane (SBN)</span>
+          <span class="svc-st on" id="sbnSt">Incluso</span>
+        </div>
         <p class="svc-count" id="sbnCount" aria-live="polite"></p>
-        <div class="svc-row">
-          <label class="sr" for="sbnUrl">Indirizzo del worker Cloudflare</label>
-          <input type="url" id="sbnUrl" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Incolla l'indirizzo del worker">
-        </div>
-        <div class="svc-acts">
-          <button class="btn svc-clear" id="sbnClear" type="button" hidden>Cancella</button>
-          <div class="svc-saved" id="sbnSaved" hidden></div>
-        </div>
-        <details class="svc-how" id="sbnHow">
-          <summary>Come si crea il worker (gratis, una volta sola)</summary>
-          <ol class="hint keysteps">
-          <li>Meglio da computer o tablet: apri <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">dash.cloudflare.com</a> e crea un account gratuito.</li>
-          <li>A sinistra «Workers &amp; Pages» › «Create» › «Start with Hello World!». Come nome scrivi <b>sbn-libri</b> e premi «Deploy».</li>
-          <li>Premi «Edit code», cancella tutto il codice di esempio e incolla il codice del worker, poi premi «Deploy».
-            <button class="btn sbn-copy" id="sbnCopy" type="button">Copia il codice del worker</button></li>
-          <li>Copia l'indirizzo del worker (tipo <b>sbn-libri.tuonome.workers.dev</b>) e incollalo qui sopra.</li>
-          <li>Tocca «Prova la ricerca ISBN» qui sotto: deve comparire «✓ Catalogo SBN».</li>
-          </ol>
-        </details>
-        </div>
       </div>
-
 
       <h3 class="opt-h3">Con gli amici</h3>
       <div class="svc-box dmenu" id="svcBox"></div>
@@ -840,7 +815,7 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
       <div class="dlist dmenu dset">
         <button type="button" class="dopt dset-t" id="goSettings" aria-expanded="false" aria-controls="setList"><span class="dset-i" aria-hidden="true"></span><span><b>Impostazioni</b><small>Account, amici, ricerca, aspetto</small></span><span class="n dset-c" aria-hidden="true">›</span></button>
         <div class="dsub" id="setList" hidden>
-        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>API Google, worker, SBN</small></span><span class="n" aria-hidden="true">›</span></button>
+        <button type="button" class="dopt" data-sec="search"><span><b>Ricerca dei libri</b><small>API Google Libri, catalogo SBN</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt" data-sec="cards"><span><b>Aggiunta dei libri</b><small>Prezzo, suoni, fotocamera</small></span><span class="n" aria-hidden="true">›</span></button>
         <button type="button" class="dopt" data-sec="look"><span><b>Aspetto</b><small>Tema, colori, caratteri</small></span><span class="n" aria-hidden="true">›</span></button>
         </div>

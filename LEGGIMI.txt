@@ -495,32 +495,19 @@ piu' di rado (20 secondi, 1 minuto, 3 minuti, 10 minuti); "Riprova ora"
 forza subito. Anche alla riapertura dell'app i libri rimasti in sospeso
 vengono cercati in automatico.
 
-CATALOGO SBN (biblioteche italiane) - FACOLTATIVO
--------------------------------------------------
+CATALOGO SBN (biblioteche italiane) - INCLUSO
+---------------------------------------------
 Per i libri italiani il catalogo SBN ha i dati piu' precisi su editore,
-anno di quell'edizione, pagine e genere (classificazione Dewey). Il
-browser non puo' interrogarlo direttamente, quindi serve un piccolo
-"intermediario" gratuito su Cloudflare (piano Free: 100.000 richieste al
-giorno, ne usi due per libro). Si fa una volta sola, da computer o tablet (la stessa guida, con il
-pulsante "Copia il codice del worker", e' in Impostazioni > Ricerca dei libri):
-1. Vai su dash.cloudflare.com e crea un account gratuito.
-2. Menu a sinistra "Workers & Pages" (o "Compute (Workers)") > "Create" >
-   "Create Worker" (o "Start with Hello World!"). Nome: sbn-libri.
-   Premi "Deploy".
-3. Premi "Edit code". Cancella tutto il codice di esempio e incolla il
-   contenuto del file cloudflare-sbn-worker.js (e' nella cartella
-   dell'app e nel repository GitHub). Premi "Deploy".
-4. Copia l'indirizzo del worker, tipo https://sbn-libri.TUONOME.workers.dev
-5. Nell'app: Impostazioni > Ricerca dei libri > riquadro "Catalogo SBN" > incolla
-   l'indirizzo (va bene anche senza https:// o con ?isbn=... in fondo). Poi
-   "Prova la ricerca ISBN": deve comparire "✓ Catalogo SBN".
-Prova anche a mano: apri nel browser l'indirizzo con ?isbn=9788806219352
-alla fine; deve comparire un testo con "briefRecords".
-L'intermediario risponde solo alla tua app (https://nextlibris.github.io):
-se pubblichi l'app altrove, aggiungi l'indirizzo in ORIGINI_AMMESSE nel
-codice. Nota: il servizio JSON di SBN non e' un'API ufficiale documentata
-e potrebbe cambiare; se smette di rispondere, l'app continua con Google e
-Open Library.
+anno di quell'edizione, pagine e genere (classificazione Dewey).
+Dal 20/11/2026 e' incluso nell'app per tutti: non c'e' niente da creare o
+da impostare. Le ricerche passano dal server di Next Libris, che le gira
+al catalogo: 500 al giorno con l'account, 50 al giorno per telefono senza
+account. Arrivati al limite, fino al giorno dopo l'app cerca in Open
+Library e con Google. In Impostazioni > Ricerca dei libri la riga
+"Catalogo delle biblioteche italiane (SBN) - Incluso" mostra le ricerche
+di oggi. (Prima ognuno creava un suo "worker" su Cloudflare: non serve piu'.)
+Nota: il servizio di SBN non e' un'API ufficiale documentata e potrebbe
+cambiare; se smette di rispondere, l'app continua con Google e Open Library.
 
 DESCRIZIONE DEL LIBRO
 ---------------------
@@ -841,6 +828,8 @@ Poi premi "Riprova" sui libri in errore (o il pulsante "Completa n libri").
 
 WORKER E CHIAVE: CONTATORI, CANCELLA, SALVATI
 --------------------------------------------
+(Dal 20/11/2026 il catalogo SBN e' incluso: il riquadro del worker non c'e' piu',
+quello che segue vale per "Google Libri".)
 In Impostazioni > Ricerca dei libri ci sono due riquadri, "Catalogo SBN" (worker
 Cloudflare) e "Google Libri" (chiave API). Ognuno mostra:
 - se e' "In uso" o "Non impostato", con l'indirizzo o la chiave nel campo;

@@ -331,8 +331,8 @@ function backupName() {
 }
 function coverIds() { return Object.keys(coverURL).filter(function (id) { return !!get(id); }).concat(quotePhKeys().filter(function (k) { return !!qphURL[k]; })); }
 /* Senza foto tue il backup e' pronto subito; con le foto va preparato prima (si leggono dal telefono), cosi' la condivisione parte al tocco. */
-/* nel backup vanno anche worker SBN e API Google (in uso e salvati): ripristinando su un altro telefono tornano anche loro */
-function backupCfg() { return { sbnUrl: mine('sbn'), gbKey: mine('key'), saved: { sbn: saved.sbn.slice(), key: saved.key.slice() } }; }
+/* nel backup va anche l'API Google (in uso e salvate): ripristinando su un altro telefono torna anche lei. I worker SBN no (031) */
+function backupCfg() { return { gbKey: mine('key'), saved: { key: saved.key.slice() } }; }
 function backupData() { return coverIds().length ? backupReady : JSON.stringify({ app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }); }
 async function buildBackup() {
   var o = { app: 'catalogo-libri', v: 4, books: storable(), cfg: backupCfg() }, ids = coverIds();
@@ -441,19 +441,14 @@ function checkBackupNag() {
   notice('Ultimo backup: ' + L.agoText(settings.lastBackup) + '. I ' + n + ' libri sono salvati solo su questo telefono: se cambi telefono o cancelli i dati del browser li perdi. Mandalo su Drive, WhatsApp o email con un tocco.',
     'Fai il backup', backupTap, function () { settings.snooze = Date.now(); saveSettings(); }, 'backup');
 }
-/* dal backup: worker e chiave tornano tra i salvati; se qui mancano, li rimette in uso. Restituisce cosa ha rimesso. */
+/* dal backup: l'API torna tra le salvate; se qui manca, la rimette in uso. Restituisce cosa ha rimesso. I worker dei backup vecchi si ignorano (031). */
 function restoreCfg(c) {
   if (!c || typeof c !== 'object') return '';
-  var okW = function (v) { v = cleanWorker(v); return /^https:\/\/[^\s/]+\.[^\s]+$/.test(v) ? v : ''; };
   var okK = function (v) { return typeof v === 'string' ? v.replace(/\s+/g, '') : ''; };
   var sv = c.saved || {}, put = [];
-  ['sbn', 'key'].forEach(function (k) {
-    var list = (Array.isArray(sv[k]) ? sv[k] : []).concat([k === 'sbn' ? c.sbnUrl : c.gbKey]).map(k === 'sbn' ? okW : okK).filter(Boolean);
-    list.forEach(function (v) { if (saved[k].indexOf(v) < 0 && saved[k].length < 4) saved[k].push(v); });
-  });
+  (Array.isArray(sv.key) ? sv.key : []).concat([c.gbKey]).map(okK).filter(Boolean).forEach(function (v) { if (saved.key.indexOf(v) < 0 && saved.key.length < 4) saved.key.push(v); });
   ls.set(LS_SAVED, JSON.stringify(saved));
-  var w = okW(c.sbnUrl), k2 = okK(c.gbKey);
-  if (w && !settings.sbnUrl) { setSvc('sbn', w); put.push('il worker SBN'); }
+  var k2 = okK(c.gbKey);
   if (k2 && !settings.gbKey) { setSvc('key', k2); put.push('l’API Google'); }
   renderSvc();
   return put.join(' e ');

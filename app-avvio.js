@@ -466,7 +466,7 @@ $('#btnDiag').addEventListener('click', async function () {
   var out = $('#diagOut'), btn = $('#btnDiag');
   btn.disabled = true; out.hidden = false; out.textContent = 'Provo le banche dati…';
   try {
-    var res = await L.diagnose(lookupOpts());
+    var res = await L.diagnose(lookupOpts(true));
     out.innerHTML = res.map(function (r) { return '<div class="' + (r.ok ? 'diag-ok' : 'diag-bad') + '"><b>' + (r.ok ? '✓ ' : '✗ ') + r.name + '</b>: ' + esc(r.msg) + '</div>'; }).join('');
   } catch (e) { out.textContent = 'Prova non riuscita.'; }
   btn.disabled = false;
@@ -559,20 +559,6 @@ $('#btnInstDiag').addEventListener('click', async function () {
 });
 $('#gbKey').value = '';
 $('#optPrice').addEventListener('change', function (e) { settings.price = e.target.checked; saveSettings(); toast(settings.price ? 'Dopo ogni libro ti chiederò il prezzo (puoi sempre saltarlo).' : 'Non chiederò più il prezzo: puoi scriverlo quando vuoi nel campo «Costo» della scheda.'); });
-/* l'indirizzo del worker si puo' incollare anche senza https:// o con ?isbn=... della prova a mano */
-function cleanWorker(v) {
-  v = String(v || '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
-  if (v && !/^[a-z][a-z0-9+.-]*:\/\//i.test(v) && /^[^\s/]+\.[a-z]{2,}(\/|$)/i.test(v)) v = 'https://' + v;
-  return v;
-}
-$('#sbnUrl').addEventListener('change', function (e) {
-  var v = cleanWorker(e.target.value), before = settings.sbnUrl;
-  if (v && !/^https:\/\/[^\s/]+\.[^\s]+$/.test(v)) { toast('L\'indirizzo deve iniziare con https:// (es. https://sbn-libri.tuonome.workers.dev).'); return; }
-  if (v === before) { e.target.value = v; return; }
-  e.target.value = v; setSvc('sbn', v);
-  if (v) toast('Worker SBN in uso. Premi «Prova la ricerca ISBN» per controllare.');
-  else toast('Worker tolto: ora cerco senza il catalogo SBN.', { label: 'Annulla', fn: function () { setSvc('sbn', before); } });
-});
 $('#gbShow').addEventListener('click', function () { gbShown = !gbShown; renderSvc(); });
 $('#gbKey').addEventListener('click', function (e) { if (e.target.dataset.mask === '1') { gbShown = true; renderSvc(); e.target.focus(); } });   // tocco sull’API coperta: si scopre per cambiarla
 $('#gbKey').addEventListener('change', function (e) {
@@ -587,31 +573,27 @@ function clearSvc(k) {
   var before = svcVal(k);
   if (!before) return;
   setSvc(k, '');
-  toast(k === 'sbn' ? 'Worker tolto. Resta tra i salvati.' : 'API tolta. Resta tra le salvate.',
+  toast('API tolta. Resta tra le salvate.',
     { label: 'Annulla', fn: function () { setSvc(k, before); } });
 }
-$('#sbnClear').addEventListener('click', function () { clearSvc('sbn'); });
 $('#gbClear').addEventListener('click', function () { clearSvc('key'); });
 $('#svcRestore').addEventListener('click', function () {
-  var did = [];
-  if (!settings.sbnUrl && saved.sbn[0]) { setSvc('sbn', saved.sbn[0]); did.push('sbn'); }
-  if (!settings.gbKey && saved.key[0]) { setSvc('key', saved.key[0]); did.push('key'); }
-  if (!did.length) return;
-  toast(did.length === 2 ? 'API e worker rimessi.' : did[0] === 'sbn' ? 'Worker rimesso.' : 'API rimessa.',
-    { label: 'Annulla', fn: function () { did.forEach(function (k) { setSvc(k, ''); }); } });
+  if (settings.gbKey || !saved.key[0]) return;
+  setSvc('key', saved.key[0]);
+  toast('API rimessa.', { label: 'Annulla', fn: function () { setSvc('key', ''); } });
 });
-$('#svcSbn').parentNode.addEventListener('click', function (e) {
+$('#svcKey').parentNode.addEventListener('click', function (e) {
   var u = e.target.closest('.schip-use'), x = e.target.closest('.schip-x');
   if (u) {
     var k = u.dataset.k, v = saved[k][+u.dataset.i], before = svcVal(k);
     if (!v) return;
     setSvc(k, v);
-    toast(k === 'sbn' ? 'Worker rimesso: ' + svcShort(k, v) + '.' : 'API rimessa: ' + svcShort(k, v) + '.', { label: 'Annulla', fn: function () { setSvc(k, before); } });
+    toast('API rimessa: ' + svcShort(k, v) + '.', { label: 'Annulla', fn: function () { setSvc(k, before); } });
   } else if (x) {
     var k2 = x.dataset.k, i2 = +x.dataset.forget, v2 = saved[k2][i2];
     if (!v2) return;
     saved[k2].splice(i2, 1); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc();
-    toast((k2 === 'sbn' ? 'Worker tolto dai salvati.' : 'API tolta dalle salvate.'), { label: 'Annulla', fn: function () { saved[k2].splice(i2, 0, v2); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc(); } });
+    toast('API tolta dalle salvate.', { label: 'Annulla', fn: function () { saved[k2].splice(i2, 0, v2); ls.set(LS_SAVED, JSON.stringify(saved)); renderSvc(); } });
   }
 });
 $('#btnClearGuess').addEventListener('click', function () {
@@ -958,8 +940,8 @@ window.NL = {
   updateStick: function () { updateStick(); }, summary: function () { updateSummary(); }, autosize: function (el) { autosizeAll(el); },
   rdLong: function (v) { return rdLong(v); }, get: function (id) { return get(id); }, itDate: function (d) { return L.itDate(d); }, refreshRow: function (id) { refreshRow(id); },
   quota: function () { rollQuota(); return { d: quota.d, ds: quota.ds, g: quota.g, s: quota.s }; },   // contatore condiviso (modulo ricerche.js)
-  setShared: function (k, n, day) { if (k === 'g') { shared.g = n; shared.d = day; } else { shared.s = n; shared.ds = day; } if (!$('#optSheet').hidden) updateQuotaInfo(); },
-  svc: function () { return { gbKey: settings.gbKey, sbnUrl: settings.sbnUrl }; }, contactURL: function () { return contactURL(); }, backupCfg: function () { return backupCfg(); }, openOptions: function (sec) { openOptions(sec); }, svcFold: function (k, o) { svcFold(k, o); },
+  setShared: function (k, n, day) { if (k === 'g') { shared.g = n; shared.d = day; } if (!$('#optSheet').hidden) updateQuotaInfo(); },
+  svc: function () { return { gbKey: settings.gbKey, sbnUrl: '' }; }, contactURL: function () { return contactURL(); }, backupCfg: function () { return backupCfg(); }, openOptions: function (sec) { openOptions(sec); }, svcFold: function (k, o) { svcFold(k, o); },
   togglePin: function (id, i) { return togglePin(id, i); }, pinned: function () { return pinned(); }, PIN_MAX: PIN_MAX,   // citazioni in evidenza (giro 6)
   fields: FIELDS, clean: function (x) { return cleanBook(x); }, stored: function () { return storable(); }, save: function () { touch(); }   // per la sincronizzazione (modulo social)
 };

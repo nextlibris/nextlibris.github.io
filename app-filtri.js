@@ -409,7 +409,7 @@ function openOptions(sec, reuse) {
   $('#optSheet .sheet-in').scrollTop = 0;
   if (reuse) { try { history.replaceState({ opt: 1 }, ''); optPushed = true; } catch (e) { nlErr(e); } }
   else if (!optPushed) { try { history.pushState({ opt: 1 }, ''); optPushed = true; } catch (e) { nlErr(e); } }
-  if (sec === 'search') { renderSvc(); renderSvcShare(); if (window.NLAmici && window.NLAmici.load) window.NLAmici.load().catch(function () {}); }   // «Con gli amici»: chiave e worker (da Condivisione, 17/11/2026)
+  if (sec === 'search') { renderSvc(); renderSvcShare(); if (window.NLAmici && window.NLAmici.load) window.NLAmici.load().catch(function () {}); }   // «Con gli amici»: l'API (da Condivisione, 17/11/2026)
   if (sec === 'app') { renderVersion(); checkVersion(); updateInstallUi(); }
   if (sec === 'privacy') loadPrivacy();
 }
