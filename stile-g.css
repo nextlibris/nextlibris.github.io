@@ -373,3 +373,6 @@ html.g-look #sgPrev .sgp-box small{font-size:13px;color:var(--muted);flex:none}
 html.g-look #sgPrev .sgp-lib{display:inline-block;margin-top:8px;font-size:14px}
 html.g-look #sgPrev .sgp-btns{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:18px}
 html.g-look #suggSheet .sg-next .nx-card .sg-cov{width:96px;height:144px}
+/* la pagina è una griglia: senza minmax(0,1fr) la riga di copertine allargava la pagina (controllo alle varie misure, 21/11/2026) */
+html.g-look #suggSheet>.sheet-in{grid-template-columns:minmax(0,1fr)}
+html.g-look #suggSheet #sgShelves,html.g-look #suggSheet .sg-shelf,html.g-look #suggSheet .sg-row{min-width:0;max-width:100%}

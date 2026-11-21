@@ -3,6 +3,11 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 119 · 21/11/2026
+> **Suggerimenti sui telefoni** Gli scaffali restano dentro lo schermo: la pagina non scorre più di lato.
+> **Linguette a sinistra** Se le hai scelte a sinistra, restano lì anche quando riapri l'app.
+- Controllate tutte le misure: telefoni piccoli e grandi, tema scuro, tablet e computer.
+
 ## Versione 118 · 21/11/2026
 > **Suggerimenti tutti nuovi** Ora sono una pagina intera: in cima il prossimo libro da leggere tra i tuoi, sotto tanti scaffali da scorrere col dito.
 > **Dai tuoi amici** Vedi i libri che piacciono ai tuoi amici e chi te li può prestare, e i preferiti dell'amico che legge più come te.
