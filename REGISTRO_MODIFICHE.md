@@ -3,6 +3,13 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 116 · 21/11/2026
+> **Cerca anche per titolo** Scrivi il titolo e Next Libris lo cerca nel catalogo delle biblioteche italiane (SBN) e in Open Library; Google solo se manca un'edizione italiana.
+> **Errori segnalati da soli** Se qualcosa si rompe sul tuo telefono, l'app lo segnala in forma anonima, così possiamo sistemarlo prima.
+- **Ricerca per titolo:** le edizioni senza ISBN compaiono dopo le altre; solo libri a stampa; vale lo stesso conto giornaliero della ricerca con il codice.
+- **Errori:** si mandano solo il punto dell'app, il messaggio, la versione e il tipo di telefono, mai nome, account o libri; restano 30 giorni. È scritto nella Privacy.
+- **Privacy:** anche il titolo cercato passa dal nostro server, come l'ISBN.
+
 ## Versione 115 · 20/11/2026
 > **Prima si installa** Sul telefono Next Libris si usa come app: dal browser c'è solo la schermata per installarla, poi tutto parte dall'icona.
 > **Un benvenuto più chiaro** Tre schede invece di quattro; l'API Google Libri la crei in 5 minuti e, quando avrai degli amici sull'app, potrete prestarvela.

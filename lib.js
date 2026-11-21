@@ -314,24 +314,47 @@
     return v === v.toUpperCase() ? sentenceCase(v) : v;
   }
   /* json = risposta di search.json?isbn= (briefRecords) con, se c'e', la scheda completa in json.full */
-  function parseSbn(json, isbn) {
-    var r = json && Array.isArray(json.briefRecords) ? json.briefRecords[0] : null;
-    if (!r) return null;
-    var full = (json.full && typeof json.full === 'object') ? json.full : {};
+  function sbnRec(r, full, isbn) {
+    full = full || {};
     var raw = str(r.titolo || full.titolo), parts = raw.split(' / ');
     var title = sbnClean(parts[0]).replace(/^\d+\s*:\s*/, '').replace(/\s+:\s+/g, ': ').replace(/\s*[.;,]\s*$/, '');
     var au = str(r.autorePrincipale || full.autorePrincipale).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
     var m = au.match(/^([^,]+),\s*(.+)$/);
     if (m) au = m[2].trim() + ' ' + m[1].trim();
     if (!au && parts[1]) au = sbnClean(parts[1].split(' ; ')[0]).replace(/^(a cura di|di)\s+/i, '');
+    if (m && title.indexOf(m[1].trim() + ', ' + m[2].trim() + '. ') === 0) title = title.slice((m[1].trim() + ', ' + m[2].trim() + '. ').length);   // «Buzzati, Dino. Il deserto dei tartari»
     var pub = str(r.pubblicazione || full.pubblicazione), first = pub.split(/\s;\s/)[0];
     var e = sbnClean((first.split(/\s:\s/)[1] || '').replace(/,[^,]*\d{4}[^,]*$/, '').replace(/[\[\]]/g, ''));
     if (/^s\.?\s?n\.?$/i.test(e)) e = '';
     var years = (pub.match(/\d{4}/g) || []).map(Number).filter(function (y) { return y >= 1450 && y <= 2100; });
     var pm = str(full.descrizioneFisica).match(/(\d+)\s*p\./);
     if (!title) return null;
-    return { id: 's:' + isbn, t: title, a: au, e: e, y: years.length ? String(years[years.length - 1]) : '', i: isbn, isbns: [isbn], img: '', lang: '',
+    return { id: 's:' + (isbn || str(r.codiceIdentificativo) || title), t: title, a: au, e: e, y: years.length ? String(years[years.length - 1]) : '', i: isbn, isbns: isbn ? [isbn] : [], img: '', lang: '',
       gen: deweyGenre(full.classificazioneDewey), pg: pm ? pagesOf(pm[1]) : '', src: 'SBN' };
+  }
+  function parseSbn(json, isbn) {
+    var r = json && Array.isArray(json.briefRecords) ? json.briefRecords[0] : null;
+    if (!r) return null;
+    return sbnRec(r, (json.full && typeof json.full === 'object') ? json.full : {}, isbn);
+  }
+  /* ricerca per titolo nel catalogo SBN (21/11/2026, scelte di Piero): solo libri a stampa (il worker toglie audiolibri, braille e
+     manoscritti); le edizioni senza ISBN restano, dopo le altre (le mette in fondo l'app). Copertina da Open Library, se c'e' l'ISBN.
+     Una edizione per ISBN; senza ISBN una per titolo, editore e anno. Lingua «it» solo con un ISBN italiano. */
+  function parseSbnList(json) {
+    var rs = json && Array.isArray(json.briefRecords) ? json.briefRecords : [], seen = {};
+    return rs.map(function (r) {
+      var isbn = toIsbn13(r.isbn), c = sbnRec(r, null, isbn);
+      if (!c) return null;
+      var k = isbn || (c.t + '|' + c.e + '|' + c.y).toLowerCase();
+      if (seen[k]) return null;
+      seen[k] = 1;
+      if (isbn) c.img = 'https://covers.openlibrary.org/b/isbn/' + isbn + '-M.jpg?default=false';
+      if (/^97(888|912)/.test(isbn)) c.lang = 'it';
+      return c;
+    }).filter(Boolean);
+  }
+  function sbnTextUrl(base, q) {
+    try { var u = new URL(str(base)); if (u.protocol !== 'https:') return ''; u.searchParams.set('t', q); return u.href; } catch (e) { return ''; }
   }
   function sbnUrl(base, isbn) {
     try { var u = new URL(str(base)); if (u.protocol !== 'https:') return ''; u.searchParams.set('isbn', isbn); return u.href; } catch (e) { return ''; }
@@ -487,32 +510,56 @@
     }
     return out;
   }
+  /* Ricerca per titolo (21/11/2026, Piero): catalogo SBN (dal server, se per oggi non e' finito) e Open Library insieme; Google Libri
+     solo se tra i risultati manca un'edizione italiana con l'ISBN. Il risultato porta via:'free' (niente da Google) e gErr
+     (perche' Google non ha dato risultati: 'nokey', 'rate', 'network'), oppure gSkip quando Google non e' servito. */
   async function searchText(query, opts) {
     opts = opts || {};
     var f = opts.fetch || (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : null);
     if (!f) throw { code: 'network' };
+    var side = { waits: opts.waits ? opts.waits.slice(0, 1) : [800], timeout: 8000 };
+    var su = opts.sbnUrl ? sbnTextUrl(opts.sbnUrl, String(query).trim().slice(0, 100)) : '';
+    var freeErr = 0;
+    async function olFind() {
+      var ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(query), side));
+      /* Open Library vuole tutte le parole: con l'editore aggiunto («l'isola del tesoro bur») puo' non trovare niente, si riprova senza l'ultima */
+      var words = String(query).trim().split(/\s+/);
+      if (!ol.length && words.length > 2) ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(words.slice(0, -1).join(' ')), side));
+      return ol;
+    }
+    var out = await Promise.allSettled([su ? getJson(f, su, side).then(parseSbnList) : Promise.resolve([]), olFind()]);
+    var free = [], byIsbn = {};
+    out.forEach(function (r) {
+      if (r.status !== 'fulfilled') { freeErr++; return; }
+      r.value.forEach(function (c) {
+        var o = c.i && byIsbn[c.i];
+        if (o) { if (!o.img && c.img) o.img = c.img; if (!o.a) o.a = c.a; return; }   // stesso ISBN in SBN e Open Library: una riga sola
+        if (c.i) byIsbn[c.i] = c;
+        free.push(c);
+      });
+    });
+    if (free.some(function (c) { return c.lang === 'it' && c.i; })) { free.via = 'free'; free.gSkip = true; return free; }
     var key = opts.gbKey ? '&key=' + encodeURIComponent(opts.gbKey) : '';
     var base = 'https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=10&printType=books' + key;
     var gErr = '', res = [];
     try {
       /* giro 10 (Piero, 18/11/2026): prima le edizioni italiane. Una sola ricerca se ne trova almeno 3; altrimenti una seconda
          senza limiti di lingua, e le italiane restano in cima */
-      var it = parseGoogle(await getJson(f, base + '&langRestrict=it', opts));
-      if (it.length >= 3) return it;
-      var seen = {};
-      it.forEach(function (c) { seen[c.id] = 1; });
-      res = it.concat(parseGoogle(await getJson(f, base, opts)).filter(function (c) { return !seen[c.id]; }));
+      res = parseGoogle(await getJson(f, base + '&langRestrict=it', opts));
+      if (res.length < 3) {
+        var seen = {};
+        res.forEach(function (c) { seen[c.id] = 1; });
+        res = res.concat(parseGoogle(await getJson(f, base, opts)).filter(function (c) { return !seen[c.id]; }));
+      }
     } catch (e) { gErr = e && e.status === 429 ? 'rate' : e && e.status === 403 ? 'nokey' : 'network'; }   // 403 = API prestata tolta (20/11/2026)
-    if (res.length) return res;
-    /* 20/11/2026 (Piero): se Google non risponde o non trova, si cerca in Open Library */
-    try {
-      var ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(query), opts));
-      /* Open Library vuole tutte le parole: con l'editore aggiunto («l'isola del tesoro bur») puo' non trovare niente, si riprova senza l'ultima */
-      var words = String(query).trim().split(/\s+/);
-      if (!ol.length && words.length > 2) ol = parseOlSearch(await getJson(f, OL_SEARCH + encodeURIComponent(words.slice(0, -1).join(' ')), opts));
-      if (ol.length) { ol.via = 'ol'; ol.gErr = gErr; return ol; }
-    } catch (e2) { /* anche Open Library non risponde: vale l'errore di Google */ }
-    if (gErr) throw { code: gErr };
+    if (res.length) {
+      var have = {};
+      res.forEach(function (c) { (c.isbns || []).forEach(function (x) { have[x] = 1; }); });
+      return res.concat(free.filter(function (c) { return !c.i || !have[c.i]; }));
+    }
+    if (free.length) { free.via = 'free'; free.gErr = gErr; return free; }
+    if (gErr && (gErr !== 'network' || freeErr)) throw { code: gErr };
+    if (freeErr === 2) throw { code: 'network' };
     return [];
   }
 
@@ -1206,6 +1253,6 @@
     csvCell: csvCell, buildCSV: buildCSV, buildTSV: buildTSV, rowsFor: rowsFor, colsFor: colsFor, itDate: itDate,
     genreIt: genreIt, crc32: crc32, zipStore: zipStore, buildXLSX: buildXLSX, publisherGroups: publisherGroups, pubTokens: pubTokens,
     computeStats: computeStats, agoText: agoText, coverCandidates: coverCandidates, badBigCover: badBigCover, googleVolumeId: googleVolumeId, bestGoogleImage: bestGoogleImage, getJson: getJson,
-    parseSbn: parseSbn, sbnUrl: sbnUrl, deweyGenre: deweyGenre, dupGroups: dupGroups, analyzeDups: analyzeDups, mergeBooks: mergeBooks, serKey: serKey, seriesInfo: seriesInfo, titleKey: titleKey, pickNews: pickNews, nextReads: nextReads, genreSubject: genreSubject, authorList: authorList, ocrParagraph: ocrParagraph, cleanDesc: cleanDesc, guessLang: guessLang, pickDesc: pickDesc, olDesc: olDesc, DESC_MAX: DESC_MAX, READ_LABEL: READ_LABEL, GONE_LABEL: GONE_LABEL, RATE_WORDS: RATE_WORDS, rateWord: rateWord
+    parseSbn: parseSbn, parseSbnList: parseSbnList, sbnUrl: sbnUrl, deweyGenre: deweyGenre, dupGroups: dupGroups, analyzeDups: analyzeDups, mergeBooks: mergeBooks, serKey: serKey, seriesInfo: seriesInfo, titleKey: titleKey, pickNews: pickNews, nextReads: nextReads, genreSubject: genreSubject, authorList: authorList, ocrParagraph: ocrParagraph, cleanDesc: cleanDesc, guessLang: guessLang, pickDesc: pickDesc, olDesc: olDesc, DESC_MAX: DESC_MAX, READ_LABEL: READ_LABEL, GONE_LABEL: GONE_LABEL, RATE_WORDS: RATE_WORDS, rateWord: rateWord
   };
 });

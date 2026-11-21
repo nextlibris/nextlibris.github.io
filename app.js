@@ -118,7 +118,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 115, date: '2026-11-20', note: 'Prima si installa, poi il benvenuto' };
+var APP_VERSION = { v: 116, date: '2026-11-21', note: 'Ricerca per titolo nel catalogo SBN; errori dei telefoni segnalati in forma anonima' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
@@ -302,8 +302,8 @@ function apiFetch(url, init) {
     var lm = /[?&]key=prestata(?:%3A|:)([0-9a-f-]{36})/i.exec(u);
     if (lm) return lentFetch(u, lm[1]);
   } else if (u.indexOf(SBN_CASA) === 0) {                   // catalogo SBN: passa dal server (031)
-    var cm = /[?&]isbn=([0-9Xx]+)/.exec(u);
-    return cm ? casaFetch(cm[1]) : Promise.resolve({ ok: false, status: 400, local: true, json: function () { return Promise.resolve({}); } });
+    var cm = /[?&]isbn=([0-9Xx]+)/.exec(u), tm = /[?&]t=([^&#]+)/.exec(u);   // per ISBN, o per titolo (21/11/2026)
+    return cm ? casaFetch('isbn=' + encodeURIComponent(cm[1])) : tm ? casaFetch('t=' + tm[1]) : Promise.resolve({ ok: false, status: 400, local: true, json: function () { return Promise.resolve({}); } });
   }
   return fetch(url, init);
 }
@@ -327,11 +327,11 @@ function sbnNow(tell) {                                   // l'indirizzo finto d
   if (tell && !sbnAuth() && sbnDay.stop !== 'tetto') sbnSay('qui', 'Senza account il catalogo delle biblioteche (SBN) fa 50 ricerche al giorno. Entra con Google per averne 500.', true);
   return '';
 }
-function casaFetch(isbn) {
+function casaFetch(q) {                                   // q: «isbn=…» oppure «t=…» (titolo, stesso conto)
   var S = window.NLSocial, no = { ok: false, status: 503, local: true, json: function () { return Promise.resolve({}); } };
   if (!S || !S.rawOpen || sbnOut()) return Promise.resolve(no);
   countCall('s');
-  return S.rawOpen('/functions/v1/libri?isbn=' + encodeURIComponent(isbn)).then(function (r) {
+  return S.rawOpen('/functions/v1/libri?' + q).then(function (r) {
     var stop = r.headers.get('x-nl-stop') || '', mio = Number(r.headers.get('x-nl-mio')) || 0;
     sbnRoll();
     if (mio > sbnDay.mio) sbnDay.mio = mio;

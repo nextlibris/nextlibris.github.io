@@ -56,11 +56,12 @@ function openIsbnSheet() {
 /* ---------- ricerca per titolo (per esempio un libro consigliato da un amico) ---------- */
 var titleSeq = 0, titleCands = [], titleText = '';
 /* perché i risultati vengono da Open Library (20/11/2026, Piero: senza API non è «Google non ha risposto») */
-function olWhy(gErr) {
-  if (gErr === 'nokey') return 'L’API Google Libri che ti avevano prestato non è più disponibile: questi li trova Open Library. ';
-  if (!settings.gbKey) return 'Senza un’API Google Libri cerco in Open Library: ecco cosa trova. ';
-  if (gErr) return 'Google Libri non ha risposto: questi li trova Open Library. ';
-  return 'Google Libri non ha trovato niente: questi li trova Open Library. ';
+function olWhy(gErr) {   // 21/11/2026: i risultati senza Google vengono dal catalogo delle biblioteche (SBN) e da Open Library
+  var W = 'il catalogo delle biblioteche (SBN) e Open Library';
+  if (gErr === 'nokey') return 'L’API Google Libri che ti avevano prestato non è più disponibile: questi li trovano ' + W + '. ';
+  if (!settings.gbKey) return 'Senza un’API Google Libri cerco solo nel catalogo delle biblioteche (SBN) e in Open Library: ecco cosa trovano. ';
+  if (gErr) return 'Google Libri non ha risposto: questi li trovano ' + W + '. ';
+  return '';
 }
 /* ordine dei risultati per titolo (20/11/2026, Piero): prima i titoli più vicini a quello scritto; poi chi corrisponde all'anno
    o all'editore scritti accanto («l'isola del tesoro bur», «l'isola del tesoro 1996»); poi le edizioni italiane, quelle con ISBN e
@@ -114,14 +115,15 @@ async function searchTitle(text) {
   }
   if (my !== titleSeq || $('#isbnSheet').hidden) return;
   // prima le edizioni italiane, poi quelle con l'ISBN; per il resto l'ordine di Google
-  titleCands = rankCands(qp, res).slice(0, 10);
+  titleCands = rankCands(qp, res);
+  titleCands = titleCands.filter(function (c) { return c.i; }).concat(titleCands.filter(function (c) { return !c.i; })).slice(0, 10);   // le edizioni senza ISBN dopo le altre (Piero, 21/11/2026)
   $('#isbnRes').innerHTML = titleCands.map(function (c, i) {
     var have = (c.isbns || []).map(findByIsbn).filter(Boolean)[0];
     var badge = have ? '<span class="tag ' + (have.w ? 'loan' : 'warn') + '">' + (have.w ? 'Già nei Desideri' : 'Ce l\'hai già') + '</span>' : '';
     return '<li><button class="cand" data-i="' + i + '"><span class="cimg">' + (c.img ? '<img src="' + esc(c.img) + '" alt="" referrerpolicy="no-referrer" data-rm>' : '') + '</span><span><b>' + esc(c.t) + '</b>' +
       '<span>' + esc(c.a || 'Autore non indicato') + '</span><span>' + esc([c.e, c.y].filter(Boolean).join(', ') || 'Editore e anno non indicati') + '</span>' + badge + '</span></button></li>';
   }).join('');
-  var viaOl = res.via === 'ol';
+  var viaOl = res.via === 'free' && !res.gSkip;   // Google serviva (mancavano edizioni italiane) ma non ha dato risultati
   $('#isbnKey').hidden = !(viaOl && (!settings.gbKey || res.gErr === 'nokey'));
   $('#isbnResMsg').textContent = titleCands.length ? (viaOl ? olWhy(res.gErr) : '') + 'Tocca il libro giusto per aggiungerlo ' + whereTxt() + ':' : 'Non ho trovato libri per «' + text + '». Prova con meno parole, o aggiungi l\'autore.';
   asIs.hidden = false;

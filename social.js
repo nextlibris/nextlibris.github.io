@@ -463,7 +463,41 @@ window.addEventListener('online', function () { schedule(1000); });
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && auth && Date.now() - (sync.when || 0) > 60000) schedule(800); });
 if (/(access_token|error_code)=/.test(location.hash)) fromLink(); else if (auth) schedule(1500);
 window.addEventListener('hashchange', function () { if (/(access_token|error_code)=/.test(location.hash)) fromLink(); });   // link aperto nella stessa scheda dell'app
-window.NLSocial = { run: run, open: open, state: function () { return { auth: auth, sync: sync, busy: !!busy, err: lastErr }; }, hash: hash,   // per le prove
+/* ---------- errori dei telefoni veri (032, scelte di Piero del 21/11/2026) ----------
+   Gli errori raccolti da nlErr() (ERRS in app.js) partono in forma anonima verso errori_manda: file:riga, messaggio, versione,
+   tipo di telefono (android/ios/pc) e se l'app è installata. Mai account, nomi o libri (email e link nel messaggio si tolgono).
+   Partono 30 s dopo il primo errore o quando l'app va in secondo piano; al massimo 5 alla volta, uno ogni minuto,
+   10 invii al giorno per telefono. Li legge solo Claude dal database; restano 30 giorni. */
+var K_ERR = 'catalogo-libri-errori-inviati', errT = 0, errLast = 0;
+function errTel() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1) ? 'ios' : /Android/.test(u) ? 'android' : 'pc'; }
+function errClean(s) { return String(s || '').replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '<email>').replace(/https?:\/\/\S+/g, '<link>').slice(0, 160); }
+function errVer() { var v = typeof APP_VERSION !== 'undefined' ? String(APP_VERSION.v) : '?'; return typeof BUILD !== 'undefined' && BUILD.n ? BUILD.n : v; }
+function errNew() { return (typeof ERRS !== 'undefined' ? ERRS : []).filter(function (x) { return !x.s; }); }
+function errSend(now) {
+  clearTimeout(errT); errT = 0;
+  try {
+    var list = errNew();
+    if (!list.length || navigator.onLine === false) return;
+    if (!now && Date.now() - errLast < 60000) { errT = setTimeout(errSend, 60000); return; }
+    var day = new Date().toISOString().slice(0, 10), c = rd(K_ERR) || {};
+    if (c.d !== day) c = { d: day, n: 0 };
+    if (c.n >= 10) return;
+    c.n++; wr(K_ERR, c); errLast = Date.now();
+    var lista = list.slice(0, 5).map(function (x) {
+      x.s = 1;
+      var m = /^([\w.-]+\.js:\d+) ([\s\S]*)$/.exec(x.k || '');
+      return { dove: m ? m[1] : '', msg: errClean(m ? m[2] : x.k), n: x.n || 1 };
+    });
+    var inst = !!(NL.inst && NL.inst.standalone && NL.inst.standalone());
+    fetch(CFG.url + '/rest/v1/rpc/errori_manda', { method: 'POST', keepalive: true, cache: 'no-store',
+      headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lista: lista, ver: errVer(), tel: errTel(), inst: inst }) }).catch(function () {});   // mai nlErr qui: niente giri
+  } catch (e) {}
+}
+setInterval(function () { if (!errT && errNew().length) errT = setTimeout(errSend, 30000); }, 15000);
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && errNew().length) errSend(true); });
+
+window.NLSocial = { run: run, errSend: errSend, open: open, state: function () { return { auth: auth, sync: sync, busy: !!busy, err: lastErr }; }, hash: hash,   // per le prove
   call: call, raw: raw, rawOpen: rawOpen, auth: function () { return auth; }, onAuth: function (f) { authFns.push(f); }, home: home,
   gButton: gButton, google: google };   // per le schede di benvenuto (guida.js)   // per gli altri moduli (amici.js)
 })();
