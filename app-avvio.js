@@ -606,7 +606,7 @@ $('#btnClearGuess').addEventListener('click', function () {
 /* indirizzo dell'app: quello da cui gira (cosi' link e condivisioni seguono un eventuale cambio di nome); di riserva quello pubblicato */
 var APP_URL = /\.github\.io$/.test(location.hostname) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://nextlibris.github.io/';
 var APP_SCOPE = location.pathname.replace(/[^/]*$/, '');      // es. /next-libris/: l'app installata e' legata a questa cartella
-var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. È gratis: apri il link e mettila tra le app del telefono.';
+var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. È gratis: apri il link e installala sul telefono.';
 var deferred = null;
 function isStandalone() {
   try {
@@ -733,7 +733,7 @@ function gatePaint(d) {
   if (ios && mine && !gateDone) foot += '<button type="button" class="wc-btn' + (btn ? ' ig-2' : '') + '" data-ig="backup">Fai il backup</button>';
   if (h.copy && !btn && !gateDone) foot += '<button type="button" class="wc-ghost" data-ig="copy">' + gateIc('link', 18) + ' Copia il link</button>';
   d.innerHTML = '<div class="ig-in"><div class="ig-head"><img class="ig-ico" src="icons/next-libris-192.png" alt="" width="76" height="76">' +
-    '<h2 class="wc-h" id="iosGateH">' + (gateDone ? 'Fatto!' : ios ? 'Mettila sul tuo iPhone' : 'Installa Next Libris') + '</h2>' +
+    '<h2 class="wc-h" id="iosGateH">' + (gateDone ? 'Fatto!' : 'Installa Next Libris') + '</h2>' +
     '<p class="wc-sub">' + (gateDone ? 'Next Libris è installata.' : 'Next Libris si usa come app: l\'icona sul telefono, a schermo intero, con le notifiche e i libri al sicuro.') + '</p></div>' +
     (gateDone || btn ? '' : '<p class="ig-lead">' + h.lead + '</p>') + '<div class="wc-rows">' + rows + '</div>' + notes + '</div>' +
     (foot ? '<div class="wc-foot ig-foot">' + foot + '</div>' : '');

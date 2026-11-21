@@ -1,0 +1,38 @@
+/* Next Libris · modulo «Leggilo gratis» (prova, 20/11/2026). Solo pezzi di STILE.md: riga di elenco con l'icona nel quadratino 38,
+   etichette maiuscole spaziate, segni sulle copertine come gli altri. Per toglierlo: vedi in cima a gratis.js. */
+
+/* pagina del libro: la riga sotto i tasti tondi (e sotto l'avviso, se c'è) */
+.gr-row{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;margin:14px 0 4px;padding:10px 14px 10px 12px;border:0;border-radius:14px;background:var(--surface);box-shadow:var(--c-sh);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gr-row>span:not(.dico):not(.n){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gr-row b{font:700 15px/1.25 var(--font-body)}
+.gr-row small{font-size:13px;line-height:1.3;color:var(--muted)}
+.gr-row .n{color:var(--muted);font-size:20px}
+.gr-row .dico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+
+/* la finestra */
+.gr-sheet .gr-lead{margin:2px 0 6px;font-size:14px;line-height:1.45;color:var(--muted)}
+.gr-sheet .gr-lab{margin:16px 0 2px;font:700 11.5px/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gr-sheet .gr-list>.dopt{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 0;color:var(--ink);text-decoration:none;text-align:left}
+.gr-sheet .gr-list>.dopt>span:not(.dico):not(.n):not(.gr-cov){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gr-sheet .gr-list b{font:700 15px/1.25 var(--font-body);overflow-wrap:anywhere}
+.gr-sheet .gr-list small{font-size:13px;line-height:1.3;color:var(--muted)}
+.gr-sheet .gr-list .n{margin-left:auto;color:var(--muted);font-size:20px}
+.gr-sheet .gr-list .dico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:var(--accent-soft);color:var(--accent)}
+.gr-sheet .gr-list>.dopt>.gr-cov{flex:0 0 38px!important;width:38px!important;min-width:38px;height:56px;border-radius:6px;overflow:hidden;display:grid;place-items:center;background:var(--surface2)}
+.gr-sheet .gr-cov img{width:100%;height:100%;object-fit:cover;display:block}
+.gr-sheet .gr-list .gr-cov.gr-ph{background:hsl(var(--h) var(--cloth-s,35%) var(--cloth-l,40%))!important;color:var(--gilt,#fff);font:800 18px/1 var(--font-display)}
+/* altre opere: il tocco apre Wikisource, il cuore la mette nei Desideri */
+.gr-sheet .gr-ot{padding:6px 0}
+.gr-sheet .gr-otl{flex:1;min-width:0;display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none}
+.gr-sheet .gr-otl>span:not(.dico){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gr-sheet .gr-wish{flex:none;width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface2);color:var(--accent);cursor:pointer}
+.gr-sheet .gr-wish.on{background:var(--accent);color:var(--accent-ink)}
+.gr-sheet .gr-wish.on svg path{fill:currentColor}
+
+/* Desideri: segno «Gratis» sulla copertina, in alto a sinistra (in basso stanno «Prestato» e gli altri) */
+.cover .art .gr-tag{position:absolute;left:6px;top:6px;display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;background:var(--surface);color:var(--accent);font:700 10.5px/1 var(--font-body);box-shadow:0 1px 4px rgba(0,0,0,.2);pointer-events:none}
+/* copertina disegnata (senza immagine): il titolo scende un poco, così il segno non lo copre */
+html .cover .art.gr-on>.ph{padding-top:34px}
+body.cols-sm #list .cover .art.gr-on>.ph{padding-top:24px}
+body.cols-sm #list .cover .art .gr-tag{left:3px;top:3px;padding:3px 5px;font-size:10px}
+body.cols-sm #list .cover .art .gr-tag svg{display:none}

@@ -2,7 +2,7 @@
 // le copie parallele (…/next-libris-prova/, in generale …/next-libris-NOME/) stanno allo stesso indirizzo di base: copie offline con un prefisso
 // loro, e ognuna cancella solo le proprie (la versione vera non tocca quelle che cominciano con «nome-catalogo-libri-»)
 const COPIA = (self.registration.scope.match(/\/next-libris-([a-z]+)\//) || [])[1] || '';
-const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v116';
+const CACHE = (COPIA ? COPIA + '-' : '') + 'catalogo-libri-v117';
 const MINE = (k) => (COPIA ? k.startsWith(COPIA + '-') : !/^[a-z]+-catalogo-libri-/.test(k));
 const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app.js', 'app-aggiungi.js', 'app-vista.js', 'app-scheda.js', 'app-per-te.js', 'app-elenco.js', 'app-finestre.js', 'app-filtri.js', 'app-strumenti.js', 'app-wiki.js', 'app-avvio.js',   // app.js divisa in parti (17/11/2026)
   'lib.js', 'manifest.json', 'stile-c.css', 'stile-g.css', 'stile-g.js',   // stile «C · Schede» (restyle 19/11/2026)
@@ -16,6 +16,7 @@ const SHELL = ['./', 'index.html', 'indirizzo.js', 'avvio.js', 'style.css', 'app
   'notifiche.js', 'notifiche.css',   // modulo: notifiche (campanella)
   'chat.js', 'chat.css',   // modulo: chat (giro 9b)
   'ricerche.js', 'ricerche.css',   // modulo: ricerche condivise e archivio comune
+  'gratis.js', 'gratis.css',   // modulo: «Leggilo gratis» (prova 20/11/2026)
   'push.js', 'push.css',   // modulo: notifiche push
   'guida.js', 'guida.css',   // modulo: guida di primo avvio e libreria di esempio
   'trasloco.html', 'trasloco.js', 'privacy.html'];   // trasloco.html: senza, la pagina arriverebbe come index.html; privacy.html: letta anche dalla finestra Privacy (17/11/2026)

@@ -3,6 +3,15 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 117 · 21/11/2026
+> **Leggilo gratis** I classici di autori morti da più di 70 anni si leggono o si ascoltano gratis: nella pagina del libro trovi dove, con i link giusti.
+> **Ascoltalo gratis** Se un libro è stato letto alla radio in «Ad alta voce» di Rai Radio3, nella sua pagina trovi il link per ascoltarlo, anche se è recente.
+> **Autore da toccare** Nella pagina del libro il nome dell'autore è sottolineato: toccalo per saperne di più.
+- **Leggilo gratis:** fonti Wikisource, Open Library, Project Gutenberg e LibriVox; in «Altre fonti» l'opera su Liber Liber (o la pagina dell'autore) e i libri gratuiti dell'autore su MLOL. Nei Desideri il segno «Gratis», in Per te «Classici da leggere gratis» con le altre opere dei tuoi autori. Il titolo si trova anche senza l'articolo iniziale.
+- **Ascoltalo gratis:** l'autore deve combaciare, anche se il nome è scritto in modo un po' diverso.
+- **Su iPhone** la schermata per installare l'app si chiama «Installa Next Libris», come su Android.
+- Le ricerche si fanno dal telefono e restano salvate lì; niente Google Libri.
+
 ## Versione 116 · 21/11/2026
 > **Cerca anche per titolo** Scrivi il titolo e Next Libris lo cerca nel catalogo delle biblioteche italiane (SBN) e in Open Library; Google solo se manca un'edizione italiana.
 > **Errori segnalati da soli** Se qualcosa si rompe sul tuo telefono, l'app lo segnala in forma anonima, così possiamo sistemarlo prima.
