@@ -604,7 +604,7 @@ $('#btnClearGuess').addEventListener('click', function () {
 /* Finche' l'app si usa dal browser, in alto c'e' la scheda «Installa»: un tocco apre la richiesta di Chrome
    (quando Chrome la offre), altrimenti spiega i passi giusti per quel telefono e browser. */
 /* indirizzo dell'app: quello da cui gira (cosi' link e condivisioni seguono un eventuale cambio di nome); di riserva quello pubblicato */
-var APP_URL = /\.github\.io$/.test(location.hostname) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://nextlibris.github.io/';
+var APP_URL = /^https:/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://nextlibris.app/';   // nextlibris.app dalla 120; di riserva (prove sul computer) l'indirizzo vero
 var APP_SCOPE = location.pathname.replace(/[^/]*$/, '');      // es. /next-libris/: l'app installata e' legata a questa cartella
 var SHARE_TXT = 'Next Libris: il catalogo della libreria di casa. Inquadri il codice a barre e il libro si compila da solo. È gratis: apri il link e installala sul telefono.';
 var deferred = null;

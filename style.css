@@ -807,6 +807,7 @@ html[data-look="nuovo"][data-pal="bosco"] .res-b .btn.primary{background:#24563F
 .ver-state.ok{color:var(--accent)}
 .ver-state.new{color:var(--warn)}
 .ver .btn{margin-top:6px;min-height:40px;font-size:14px}
+.ver-c{font-size:11.5px;line-height:1.35;color:var(--muted);margin-top:4px!important}   /* diritti su nome e logo (21/11/2026) */
 
 /* ---- barra in alto ferma durante lo scorrimento (solo con l'elenco compatto) ---- */
 .stick-sentinel{height:1px;margin-bottom:-1px}

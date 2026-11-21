@@ -864,7 +864,7 @@ function keysInner(full) {
     h += '<p class="fr-small">Prestarla non ti costa niente e puoi smettere quando vuoi. Tocca un amico per prestargliela.</p>' +   // testo approvato (20/11/2026)
       pickerHTML(fr, 'data-f="keyshare" data-id', function (x) { return !!outKey(x.id); }, function (x) { var k = outKey(x.id); return k ? lentLabel(k) : ''; }) +
       '<p class="fr-small kw-n">' + lentText(lentCount()) + '.</p>' +
-      '<p class="fr-small kw-uff">Incolla l’API solo in Next Libris, su nextlibris.github.io. Non te la chiederemo mai per email o messaggio.</p>';   // indirizzo ufficiale (Piero, 18/11/2026)
+      '<p class="fr-small kw-uff">Incolla l’API solo in Next Libris, su nextlibris.app. Non te la chiederemo mai per email o messaggio.</p>';   // indirizzo ufficiale (Piero, 18/11/2026)
   }
   inn.forEach(function (k) {
     if (!k.gb_key) return;

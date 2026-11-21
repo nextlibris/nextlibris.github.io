@@ -1,7 +1,11 @@
 # Registro delle modifiche di Next Libris
 
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
-L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
+L'indirizzo dell'app è https://nextlibris.app/ (fino alla versione 119 era https://nextlibris.github.io/, fino alla 99 https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
+
+## Versione 120 · 21/11/2026
+> **Nuovo indirizzo** Next Libris ora sta su nextlibris.app, più facile da ricordare. Il vecchio indirizzo porta da solo a quello nuovo.
+- Sul telefono installa l'app dal nuovo indirizzo ed entra con Google: i tuoi libri tornano dalla copia online. Poi puoi togliere l'icona vecchia.
 
 ## Versione 119 · 21/11/2026
 > **Suggerimenti sui telefoni** Gli scaffali restano dentro lo schermo: la pagina non scorre più di lato.

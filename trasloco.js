@@ -4,7 +4,7 @@
    chiavi condivise (?amico=, #k=). Aperta al nuovo indirizzo, apre l'app. */
 (function () {
 'use strict';
-var NUOVO = 'https://nextlibris.github.io';
+var NUOVO = 'https://nextlibris.app';   // dalla 120 (21/11/2026); prima nextlibris.github.io
 // prove automatiche (solo sul computer): il nuovo indirizzo e' una porta diversa, passata nell'indirizzo della pagina
 var Q = new URLSearchParams(location.search);
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && Q.get('nuovo')) NUOVO = Q.get('nuovo');

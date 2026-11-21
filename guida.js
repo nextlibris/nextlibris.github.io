@@ -522,7 +522,7 @@ function menu() {
   b.innerHTML = '<span><b>Guarda una libreria di esempio</b><small>Prova l\'app senza i tuoi libri</small></span><span class="n" aria-hidden="true">›</span>';
   // indirizzo ufficiale (Piero, 18/11/2026): contro le copie dell'app ad altri indirizzi
   var u = document.createElement('p'); u.className = 'gd-uff'; u.id = 'nlUfficiale';
-  u.innerHTML = 'Next Libris è solo su <b>nextlibris.github.io</b>. Una copia a un altro indirizzo non è nostra: non darle la tua API né i tuoi dati.';
+  u.innerHTML = 'Next Libris è solo su <b>nextlibris.app</b>. Una copia a un altro indirizzo non è nostra: non darle la tua API né i tuoi dati.';
   list.insertBefore(b, list.firstChild); list.insertBefore(a, b); list.appendChild(u);   // giro 10: la frase sull'indirizzo in fondo a Info e aiuto
   a.addEventListener('click', function () { NL.fromMenu(function () { open(0); }); });
   b.addEventListener('click', function () { NL.fromMenu(function () { enter(-1, ''); }); });

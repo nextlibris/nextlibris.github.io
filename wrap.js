@@ -239,7 +239,7 @@ function loved(read, max) {
 }
 /* il link all'app con l'invito (?amico=Nome), se c'è l'account */
 function invite() {
-  var S = window.NLSocial, base = (S && S.home && S.home()) || 'https://nextlibris.github.io/';
+  var S = window.NLSocial, base = (S && S.home && S.home()) || 'https://nextlibris.app/';
   var A = window.NLAmici, me = A && A.state && A.state().me;
   return me && me.utente ? base + '?amico=' + encodeURIComponent(me.utente) : base;
 }
@@ -408,7 +408,7 @@ async function card(c, fmt) {
   });
   /* piede: nome e indirizzo dell'app (il link con l'invito va nel testo del messaggio) */
   g.fillStyle = '#FFFFFF'; g.font = '700 ' + (sq ? 32 : 40) + 'px ' + FD; g.fillText('Next Libris', M, H - foot + (sq ? 16 : 34));
-  g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '500 ' + (sq ? 26 : 32) + 'px ' + FB; g.textAlign = 'right'; g.fillText('nextlibris.github.io', W - M, H - foot + (sq ? 20 : 40)); g.textAlign = 'left';
+  g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '500 ' + (sq ? 26 : 32) + 'px ' + FB; g.textAlign = 'right'; g.fillText('nextlibris.app', W - M, H - foot + (sq ? 20 : 40)); g.textAlign = 'left';
   return cv;
 }
 function cardName(c, fmt) { return 'Next Libris - ' + c.title.replace(/[^\wÀ-ÿ ]+/g, '').trim() + (fmt === 'square' ? ' (quadrata)' : '') + '.png'; }

@@ -43,7 +43,7 @@ document.addEventListener('error', function (e) { var t = e.target; if (t && t.t
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 /* Copie parallele (piero907.github.io/next-libris-prova/, in generale …/next-libris-NOME/): stesso codice, ma dati tutti loro.
    Stanno allo stesso indirizzo di base, quindi sul telefono condividerebbero lo stesso spazio: ogni nome di dato ha il prefisso
-   della copia («prova:»). COPIA e' il nome della copia ('' per la versione vera, oggi su nextlibris.github.io); PROVA vale solo per la prova. */
+   della copia («prova:»). COPIA e' il nome della copia ('' per la versione vera, dal 21/11/2026 su nextlibris.app); PROVA vale solo per la prova. */
 var COPIA = (location.pathname.match(/\/next-libris-([a-z]+)(\/|$)/) || [])[1] || '';
 var PROVA = COPIA === 'prova';
 function lsKey(k) { return COPIA ? COPIA + ':' + k : k; }
@@ -118,7 +118,7 @@ var coll = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
 var LS_KEY = 'catalogo-libri-v2', LS_SET = 'catalogo-libri-set', oldApp = false;
 var nlFirstRun = !ls.get(LS_KEY) && !ls.get(LS_SET);   // prima apertura in assoluto (né libri né impostazioni salvate): la guida di primo avvio si apre da sola (giro 4); chi aggiorna non la vede
 /* versione dell'app: la stessa di version.json e del nome della cache in sw.js (si aggiornano insieme) */
-var APP_VERSION = { v: 119, date: '2026-11-21', note: 'Suggerimenti dentro lo schermo sui telefoni; linguette a sinistra ricordate' };
+var APP_VERSION = { v: 120, date: '2026-11-21', note: 'Nuovo indirizzo: nextlibris.app' };
 var BUILD = { t: '', n: '', note: '' };   // la copia di prova lo riempie a ogni pubblicazione (pubblica_prova.py): ora, numero («94.9») e nota
 function verNewer(j) { return !!(j && (j.v > APP_VERSION.v || (COPIA && BUILD.t && j.build && j.build !== BUILD.t))); }   // copie parallele (prova, social): anche a parita' di versione, con il timbro della pubblicazione
 function copiaDi() { return PROVA ? 'della prova' : 'della copia ' + COPIA; }
