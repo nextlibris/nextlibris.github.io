@@ -353,5 +353,5 @@ function watchYou() {
 watchYou();
 window.addEventListener('online', function () { later = {}; kick(2000); });
 kick(6000);
-window.NLGratis = { avail: avail, openFor: openFor, openAll: openAll, run: loop, data: load, PD_Y: PD_Y };   // per le prove
+window.NLGratis = { avail: avail, openFor: openFor, openAll: openAll, run: loop, data: load, PD_Y: PD_Y, free: function () { return { mine: mineFree(), other: otherWorks() }; } };   // free: per lo scaffale «Leggilo gratis» dei Suggerimenti   // per le prove
 })();

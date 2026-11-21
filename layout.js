@@ -72,7 +72,7 @@ function menuIcons() {
   var t = 0; new MutationObserver(function () { if (t) return; t = setTimeout(function () { t = 0; if (dr.classList.contains('open') || !dr.hidden) menuIcons(); }, 30); }).observe(dr, { attributes: true, attributeFilter: ['class', 'hidden'], childList: true, subtree: true });
 })();
 function youItems() {
-  var out = [{ l: 'sugg', i: I.next, t: 'Suggerimenti', s: 'Cosa leggere dopo e libri da scoprire' }];
+  var out = [{ l: 'sugg', i: I.next, t: 'Suggerimenti', s: 'Cosa leggere dopo, dagli amici e da scoprire' }];
   var W = window.NLWrap; if (W && W.cfg().on && W.quarters().length) out.push({ l: 'wrap', i: I.cal, t: 'La tua stagione in libri', s: 'Il riepilogo di ogni stagione' });
   var nq = NL.nQuotes();
   var nf = NL.films ? NL.films().length : 0;        // film e serie TV tratti dai tuoi libri (giro 2, 18/11/2026)
@@ -125,7 +125,7 @@ function act(l) {
   else if (l === 'check') NL.scan('check');
   else if (l === 'author') NL.openWorks();
   else if (l === 'films') NL.openFilms();
-  else if (l === 'sugg') NL.openSugg('next');
+  else if (l === 'sugg') NL.openSugg('you');   // dalla pagina Per te: ‹ ci torna
   else if (l === 'wrap') { if (window.NLWrap) window.NLWrap.open(); }
   else if (l === 'quotes') NL.openQuotes();
   else if (l === 'stats') NL.openStats();

@@ -3,6 +3,15 @@
 Le novità di ogni versione, dalla più recente. Il numero di versione dell'app si vede in fondo all'Indice.
 L'indirizzo dell'app è https://nextlibris.github.io/ (fino alla versione 99 era https://piero907.github.io/next-libris/, fino alla 49 …/catalogo-libri/).
 
+## Versione 118 · 21/11/2026
+> **Suggerimenti tutti nuovi** Ora sono una pagina intera: in cima il prossimo libro da leggere tra i tuoi, sotto tanti scaffali da scorrere col dito.
+> **Dai tuoi amici** Vedi i libri che piacciono ai tuoi amici e chi te li può prestare, e i preferiti dell'amico che legge più come te.
+> **Tocca un libro** Scopri perché te lo proponiamo, aggiungilo ai Desideri o chiedilo in prestito.
+- **Scaffali:** Piace ai tuoi amici (4-5 stelle o «Lo consiglio»), Lettori come te (l'amico con almeno 5 libri in comune), Leggilo gratis, Manca alla tua serie, Altri libri dei tuoi autori, Novità nei tuoi generi.
+- **Amici:** si vedono solo i libri degli amici che ti mostrano la libreria, mai note o citazioni; una sola richiesta al server, rifatta al massimo ogni 6 ore. Senza amici trovi l'invito ad aggiungerne uno.
+- Le scelte «cerca da solo una volta a settimana» e «anche libri in altre lingue» ora stanno in Indice › Ricerca dei libri.
+- Nessuna ricerca in più su Google Libri.
+
 ## Versione 117 · 21/11/2026
 > **Leggilo gratis** I classici di autori morti da più di 70 anni si leggono o si ascoltano gratis: nella pagina del libro trovi dove, con i link giusti.
 > **Ascoltalo gratis** Se un libro è stato letto alla radio in «Ad alta voce» di Rai Radio3, nella sua pagina trovi il link per ascoltarlo, anche se è recente.

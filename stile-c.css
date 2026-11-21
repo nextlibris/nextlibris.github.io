@@ -425,12 +425,12 @@ html[data-look="nuovo"] .sheet .seg>label:not(:has(input:checked))>span{backgrou
 
 /* ---------- 15. pagine intere: Per te, I tuoi amici, Chat (pezzo 4, Piero 19/11/2026) ---------- */
 /* come il profilo: foglio a tutto schermo sul fondo della pagina, barra in basso sopra (tranne nella chat aperta, dove serve il campo) */
-html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet){padding:0;align-items:stretch;background:var(--bg)}
-html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in{width:100%;max-width:none;max-height:none;height:100%;border-radius:0;background:var(--bg);box-shadow:none;
+html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet,#suggSheet){padding:0;align-items:stretch;background:var(--bg)}
+html[data-look="nuovo"] :is(#layYou,#friSheet,#suggSheet)>.sheet-in{width:100%;max-width:none;max-height:none;height:100%;border-radius:0;background:var(--bg);box-shadow:none;
   padding:calc(14px + env(safe-area-inset-top)) max(12px,calc(50% - 300px)) calc(110px + env(safe-area-inset-bottom));align-content:start}
-html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet)>.sheet-in::before{display:none}
-html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;min-height:38px;margin:0 0 -38px;font-size:24px}
-html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>h2{margin:2px 48px 4px 0;font:700 26px/1.15 var(--font-display)}
+html[data-look="nuovo"] :is(#layYou,#friSheet,#chSheet,#suggSheet)>.sheet-in::before{display:none}
+html[data-look="nuovo"] :is(#layYou,#friSheet,#suggSheet)>.sheet-in>.sh-x{width:38px;height:38px;min-width:38px;min-height:38px;margin:0 0 -38px;font-size:24px}
+html[data-look="nuovo"] :is(#layYou,#friSheet,#suggSheet)>.sheet-in>h2{margin:2px 48px 4px 0;font:700 26px/1.15 var(--font-display)}
 html[data-look="nuovo"] :is(#layYou,#friSheet)>.sheet-in>.row-btns:last-child{display:none}
 
 /* Per te: scheda della stagione nei suoi colori, poi le righe */

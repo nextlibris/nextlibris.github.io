@@ -1529,8 +1529,6 @@ html[data-look="nuovo"] .sg-tabs button[aria-pressed="true"]{color:var(--accent-
 .nx-why li{position:relative;padding-left:16px;font-size:14px;line-height:1.35}
 .nx-why li::before{content:"";position:absolute;left:3px;top:.5em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
 .nx-btns{margin-top:12px}
-.sg-list .sg-why{margin:5px 0 0;font-size:13.5px;line-height:1.35;color:var(--ink)}
-.sg-list .desc-acts .link:first-child{font-weight:600}
 .nx-box{position:relative;margin:4px 0 12px;padding:14px 16px 12px;border-radius:14px;background:var(--accent-soft);display:grid;gap:4px}
 .nx-box h3{margin:0 34px 0 0;font-family:var(--font-display,Georgia,serif);font-size:17px;font-weight:600;line-height:1.3}
 .nx-box .nx-card{grid-template-columns:54px minmax(0,1fr);gap:12px}

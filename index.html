@@ -327,27 +327,24 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
   </div>
 </div>
 
-<div class="sheet" id="suggSheet" hidden>
-  <div class="sheet-in wide" role="dialog" aria-modal="true" aria-labelledby="suggH">
-    <h2 id="suggH">Suggerimenti</h2>
-    <div class="seg kinds sg-tabs" role="tablist" aria-label="Tipo di suggerimento">
-      <button type="button" role="tab" id="sgTabNext" aria-controls="sgNext" aria-pressed="true" aria-selected="true">Cosa leggere dopo</button>
-      <button type="button" role="tab" id="sgTabDisc" aria-controls="sgDisc" aria-pressed="false" aria-selected="false">Da scoprire</button>
-    </div>
-    <div id="sgNext" role="tabpanel" aria-labelledby="sgTabNext">
-      <p class="msg" id="sgNextMsg" aria-live="polite"></p>
+<div class="sheet" id="suggSheet" hidden>   <!-- pagina intera (Piero, 21/11/2026: tela A «Scaffali») -->
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="suggH">
+    <div class="sg-top"><button type="button" class="sg-back" id="sgClose" aria-label="Torna indietro">‹</button><h2 id="suggH">Suggerimenti</h2></div>
+    <p class="sg-lead">Scelti per te dai tuoi libri, dai tuoi amici e da fonti gratuite.</p>
+    <p class="sg-lbl"><span>Cosa leggere dopo</span></p>
+    <div id="sgNext" class="sg-next">
+      <p class="msg" id="sgNextMsg" aria-live="polite" hidden></p>
       <div id="sgNextCard"></div>
     </div>
-    <div id="sgDisc" role="tabpanel" aria-labelledby="sgTabDisc" hidden>
-      <p class="msg" id="sgDiscMsg" aria-live="polite"></p>
-      <ul class="news sg-list" id="sgList"></ul>
-      <label class="check small"><input type="checkbox" id="sgAuto"><span>Cerca da solo una volta a settimana</span></label>
-      <label class="check small"><input type="checkbox" id="sgLang"><span>Anche libri in altre lingue (non solo in italiano)</span></label>
-    </div>
-    <div class="row-btns">
-      <button class="btn" type="button" id="sgAgain" hidden>Cerca di nuovo</button>
-      <button class="btn" type="button" id="sgClose">Chiudi</button>
-    </div>
+    <div id="sgShelves"></div>
+    <p class="sg-foot" id="sgFoot" aria-live="polite"></p>
+  </div>
+</div>
+
+<div class="sheet" id="sgPrev" hidden>   <!-- anteprima di un libro suggerito -->
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="sgPrevH">
+    <button type="button" class="sh-x" data-act="sgclose" aria-label="Chiudi">×</button>
+    <div id="sgPrevBody"></div>
   </div>
 </div>
 
@@ -644,6 +641,10 @@ html[data-splash] #splash{position:fixed;top:0;left:0;right:0;bottom:auto;height
 
       <h3 class="opt-h3">Con gli amici</h3>
       <div class="svc-box dmenu" id="svcBox"></div>
+
+      <h3 class="opt-h3">Suggerimenti</h3>
+      <label class="check"><input type="checkbox" id="sgAuto"><span>Cerca libri da scoprire da solo, una volta a settimana<small>Usa qualche ricerca di Google Libri: altri libri dei tuoi autori e novità dei tuoi generi.</small></span></label>
+      <label class="check"><input type="checkbox" id="sgLang"><span>Anche libri in altre lingue (non solo in italiano)</span></label>
 
       <div class="opts-row"><button class="btn" id="btnDiag">Prova la ricerca ISBN</button></div>
       <div class="diag" id="diagOut" hidden aria-live="polite"></div>

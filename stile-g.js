@@ -66,7 +66,7 @@ function current() {
   if (vis('#friSheet')) return 'fri';
   if (vis('#profSheet')) return (window.NLProfilo && window.NLProfilo.state && window.NLProfilo.state().cur) ? 'fri' : 'prof';
   if (document.documentElement.classList.contains('drawer-open') || document.body.classList.contains('drawer-open') || vis('#drawer')) return 'idx';
-  if (vis('#layYou') || vis('#wrap')) return 'you';
+  if (vis('#layYou') || vis('#wrap') || vis('#suggSheet')) return 'you';   // Suggerimenti: pagina di Per te (21/11/2026)
   if (NL.guest && NL.guest()) return 'fri';
   return NL.tab && NL.tab() === 'wish' ? 'wish' : 'lib';
 }
