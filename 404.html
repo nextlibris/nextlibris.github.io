@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#24563F">
+<title>Next Libris · ci siamo trasferiti</title>
+<link rel="icon" href="/icons/next-libris-192.png">
+<style>
+/* Vecchio indirizzo (nextlibris.github.io): dal 22/11/2026 solo «Ci siamo trasferiti» (Piero). Stile G, tavolozza Bosco. */
+@font-face{font-family:"Bricolage Grotesque";font-display:swap;font-weight:600 800;src:url(/vendor/fonts/bricolage-latin.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-display:swap;font-weight:400;src:url(/vendor/fonts/plex-latin-400.woff2) format("woff2")}
+@font-face{font-family:"IBM Plex Sans";font-display:swap;font-weight:600;src:url(/vendor/fonts/plex-latin-600.woff2) format("woff2")}
+:root{--surface:#FFFFFF;--surface2:#F3F6F3;--ink:#172420;--muted:#58665F;--line:#D5DDD8;--accent:#24563F;--accent-ink:#FFFFFF;--accent-soft:#E0ECE5;
+  --fd:"Bricolage Grotesque",system-ui,sans-serif;--fb:"IBM Plex Sans",system-ui,sans-serif;--pad:20px;--h1:40px}
+@media (prefers-color-scheme:dark){:root{--surface:#161E1B;--surface2:#1D2723;--ink:#E4ECE8;--muted:#98A8A0;--line:#29352F;--accent:#8FD1AE;--accent-ink:#0B2016;--accent-soft:#1D3A2D}}
+@media (max-width:379.98px){:root{--pad:14px;--h1:32px}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--surface);color:var(--ink);font:400 15px/1.5 var(--fb);-webkit-text-size-adjust:100%}
+main{max-width:560px;margin:0 auto;padding:env(safe-area-inset-top) var(--pad) calc(32px + env(safe-area-inset-bottom))}
+.head{display:flex;align-items:center;gap:8px;min-height:52px;border-bottom:1px solid var(--line);font:700 11.5px/1 var(--fb);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.beta{font:700 9.5px/1 var(--fb);letter-spacing:.08em;padding:3px 6px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+.ico{width:72px;height:72px;border-radius:18px;display:block;margin:28px 0 18px}
+h1{font:800 var(--h1)/1.02 var(--fd);letter-spacing:-.02em;margin:0 0 12px}
+.prose{margin:0 0 20px}
+.prose b{color:var(--accent)}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;padding:12px 16px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:600 16px/1.2 var(--fb);text-decoration:none}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wait{margin:10px 0 0;text-align:center;font-size:13.5px;color:var(--muted)}
+.lab{display:flex;align-items:center;gap:10px;margin:32px 0 10px;font:700 11.5px/1.2 var(--fb);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lab::after{content:"";flex:1;border-bottom:1px solid var(--line)}
+ol{margin:0;padding:0;list-style:none;counter-reset:p}
+ol li{counter-increment:p;position:relative;padding:0 0 12px 36px}
+ol li::before{content:counter(p);position:absolute;left:0;top:-1px;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 13px/24px var(--fb);text-align:center}
+.note{margin:6px 0 0;padding:12px 14px;border-radius:12px;background:var(--surface2);font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="head">Next Libris <span class="beta">BETA</span></div>
+  <img src="/icons/next-libris-192.png" alt="" class="ico">
+  <h1>Ci siamo trasferiti</h1>
+  <p class="prose">Next Libris adesso abita a un indirizzo tutto suo: <b>nextlibris.app</b>. Qui non c'è più niente: la tua libreria ti aspetta là.</p>
+  <a class="btn" id="vai" href="https://nextlibris.app/">Apri Next Libris</a>
+  <p class="wait" id="wait">Ti portiamo lì tra qualche secondo…</p>
+
+  <div class="lab">Hai l'icona sul telefono?</div>
+  <ol>
+    <li>Apri <b>nextlibris.app</b> e installa Next Libris: l'app ti guida passo passo.</li>
+    <li>Entra con il tuo account: i tuoi libri tornano da soli.</li>
+    <li>Poi puoi cancellare la vecchia icona.</li>
+  </ol>
+  <p class="note">Una copia a un altro indirizzo non è nostra: non darle la tua chiave né i tuoi dati.</p>
+</main>
+<script>
+/* Porta a nextlibris.app con gli inviti degli amici (?amico=) e le chiavi condivise (#k=), sempre alla pagina principale. */
+(function () {
+  var pag = /\/privacy\.html$/.test(location.pathname) ? 'privacy.html' : '';   // la privacy resta raggiungibile (link vecchi, Google)
+  var dove = 'https://nextlibris.app/' + pag + location.search + location.hash;
+  var a = document.getElementById('vai'); if (a) a.href = dove;
+  setTimeout(function () { location.replace(dove); }, 4000);   // replace: l'Indietro non torna qui
+})();
+</script>
+</body>
+</html>
